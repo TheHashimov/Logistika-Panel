@@ -27,6 +27,10 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
 .drop-zone{border:2px dashed #cbd5e1;transition:border-color .2s,background .2s}
 .drop-zone.drag-over{border-color:#6366f1;background:#eef2ff}
 .mini-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer}
+.media-select-item{position:relative}
+.media-select-item.selected{outline:3px solid #6366f1;outline-offset:2px;border-radius:12px}
+.media-select-item .media-checkbox{position:absolute;top:6px;left:6px;z-index:10;width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.9);border:2px solid #cbd5e1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.media-select-item.selected .media-checkbox{background:#6366f1;border-color:#6366f1;color:#fff}
 </style>
 </head>
 <body class="min-h-screen pb-12 antialiased">
@@ -579,6 +583,7 @@ const DEFAULT_TRACKING_COMPANIES = {
 };
 
 let cars = [], trash = [], isAdminLoggedIn = false, isFinanceUnlocked = false, pendingFinanceAction = null, isCloudSyncing = false, tempAttachedDocs = [], currentViewMode = 'card', analyticsSearchMode = 'port', trackingCompanies = [], currentPhotoCarId = null, currentPhotoTab = 'auction', lbPhotos = [], lbIndex = 0, adminLbPhotos = [], adminLbIdx = 0, sessionToken = sessionStorage.getItem('cz_token') || '', searchDebounceTimer = null, expandedCars = {};
+let selectedMedia = new Set(); /* Toplu silmə üçün seçilmiş media */
 
 function generateShareToken() {const a = new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2, '0')).join('');}
 function debouncedRender() {clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(() => renderApp(), 300);}
@@ -586,24 +591,12 @@ function cleanOldTrash() {const now = Date.now(), limit = TRASH_DAYS * 24 * 60 *
 function emptyPhotos() {const o = {}; ALL_PHOTO_CATS.forEach(k => {o[k] = {images: [], videos: []};}); return o;}
 function ensurePhotosStruct(car) {if (!car.photos || typeof car.photos !== 'object') car.photos = {}; ALL_PHOTO_CATS.forEach(k => {if (!car.photos[k] || typeof car.photos[k] !== 'object') car.photos[k] = {images: [], videos: []}; if (!Array.isArray(car.photos[k].images)) car.photos[k].images = []; if (!Array.isArray(car.photos[k].videos)) car.photos[k].videos = [];});}
 
-function findTrackingCompany(id) {
-  if (!id) return null;
-  const fromArray = trackingCompanies.find(x => x.id === id);
-  if (fromArray) return fromArray;
-  return DEFAULT_TRACKING_COMPANIES[id] || null;
-}
+function findTrackingCompany(id) {if (!id) return null; const fromArray = trackingCompanies.find(x => x.id === id); if (fromArray) return fromArray; return DEFAULT_TRACKING_COMPANIES[id] || null;}
 
-function getCarFolder(car) {
-  if (car.vin && car.vin.trim()) return 'AuctionLand/' + car.vin.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-  if (car.model) {const m = car.model.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').substring(0, 40); return 'AuctionLand/' + (m || 'Unknown');}
-  return 'AuctionLand/Unknown';
-}
+function getCarFolder(car) {if (car.vin && car.vin.trim()) return 'AuctionLand/' + car.vin.replace(/[^A-Z0-9]/gi, '').toUpperCase(); if (car.model) {const m = car.model.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').substring(0, 40); return 'AuctionLand/' + (m || 'Unknown');} return 'AuctionLand/Unknown';}
 function getCarFolderWithCategory(car, category) {return getCarFolder(car) + '/' + category;}
 
-function toggleCarExpand(id) {
-  expandedCars[id] = !expandedCars[id];
-  renderApp();
-}
+function toggleCarExpand(id) {expandedCars[id] = !expandedCars[id]; renderApp();}
 
 window.addEventListener('DOMContentLoaded', async () => {
   if (sessionToken) {isAdminLoggedIn = true; document.getElementById('lockScreen').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); updateAdminUI(); await loadDataFromCloud();}
@@ -631,12 +624,164 @@ async function uploadToCloudinary(file, mediaType = 'image', folder = '') {const
 function getVideoThumb(videoUrl) {if (!videoUrl) return ''; if (videoUrl.includes('/video/upload/')) {return videoUrl.replace('/video/upload/', '/video/upload/so_0,w_400/').replace(/\.[^.]+$/, '.jpg');} return videoUrl;}
 
 /* PHOTO MODAL */
-function openPhotoModal(carId) {currentPhotoCarId = carId; currentPhotoTab = 'auction'; const car = cars.find(c => c.id === carId); if (!car) return; document.getElementById('photo-modal-title').textContent = car.model || 'Media'; document.getElementById('photoModal').classList.remove('hidden'); renderPhotoStatusRow(car); setPhotoTab('auction');}
-function closePhotoModal() {document.getElementById('photoModal').classList.add('hidden'); currentPhotoCarId = null;}
-function setPhotoTab(tab) {currentPhotoTab = tab; ALL_PHOTO_CATS.forEach(t => {const btn = document.getElementById(`ptab-${t}`); if (!btn) return; btn.className = t === tab ? 'flex-1 py-2 px-2 rounded-xl text-xs font-bold bg-white text-indigo-700 shadow-sm' : 'flex-1 py-2 px-2 rounded-xl text-xs font-bold text-slate-600';}); renderPhotoTabContent();}
+function openPhotoModal(carId) {currentPhotoCarId = carId; currentPhotoTab = 'auction'; selectedMedia.clear(); const car = cars.find(c => c.id === carId); if (!car) return; document.getElementById('photo-modal-title').textContent = car.model || 'Media'; document.getElementById('photoModal').classList.remove('hidden'); renderPhotoStatusRow(car); setPhotoTab('auction');}
+function closePhotoModal() {document.getElementById('photoModal').classList.add('hidden'); currentPhotoCarId = null; selectedMedia.clear();}
+function setPhotoTab(tab) {currentPhotoTab = tab; selectedMedia.clear(); ALL_PHOTO_CATS.forEach(t => {const btn = document.getElementById(`ptab-${t}`); if (!btn) return; btn.className = t === tab ? 'flex-1 py-2 px-2 rounded-xl text-xs font-bold bg-white text-indigo-700 shadow-sm' : 'flex-1 py-2 px-2 rounded-xl text-xs font-bold text-slate-600';}); renderPhotoTabContent();}
 function renderPhotoStatusRow(car) {ensurePhotosStruct(car); const ph = car.photos; const cats = [{key: 'auction', label: 'Auksion', icon: '🏷️'}, {key: 'anbar', label: 'Anbar', icon: '🏭'}, {key: 'poti', label: 'Poti', icon: '🇬🇪'}]; document.getElementById('photo-status-row').innerHTML = `<div class="flex flex-wrap gap-2 pb-1">${cats.map(c => {const cat = ph[c.key] || {}; const im = (cat.images || []).length, vi = (cat.videos || []).length; const ok = im > 0 || vi > 0; return `<span class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${ok ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}"><span>${ok ? '🟢' : '🔴'}</span> ${c.icon} ${c.label}: 📷${im} 🎬${vi}</span>`;}).join('')}</div>`;}
-function renderPhotoTabContent() {const car = cars.find(c => c.id === currentPhotoCarId); if (!car) return; ensurePhotosStruct(car); const catData = car.photos[currentPhotoTab] || {images: [], videos: []}; const images = catData.images || [], videos = catData.videos || []; const tabContent = document.getElementById('photo-tab-content'); const catLabel = {auction: 'Auksion', anbar: 'Anbar', poti: 'Poti'}[currentPhotoTab]; const folderHint = `<p class="text-[10px] text-indigo-500 font-mono mt-0.5">📁 ${getCarFolderWithCategory(car, currentPhotoTab)}</p>`; tabContent.innerHTML = `<div class="drop-zone rounded-2xl p-4 text-center space-y-2" id="dz-img"><div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center text-xl mx-auto"><i class="fa-solid fa-cloud-arrow-up"></i></div><div><p class="text-sm font-bold text-slate-700">${catLabel} — Şəkil</p><p class="text-xs text-slate-400">Max ${MAX_IMAGE_MB} MB</p>${folderHint}</div><label class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold cursor-pointer"><i class="fa-solid fa-image"></i> Şəkil Seç<input type="file" multiple accept="image/*" class="hidden" onchange="handlePhotoFileSelect(this.files,'image')"></label></div><div class="drop-zone rounded-2xl p-4 text-center space-y-2" id="dz-vid"><div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-xl mx-auto"><i class="fa-solid fa-video"></i></div><div><p class="text-sm font-bold text-slate-700">${catLabel} — Video</p><p class="text-xs text-slate-400">Max ${MAX_VIDEO_MB} MB</p></div><label class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-bold cursor-pointer"><i class="fa-solid fa-video"></i> Video Seç<input type="file" multiple accept="video/*" class="hidden" onchange="handlePhotoFileSelect(this.files,'video')"></label></div><div id="upload-progress" class="hidden bg-indigo-50 border border-indigo-200 rounded-2xl p-4 text-xs font-bold text-indigo-800 flex items-center gap-3"><i class="fa-solid fa-spinner fa-spin text-indigo-600"></i><span id="upload-progress-text">Yüklənir...</span></div>${images.length > 0 ? `<div><h4 class="text-xs font-bold text-slate-700 mb-3">📷 Şəkillər (${images.length})</h4><div class="grid grid-cols-3 sm:grid-cols-4 gap-2">${images.map((p, i) => {const url = typeof p === 'string' ? p : p.url; return `<div class="relative group rounded-xl overflow-hidden border border-slate-200"><img src="${url}" class="photo-thumb w-full" loading="lazy"><button onclick="deleteAdminMedia('image',${i})" class="opacity-100 absolute top-1.5 right-1.5 w-7 h-7 bg-rose-600 text-white rounded-lg text-xs flex items-center justify-center shadow-lg"><i class="fa-solid fa-trash"></i></button></div>`;}).join('')}</div></div>` : ''}${videos.length > 0 ? `<div><h4 class="text-xs font-bold text-slate-700 mb-3">🎬 Videolar (${videos.length})</h4><div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${videos.map((v, i) => {const url = typeof v === 'string' ? v : v.url; const thumb = getVideoThumb(url); return `<div class="relative group rounded-xl overflow-hidden border border-slate-200 cursor-pointer" onclick="window.open('${url}','_blank')"><img src="${thumb}" class="photo-thumb w-full" loading="lazy"><div class="absolute inset-0 bg-black/30 flex items-center justify-center"><i class="fa-solid fa-play text-white text-2xl"></i></div><button onclick="event.stopPropagation();deleteAdminMedia('video',${i})" class="absolute top-1.5 right-1.5 w-7 h-7 bg-rose-600 text-white rounded-lg text-xs flex items-center justify-center opacity-100 shadow-lg"><i class="fa-solid fa-trash"></i></button></div>`;}).join('')}</div></div>` : ''}`; const dz1 = document.getElementById('dz-img'); if (dz1) {dz1.addEventListener('dragover', e => {e.preventDefault(); dz1.classList.add('drag-over');}); dz1.addEventListener('dragleave', () => dz1.classList.remove('drag-over')); dz1.addEventListener('drop', e => {e.preventDefault(); dz1.classList.remove('drag-over'); if (e.dataTransfer.files.length) handlePhotoFileSelect(e.dataTransfer.files, 'image');});} const dz2 = document.getElementById('dz-vid'); if (dz2) {dz2.addEventListener('dragover', e => {e.preventDefault(); dz2.classList.add('drag-over');}); dz2.addEventListener('dragleave', () => dz2.classList.remove('drag-over')); dz2.addEventListener('drop', e => {e.preventDefault(); dz2.classList.remove('drag-over'); if (e.dataTransfer.files.length) handlePhotoFileSelect(e.dataTransfer.files, 'video');});} }
+
+/* Toplu silmə funksiyaları */
+function toggleMediaSelect(mediaType, index, event) {
+  if (event) event.stopPropagation();
+  const key = mediaType + ':' + index;
+  if (selectedMedia.has(key)) selectedMedia.delete(key);
+  else selectedMedia.add(key);
+  renderPhotoTabContent();
+}
+function selectAllMedia() {
+  const car = cars.find(c => c.id === currentPhotoCarId);
+  if (!car) return;
+  const cat = car.photos[currentPhotoTab] || {images: [], videos: []};
+  const totalImg = (cat.images || []).length;
+  const totalVid = (cat.videos || []).length;
+  const total = totalImg + totalVid;
+  const isAllSelected = selectedMedia.size === total && total > 0;
+  selectedMedia.clear();
+  if (!isAllSelected) {
+    for (let i = 0; i < totalImg; i++) selectedMedia.add('image:' + i);
+    for (let i = 0; i < totalVid; i++) selectedMedia.add('video:' + i);
+  }
+  renderPhotoTabContent();
+}
+async function deleteSelectedMedia() {
+  if (!currentPhotoCarId || selectedMedia.size === 0) return;
+  const car = cars.find(c => c.id === currentPhotoCarId);
+  if (!car) return;
+  if (!confirm(`${selectedMedia.size} elementi silmək istəyirsiniz?`)) return;
+  const cat = car.photos[currentPhotoTab] || {images: [], videos: []};
+  
+  // PublicId-ləri yığ
+  const publicIds = [];
+  const imgIdxs = [], vidIdxs = [];
+  selectedMedia.forEach(key => {
+    const [type, idx] = key.split(':');
+    const i = parseInt(idx);
+    if (type === 'image' && cat.images[i]) {
+      const item = cat.images[i];
+      if (typeof item === 'object' && item.publicId) publicIds.push({publicId: item.publicId, resourceType: 'image'});
+      imgIdxs.push(i);
+    } else if (type === 'video' && cat.videos[i]) {
+      const item = cat.videos[i];
+      if (typeof item === 'object' && item.publicId) publicIds.push({publicId: item.publicId, resourceType: 'video'});
+      vidIdxs.push(i);
+    }
+  });
+  
+  // Cloudinary-dən sil (paralel)
+  await Promise.all(publicIds.map(p => 
+    fetch('/api/delete-media', {
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json', 'X-Auth-Token': sessionToken}, 
+      body: JSON.stringify(p)
+    }).catch(() => {})
+  ));
+  
+  // Array-dən sil (böyükdən kiçiyə)
+  imgIdxs.sort((a, b) => b - a).forEach(i => cat.images.splice(i, 1));
+  vidIdxs.sort((a, b) => b - a).forEach(i => cat.videos.splice(i, 1));
+  
+  const count = selectedMedia.size;
+  selectedMedia.clear();
+  await saveData(`🗑️ ${count} element silindi`);
+  renderPhotoStatusRow(car); 
+  renderPhotoTabContent(); 
+  renderApp();
+}
+
+function renderPhotoTabContent() {
+  const car = cars.find(c => c.id === currentPhotoCarId); 
+  if (!car) return; 
+  ensurePhotosStruct(car); 
+  const catData = car.photos[currentPhotoTab] || {images: [], videos: []}; 
+  const images = catData.images || [], videos = catData.videos || []; 
+  const tabContent = document.getElementById('photo-tab-content'); 
+  const catLabel = {auction: 'Auksion', anbar: 'Anbar', poti: 'Poti'}[currentPhotoTab]; 
+  const folderHint = `<p class="text-[10px] text-indigo-500 font-mono mt-0.5">📁 ${getCarFolderWithCategory(car, currentPhotoTab)}</p>`; 
+  const total = images.length + videos.length;
+  const isAllSelected = selectedMedia.size === total && total > 0;
+  
+  // Toplu silmə paneli
+  const bulkPanel = total > 0 ? `
+    <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <button onclick="selectAllMedia()" class="px-3 py-1.5 rounded-lg text-xs font-bold ${isAllSelected ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-200'}">
+          <i class="fa-solid fa-check-square mr-1"></i> ${isAllSelected ? 'Seçimi ləğv et' : 'Hamısını seç'}
+        </button>
+        <span class="text-xs font-bold text-slate-600">${selectedMedia.size} / ${total} seçildi</span>
+      </div>
+      <button onclick="deleteSelectedMedia()" class="px-3 py-1.5 rounded-lg text-xs font-bold ${selectedMedia.size > 0 ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}" ${selectedMedia.size === 0 ? 'disabled' : ''}>
+        <i class="fa-solid fa-trash mr-1"></i> Sil (${selectedMedia.size})
+      </button>
+    </div>` : '';
+  
+  tabContent.innerHTML = `
+    <div class="drop-zone rounded-2xl p-4 text-center space-y-2" id="dz-img">
+      <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center text-xl mx-auto"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+      <div><p class="text-sm font-bold text-slate-700">${catLabel} — Şəkil</p><p class="text-xs text-slate-400">Max ${MAX_IMAGE_MB} MB</p>${folderHint}</div>
+      <label class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold cursor-pointer"><i class="fa-solid fa-image"></i> Şəkil Seç<input type="file" multiple accept="image/*" class="hidden" onchange="handlePhotoFileSelect(this.files,'image')"></label>
+    </div>
+    <div class="drop-zone rounded-2xl p-4 text-center space-y-2" id="dz-vid">
+      <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-xl mx-auto"><i class="fa-solid fa-video"></i></div>
+      <div><p class="text-sm font-bold text-slate-700">${catLabel} — Video</p><p class="text-xs text-slate-400">Max ${MAX_VIDEO_MB} MB</p></div>
+      <label class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-bold cursor-pointer"><i class="fa-solid fa-video"></i> Video Seç<input type="file" multiple accept="video/*" class="hidden" onchange="handlePhotoFileSelect(this.files,'video')"></label>
+    </div>
+    <div id="upload-progress" class="hidden bg-indigo-50 border border-indigo-200 rounded-2xl p-4 text-xs font-bold text-indigo-800 flex items-center gap-3"><i class="fa-solid fa-spinner fa-spin text-indigo-600"></i><span id="upload-progress-text">Yüklənir...</span></div>
+    ${bulkPanel}
+    ${images.length > 0 ? `
+    <div>
+      <h4 class="text-xs font-bold text-slate-700 mb-3">📷 Şəkillər (${images.length})</h4>
+      <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        ${images.map((p, i) => {
+          const url = typeof p === 'string' ? p : p.url; 
+          const isSel = selectedMedia.has('image:' + i);
+          return `<div class="media-select-item ${isSel ? 'selected' : ''}" onclick="toggleMediaSelect('image', ${i}, event)">
+            <div class="media-checkbox" onclick="event.stopPropagation();toggleMediaSelect('image',${i})">
+              ${isSel ? '<i class="fa-solid fa-check text-white text-xs"></i>' : ''}
+            </div>
+            <div class="rounded-xl overflow-hidden border border-slate-200"><img src="${url}" class="photo-thumb w-full" loading="lazy"></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : ''}
+    ${videos.length > 0 ? `
+    <div>
+      <h4 class="text-xs font-bold text-slate-700 mb-3">🎬 Videolar (${videos.length})</h4>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        ${videos.map((v, i) => {
+          const url = typeof v === 'string' ? v : v.url; 
+          const thumb = getVideoThumb(url); 
+          const isSel = selectedMedia.has('video:' + i);
+          return `<div class="media-select-item ${isSel ? 'selected' : ''}" onclick="toggleMediaSelect('video', ${i}, event)">
+            <div class="media-checkbox" onclick="event.stopPropagation();toggleMediaSelect('video',${i})">
+              ${isSel ? '<i class="fa-solid fa-check text-white text-xs"></i>' : ''}
+            </div>
+            <div class="rounded-xl overflow-hidden border border-slate-200 cursor-pointer relative" onclick="event.stopPropagation();window.open('${url}','_blank')">
+              <img src="${thumb}" class="photo-thumb w-full" loading="lazy">
+              <div class="absolute inset-0 bg-black/30 flex items-center justify-center"><i class="fa-solid fa-play text-white text-2xl"></i></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : ''}
+  `;
+  
+  const dz1 = document.getElementById('dz-img'); 
+  if (dz1) {dz1.addEventListener('dragover', e => {e.preventDefault(); dz1.classList.add('drag-over');}); dz1.addEventListener('dragleave', () => dz1.classList.remove('drag-over')); dz1.addEventListener('drop', e => {e.preventDefault(); dz1.classList.remove('drag-over'); if (e.dataTransfer.files.length) handlePhotoFileSelect(e.dataTransfer.files, 'image');});} 
+  const dz2 = document.getElementById('dz-vid'); 
+  if (dz2) {dz2.addEventListener('dragover', e => {e.preventDefault(); dz2.classList.add('drag-over');}); dz2.addEventListener('dragleave', () => dz2.classList.remove('drag-over')); dz2.addEventListener('drop', e => {e.preventDefault(); dz2.classList.remove('drag-over'); if (e.dataTransfer.files.length) handlePhotoFileSelect(e.dataTransfer.files, 'video');});}
+}
+
 async function handlePhotoFileSelect(files, mediaType = 'image') {if (!files || !files.length || !currentPhotoCarId) return; const progressEl = document.getElementById('upload-progress'), progressText = document.getElementById('upload-progress-text'); if (progressEl) progressEl.classList.remove('hidden'); const car = cars.find(c => c.id === currentPhotoCarId); if (!car) return; ensurePhotosStruct(car); const targetArr = mediaType === 'video' ? car.photos[currentPhotoTab].videos : car.photos[currentPhotoTab].images; const folder = getCarFolderWithCategory(car, currentPhotoTab); let uploaded = 0; for (const file of Array.from(files)) {const maxSize = mediaType === 'video' ? MAX_VIDEO_MB * 1024 * 1024 : MAX_IMAGE_MB * 1024 * 1024; if (file.size > maxSize) {const limitMB = mediaType === 'video' ? MAX_VIDEO_MB : MAX_IMAGE_MB; showToast(`❌ "${file.name}" çox böyükdür (limit: ${limitMB} MB)`, 'error'); continue;} if (progressText) progressText.textContent = `Yüklənir ${uploaded + 1}/${files.length}... (${file.name})`; try {const result = await uploadToCloudinary(file, mediaType, folder); const today = new Date(); const dateStr = `${String(today.getDate()).padStart(2, '0')}.${String(today.getMonth() + 1).padStart(2, '0')}.${today.getFullYear()}`; targetArr.push({url: result.url, thumb: result.thumb, publicId: result.publicId, resourceType: result.resourceType, mediaType: result.mediaType, duration: result.duration, date: dateStr}); uploaded++;} catch (err) {showToast(`❌ "${file.name}": ${err.message}`, 'error');} } if (progressEl) progressEl.classList.add('hidden'); if (uploaded > 0) {await saveData(`✅ ${uploaded} fayl yükləndi`); const c2 = cars.find(c => c.id === currentPhotoCarId); if (c2) renderPhotoStatusRow(c2); renderPhotoTabContent(); renderApp(); showToast(`${uploaded} fayl yükləndi!`, 'success');} }
+
 async function deleteAdminMedia(mediaType, index) {if (!currentPhotoCarId) return; const car = cars.find(c => c.id === currentPhotoCarId); if (!car || !car.photos || !car.photos[currentPhotoTab]) return; const arr = mediaType === 'video' ? car.photos[currentPhotoTab].videos : car.photos[currentPhotoTab].images; if (!arr || !arr[index]) return; if (!confirm(`Bu ${mediaType === 'video' ? 'videonu' : 'şəkili'} silmək istəyirsiniz?`)) return; const item = arr[index]; const publicId = typeof item === 'object' ? item.publicId : null; const resourceType = mediaType === 'video' ? 'video' : 'image'; if (publicId) {try {const r = await fetch('/api/delete-media', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Auth-Token': sessionToken}, body: JSON.stringify({publicId, resourceType})});} catch (e) {}} arr.splice(index, 1); await saveData('🗑️ Silindi'); renderPhotoStatusRow(car); renderPhotoTabContent(); renderApp();}
 
 /* LINK */
@@ -699,11 +844,7 @@ async function saveDataToCloud(data) {
   } catch (e) { return false; }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   MERGE CARS — DÜZƏLDİLDİ: silinmiş avtomobilləri geri qaytarmır
-   ═══════════════════════════════════════════════════════════ */
 function mergeCars(remoteCars, localCars) {
-  /* Trash-da olan avtomobillərin ID və VIN-lərini yığ */
   const trashIds = new Set();
   const trashVins = new Set();
   (trash || []).forEach(t => {
@@ -712,7 +853,6 @@ function mergeCars(remoteCars, localCars) {
       if (t.data.vin) trashVins.add(String(t.data.vin).toUpperCase());
     }
   });
-
   const remoteMap = new Map();
   remoteCars.forEach(c => { const key = c.vin && c.vin.trim() ? 'v:' + c.vin.toUpperCase() : 'i:' + c.id; remoteMap.set(key, c); });
   const merged = [];
@@ -732,7 +872,6 @@ function mergeCars(remoteCars, localCars) {
   });
   remoteCars.forEach(rc => {
     const key = rc.vin && rc.vin.trim() ? 'v:' + rc.vin.toUpperCase() : 'i:' + rc.id;
-    /* Silinmiş avtomobilləri geri qaytarma */
     if (rc.id && trashIds.has(rc.id)) { console.log('[MERGE] Skip trashed (id):', rc.id); return; }
     if (rc.vin && trashVins.has(String(rc.vin).toUpperCase())) { console.log('[MERGE] Skip trashed (vin):', rc.vin); return; }
     if (!seen.has(key)) { seen.add(key); merged.push(rc); }
@@ -792,16 +931,12 @@ async function copyContainerAndTrack(carId, event) {if (event && event.preventDe
 function parseAppDate(str) {if (!str) return null; let m = String(str).match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/); if (m) {const dt = new Date(+m[3], +m[2] - 1, +m[1]); return isNaN(dt) ? null : dt;} m = String(str).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if (m) {const dt = new Date(+m[1], +m[2] - 1, +m[3]); return isNaN(dt) ? null : dt;} return null;}
 function formatDateDMY(str) {const dt = parseAppDate(str); if (!dt) return ''; return `${String(dt.getDate()).padStart(2, '0')}.${String(dt.getMonth() + 1).padStart(2, '0')}.${dt.getFullYear()}`;}
 function autoFormatDateInput(el) {let d = el.value.replace(/\D/g, '').slice(0, 8); if (d.length > 4) d = d.slice(0, 2) + '.' + d.slice(2, 4) + '.' + d.slice(4); else if (d.length > 2) d = d.slice(0, 2) + '.' + d.slice(2); el.value = d;}
-
-/* ═══════════════════════════════════════════════════════════
-   ADJUST DATE — DÜZƏLDİLDİ: timezone bug həll edildi
-   ═══════════════════════════════════════════════════════════ */
 function adjustDateField(id, delta) {
   const el = document.getElementById(id);
   if (!el) return;
   let dt = parseAppDate(el.value.trim());
   if (!dt) dt = new Date();
-  dt.setHours(12, 0, 0, 0); /* TZ problemi üçün */
+  dt.setHours(12, 0, 0, 0);
   dt.setDate(dt.getDate() + delta);
   const y = dt.getFullYear();
   const m = String(dt.getMonth() + 1).padStart(2, '0');
@@ -918,9 +1053,6 @@ function setViewMode(mode) {currentViewMode = mode; const act = 'px-3 py-1.5 rou
 function renderCarsContainer() {const cont = document.getElementById('cars-container'); const fc = getFilteredCars(); if (!fc.length) {cont.innerHTML = `<div class="bg-white rounded-3xl p-12 text-center border border-slate-200"><i class="fa-solid fa-car text-4xl text-slate-300 mb-3 block"></i><h3 class="text-base font-bold text-slate-700">${cars.length ? 'Tapılmadı' : 'Hələ məlumat yoxdur'}</h3></div>`; return;} currentViewMode === 'card' ? renderCardGrid(cont, fc) : renderTableView(cont, fc);}
 function getPhotoStatusHtml(car) {ensurePhotosStruct(car); const ph = car.photos; return ['auction', 'anbar', 'poti'].map(k => {const cat = ph[k] || {}; const im = (cat.images || []).length, vi = (cat.videos || []).length; const ok = im > 0 || vi > 0; return `<span class="flex items-center gap-0.5 text-[10px] font-bold ${ok ? 'text-emerald-700' : 'text-rose-500'}">${ok ? '🟢' : '🔴'}${k === 'auction' ? '🏷️' : k === 'anbar' ? '🏭' : '🇬🇪'}${im}${vi ? '/' + vi : ''}</span>`;}).join('');}
 
-/* ═══════════════════════════════════════════════════════════
-   KOMPAKT ŞƏKİL GÖRÜNÜŞÜ — Yalnız 4 şəkil + "+N" düyməsi
-   ═══════════════════════════════════════════════════════════ */
 function renderAdminCardPhotos(c) {
   ensurePhotosStruct(c);
   const ph = c.photos;
@@ -929,8 +1061,6 @@ function renderAdminCardPhotos(c) {
     {key: 'anbar', label: '🏭', color: 'text-blue-700'},
     {key: 'poti', label: '🇬🇪', color: 'text-amber-700'}
   ];
-  
-  // Hər kateqoriyanın ümumi sayı
   const counts = cats.map(ct => {
     const cat = ph[ct.key] || {};
     return {
@@ -939,27 +1069,18 @@ function renderAdminCardPhotos(c) {
       images: (cat.images || []).map(p => typeof p === 'string' ? p : p.url)
     };
   });
-  
   const totalAll = counts.reduce((s, x) => s + x.total, 0);
   if (totalAll === 0) return '<div class="bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 flex items-center gap-2 text-xs text-slate-400"><i class="fa-regular fa-image"></i> Media yoxdur</div>';
-  
-  // Yalnız ilk 4 şəkil (hər kateqoriyadan)
   const allImages = [];
-  counts.forEach(ct => {
-    ct.images.slice(0, 2).forEach(url => allImages.push(url));
-  });
+  counts.forEach(ct => { ct.images.slice(0, 2).forEach(url => allImages.push(url)); });
   const displayImages = allImages.slice(0, 4);
-  
   let html = '<div>';
-  // Üst sətir: kateqoriya sayğacları
   html += '<div class="flex gap-1.5 mb-2 flex-wrap">';
   counts.forEach(ct => {
     if (ct.total === 0) return;
     html += `<span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 ${ct.color}">${ct.label}${ct.total}</span>`;
   });
   html += '</div>';
-  
-  // Kiçik thumbnaillər
   if (displayImages.length > 0) {
     html += '<div class="flex gap-1.5">';
     displayImages.forEach(url => {
@@ -985,9 +1106,6 @@ function lbNext() {if (!adminLbPhotos.length) return; adminLbIdx = (adminLbIdx +
 function lbPrev() {if (!adminLbPhotos.length) return; adminLbIdx = (adminLbIdx - 1 + adminLbPhotos.length) % adminLbPhotos.length; renderAdminLightbox();}
 async function lbDownloadCurrent() {const url = adminLbPhotos[adminLbIdx]; if (!url) return; try {const r = await fetch(url, {mode: 'cors'}); const b = await r.blob(); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `photo_${Date.now()}.jpg`; a.click(); showToast('Yükləndi!', 'success');} catch {window.open(url, '_blank');} }
 
-/* ═══════════════════════════════════════════════════════════
-   KART — DAHA KOMPAKT + AÇILIB BAĞLANAN REJİM
-   ═══════════════════════════════════════════════════════════ */
 function renderCardGrid(cont, fc) {
   let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">'; 
   fc.forEach(c => {
@@ -995,7 +1113,6 @@ function renderCardGrid(cont, fc) {
     const np = calculateCarNetProfit(c); 
     const sb = {'Potidədir': 'bg-purple-100 text-purple-800 border-purple-200', 'Bakıdadır': 'bg-emerald-100 text-emerald-800 border-emerald-200', 'Gəmidə': 'bg-blue-100 text-blue-800 border-blue-200'}[c.status] || 'bg-slate-100 text-slate-700'; 
     const financeBlock = isFinanceUnlocked ? `<div class="bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl flex justify-between items-center"><span class="text-[10px] font-bold text-amber-900">Net:</span><span class="text-sm font-black ${np >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${np >= 0 ? '+' : ''}$${np.toLocaleString()}</span></div>` : `<div onclick="openFinancePinModal()" class="bg-slate-100 border border-slate-300 px-3 py-2 rounded-xl flex justify-between cursor-pointer hover:bg-slate-200 transition items-center"><span class="text-[10px] font-bold text-slate-500">🔒 Maliyyə</span></div>`; 
-    
     const isExpanded = !!expandedCars[c.id];
 
     html += `<div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition flex flex-col">
@@ -1007,9 +1124,12 @@ function renderCardGrid(cont, fc) {
         </div>
         
         <div class="p-3 space-y-2">
-          <div>
-            <h3 class="font-extrabold text-sm text-slate-900 truncate">${c.model}</h3>
-            <p class="text-[10px] font-mono text-slate-400 truncate">VIN: ${c.vin || '-'}</p>
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0 flex-1">
+              <h3 class="font-extrabold text-sm text-slate-900 truncate">${c.model}</h3>
+              <p class="text-[10px] font-mono text-slate-400 truncate">VIN: ${c.vin || '-'}</p>
+            </div>
+            ${c.link ? `<a href="${c.link}" target="_blank" class="shrink-0 px-2 py-1.5 bg-amber-100 text-amber-800 rounded-lg border border-amber-200 text-xs font-bold flex items-center gap-1 hover:bg-amber-200 transition" title="bid.cars-da aç"><i class="fa-solid fa-gavel text-[10px]"></i> <span class="hidden sm:inline">Hərraca</span></a>` : ''}
           </div>
           
           ${renderAdminCardPhotos(c)}
@@ -1027,7 +1147,6 @@ function renderCardGrid(cont, fc) {
             <span class="px-2 py-0.5 rounded border ${c.shippingPaid ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'}">${c.shippingPaid ? '💵' : '⏳ Yol'}</span>
           </div>
           
-          <!-- Açılıb-bağlanan tarixlər -->
           <button onclick="toggleCarExpand(${c.id})" class="w-full text-[10px] font-bold py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center gap-1.5 transition">
             <i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'}"></i> ${isExpanded ? 'Tarixləri Gizlət' : 'Tarixləri Göst'}
           </button>
@@ -1062,7 +1181,6 @@ function renderCardGrid(cont, fc) {
   cont.innerHTML = html;
 }
 
-/* CƏDVƏL */
 function renderTableView(cont, fc) {
   let html = `<div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm overflow-x-auto"><table class="w-full text-left border-collapse text-xs"><thead><tr class="bg-slate-900 text-white uppercase text-[10px] font-black tracking-wider"><th class="p-3">Uduş</th><th class="p-3">Poti</th><th class="p-3">Müştəri</th><th class="p-3">Model</th><th class="p-3">Etib.</th><th class="p-3">Yol</th><th class="p-3">Məkan</th><th class="p-3">Konteyner</th><th class="p-3">Media</th><th class="p-3 text-emerald-400">Net</th><th class="p-3">Status</th><th class="p-3 text-center">Əməliyyat</th></tr></thead><tbody class="divide-y divide-slate-100">`; 
   fc.forEach(c => {
