@@ -44,12 +44,11 @@ body{
 button,a,[onclick],.tap,img{user-select:none;-webkit-user-select:none;-webkit-user-drag:none;touch-action:manipulation;-webkit-touch-callout:none}
 img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
 
-/* ═══ SCROLLBAR ═══ */
 .cs::-webkit-scrollbar{width:5px;height:5px}
 .cs::-webkit-scrollbar-track{background:transparent}
 .cs::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:4px}
 
-/* ═══ BACKGROUND OVERRIDES ═══ */
+/* BACKGROUND OVERRIDES */
 .bg-white{background-color:var(--card) !important}
 .bg-slate-50{background-color:var(--card-hover) !important}
 .bg-slate-100{background-color:var(--card-hover) !important}
@@ -65,21 +64,21 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
 .bg-slate-950\/80{background-color:rgba(0,0,0,.8) !important}
 .bg-slate-950\/90{background-color:rgba(0,0,0,.9) !important}
 
-/* ═══ TEXT OVERRIDES ═══ */
+/* TEXT OVERRIDES */
 .text-slate-900,.text-slate-800,.text-slate-700{color:var(--text) !important}
 .text-slate-600,.text-slate-500{color:var(--text-2) !important}
 .text-slate-400,.text-slate-300{color:var(--text-3) !important}
 .text-white{color:var(--text) !important}
 .hover\:text-white:hover{color:#fff !important}
 
-/* ═══ BORDER OVERRIDES ═══ */
+/* BORDER OVERRIDES */
 .border-slate-100,.border-slate-200,.border-slate-300{border-color:var(--border) !important}
 .border-slate-700,.border-slate-800{border-color:var(--border-2) !important}
 .divide-slate-100 > * + *,.divide-y > * + *{border-color:var(--border) !important}
 .border{border-color:var(--border)}
 .border-2{border-color:var(--border-2)}
 
-/* ═══ STATUS SOFT BG ═══ */
+/* STATUS SOFT BG */
 .bg-emerald-50,.bg-emerald-100{background-color:rgba(34,197,94,.1) !important}
 .bg-rose-50,.bg-rose-100{background-color:rgba(239,68,68,.1) !important}
 .bg-amber-50,.bg-amber-100{background-color:rgba(245,158,11,.1) !important}
@@ -89,7 +88,7 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
 .bg-amber-500\/5{background-color:rgba(245,158,11,.06) !important}
 .bg-amber-50\/60{background-color:rgba(245,158,11,.06) !important}
 
-/* ═══ STATUS BORDERS ═══ */
+/* STATUS BORDERS */
 .border-emerald-100,.border-emerald-200,.border-emerald-300{border-color:rgba(34,197,94,.25) !important}
 .border-rose-100,.border-rose-200,.border-rose-300{border-color:rgba(239,68,68,.25) !important}
 .border-amber-100,.border-amber-200,.border-amber-300{border-color:rgba(245,158,11,.25) !important}
@@ -100,7 +99,7 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
 [class*="border-emerald-500"]{border-color:rgba(34,197,94,.25) !important}
 [class*="border-rose-500"]{border-color:rgba(239,68,68,.25) !important}
 
-/* ═══ STATUS TEXT TONES ═══ */
+/* STATUS TEXT TONES */
 .text-emerald-800,.text-emerald-700,.text-emerald-600,.text-emerald-500,.text-emerald-400{color:#4ade80 !important}
 .text-rose-800,.text-rose-700,.text-rose-600,.text-rose-500,.text-rose-400{color:#f87171 !important}
 .text-amber-900,.text-amber-800,.text-amber-700,.text-amber-600,.text-amber-500,.text-amber-400{color:#fbbf24 !important}
@@ -110,37 +109,29 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
 .text-red-600,.text-red-700{color:#f87171 !important}
 .text-emerald-950,.text-rose-950,.text-amber-950,.text-blue-950,.text-indigo-950,.text-purple-950{color:var(--text) !important}
 
-/* ═══ SOFT STATUS BACKGROUNDS (opacity) ═══ */
 .bg-emerald-50\/70,.bg-emerald-50\/60{background-color:rgba(34,197,94,.08) !important}
 .bg-rose-50\/70{background-color:rgba(239,68,68,.08) !important}
 
-/* ═══ INPUTS ═══ */
+/* INPUTS */
 input[type="text"],input[type="number"],input[type="password"],input[type="file"],select,textarea{
   background-color:var(--card-hover) !important;
   border-color:var(--border) !important;
   color:var(--text) !important;
   transition:border-color .2s,background .2s;
 }
-input:focus,select:focus,textarea:focus{
-  border-color:var(--border-2) !important;
-  outline:none;
-}
+input:focus,select:focus,textarea:focus{border-color:var(--border-2) !important;outline:none}
 input::placeholder{color:var(--text-3) !important}
 input[type="checkbox"]{accent-color:#e6e8ec}
 select option{background-color:var(--card);color:var(--text)}
 
-/* ═══ SHADOWS ═══ */
 .shadow-sm{box-shadow:0 1px 2px rgba(0,0,0,.3) !important}
 .shadow-md{box-shadow:0 4px 12px rgba(0,0,0,.4) !important}
 .shadow-lg{box-shadow:0 8px 24px rgba(0,0,0,.4) !important}
 .shadow-xl{box-shadow:0 16px 40px rgba(0,0,0,.5) !important}
 .shadow-2xl{box-shadow:0 24px 64px rgba(0,0,0,.6) !important}
 
-/* ═══ BACKDROP / MODAL ═══ */
 .backdrop-blur-sm,.backdrop-blur-md{-webkit-backdrop-filter:blur(20px) saturate(1.2);backdrop-filter:blur(20px) saturate(1.2)}
-.bg-slate-950.bg-opacity-90{background-color:rgba(0,0,0,.9) !important}
 
-/* ═══ HEADER ═══ */
 header.bg-white{
   background-color:rgba(17,18,22,.75) !important;
   backdrop-filter:blur(20px) saturate(1.2) !important;
@@ -148,13 +139,10 @@ header.bg-white{
   border-color:var(--border) !important;
 }
 
-/* ═══ BODY OVERRIDE ═══ */
 body.pb-12{background:var(--bg) !important}
 
-/* ═══ PRINT ═══ */
 @media print{body *{visibility:hidden}#print-area,#print-area *{visibility:visible}#print-area{position:absolute;left:0;top:0;width:100%;color:#000!important;background:#fff!important}.no-print{display:none!important}}
 
-/* ═══ PHOTO THUMBS ═══ */
 .photo-thumb{aspect-ratio:1;object-fit:cover;cursor:pointer;transition:transform .2s;border-radius:10px}
 .photo-thumb:hover{transform:scale(1.04)}
 .drop-zone{border:2px dashed var(--border-2);transition:border-color .2s,background .2s;border-radius:14px}
@@ -165,20 +153,11 @@ body.pb-12{background:var(--bg) !important}
 .media-select-item .media-checkbox{position:absolute;top:6px;left:6px;z-index:10;width:22px;height:22px;border-radius:6px;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.25);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .media-select-item.selected .media-checkbox{background:var(--text);border-color:var(--text);color:var(--bg)}
 
-/* ═══ ANIMATIONS ═══ */
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .fade-up{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) both}
 
-/* ═══ SCROLLBAR for filter panel ═══ */
-.overflow-x-auto::-webkit-scrollbar{height:4px}
-.overflow-x-auto::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:4px}
-
-/* ═══ CARDS ═══ */
 .rounded-2xl{transition:border-color .3s ease}
 .rounded-3xl{transition:border-color .3s ease}
-
-/* Remove harsh pure blacks */
-.bg-black{background-color:#000 !important}
 </style>
 </head>
 <body class="min-h-screen pb-12 antialiased">
@@ -327,7 +306,6 @@ body.pb-12{background:var(--bg) !important}
 
 <main class="max-w-[1750px] mx-auto px-3 sm:px-8 mt-5 space-y-5">
 
-  <!-- FINANCIAL ANALYTICS -->
   <div id="financial-analytics-section" class="hidden p-5 rounded-2xl space-y-5" style="background:var(--card);border:1px solid var(--border)">
     <div class="flex flex-col sm:flex-row justify-between pb-4 gap-3" style="border-bottom:1px solid var(--border)">
       <div class="flex items-center gap-3">
@@ -347,7 +325,6 @@ body.pb-12{background:var(--bg) !important}
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" id="monthly-profit-cards"></div>
   </div>
 
-  <!-- FINANCE LOCK -->
   <div class="p-4 rounded-2xl flex items-center justify-between" id="finance-lock-bar" style="background:var(--card);border:1px solid var(--border)">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:var(--card-hover);border:1px solid var(--border-2);color:var(--text-2)">
@@ -361,7 +338,6 @@ body.pb-12{background:var(--bg) !important}
     <button onclick="openFinancePinModal()" class="px-3.5 py-2 text-[11px] font-semibold rounded-lg flex items-center gap-1.5" style="background:var(--text);color:var(--bg)"><i class="fa-solid fa-unlock" style="font-size:10px"></i> Aç</button>
   </div>
 
-  <!-- KPI GRID -->
   <div id="kpi-grid" class="grid grid-cols-3 sm:grid-cols-6 gap-2">
     <div class="p-3.5 rounded-xl" style="background:var(--card);border:1px solid var(--border)">
       <div class="text-[9.5px] font-semibold uppercase" style="color:var(--text-3);letter-spacing:.1em">Ümumi</div>
@@ -389,7 +365,6 @@ body.pb-12{background:var(--bg) !important}
     </div>
   </div>
 
-  <!-- FILTERS -->
   <div id="filters-panel" class="p-3 rounded-2xl flex flex-col lg:flex-row gap-3 justify-between" style="background:var(--card);border:1px solid var(--border)">
     <div class="flex flex-wrap items-center gap-2">
       <input type="text" id="filter-search" oninput="debouncedRender()" placeholder="Axtar..."
@@ -706,7 +681,9 @@ body.pb-12{background:var(--bg) !important}
           </div>
         </div>
       </div>
-      <div class="p-4 rounded-xl space-y-3" style="background:var(--card-hover);border:1px solid var(--border)">
+
+      <!-- ═══════════════ GİZLİ MALİYYƏ (PIN İLƏ) ═══════════════ -->
+      <div id="finance-section-modal" class="p-4 rounded-xl space-y-3" style="background:var(--card-hover);border:1px solid var(--border)">
         <div class="flex items-center justify-between pb-2" style="border-bottom:1px solid var(--border)">
           <span class="text-[10px] font-bold uppercase" style="color:var(--text-3);letter-spacing:.1em">Gizli Maliyyə</span>
           <span class="text-[9px] font-bold px-2 py-0.5 rounded" style="background:var(--card);border:1px solid var(--border-2);color:var(--text-2)">PIN</span>
@@ -724,6 +701,8 @@ body.pb-12{background:var(--bg) !important}
           <div class="sm:col-span-3"><label class="block text-[10px] font-semibold mb-1" style="color:var(--text-3)">Auksion Linki</label><input type="text" id="form-link" class="w-full rounded-lg px-2 py-2 text-[11px]" style="background:var(--card);border:1px solid var(--border);color:var(--text)"></div>
         </div>
       </div>
+      <!-- ═══════════════ GİZLİ MALİYYƏ SONU ═══════════════ -->
+
       <div class="p-4 rounded-xl space-y-2" style="background:var(--card-hover);border:1px solid var(--border)">
         <span class="text-[10px] font-bold uppercase block" style="color:var(--text-3);letter-spacing:.1em">📎 Sənədlər</span>
         <div class="flex gap-2">
@@ -810,6 +789,7 @@ function getCarFolderWithCategory(car, category) {return getCarFolder(car) + '/'
 
 function toggleCarExpand(id) {expandedCars[id] = !expandedCars[id]; renderApp();}
 
+/* ═══ KONTEYNER AÇILIŞ STATE ═══ */
 function setContainerOpenState(opened, keepDate = false) {
   containerOpenState = opened;
   const btnOpened = document.getElementById('btn-container-opened');
@@ -860,6 +840,22 @@ async function setContainerOpenedFromList(id, opened) {
   renderPotiTrackingList();
 }
 
+/* ═══ MALİYYƏ BÖLMƏSİNİN GÖRÜNÜŞÜNÜ İDARƏ ET ═══ */
+function updateFinanceSectionVisibility() {
+  const section = document.getElementById('finance-section-modal');
+  if (!section) return;
+  if (isFinanceUnlocked) {
+    section.style.display = '';
+    section.style.opacity = '0';
+    requestAnimationFrame(() => {
+      section.style.transition = 'opacity .3s ease';
+      section.style.opacity = '1';
+    });
+  } else {
+    section.style.display = 'none';
+  }
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
   if (sessionToken) {isAdminLoggedIn = true; document.getElementById('lockScreen').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); updateAdminUI(); await loadDataFromCloud();}
   else {document.getElementById('lockScreen').classList.remove('hidden'); setTimeout(() => document.getElementById('lock-pin-input').focus(), 150);}
@@ -877,7 +873,7 @@ async function verifyLockPin() {const input = document.getElementById('lock-pin-
 
 function openFinancePinModal(callback) {pendingFinanceAction = callback || null; document.getElementById('finance-pin-input').value = ''; document.getElementById('finance-pin-error').classList.add('hidden'); document.getElementById('financePinModal').classList.remove('hidden'); document.getElementById('financePinModal').classList.add('flex'); setTimeout(() => document.getElementById('finance-pin-input').focus(), 100);}
 function closeFinancePinModal() {document.getElementById('financePinModal').classList.add('hidden'); document.getElementById('financePinModal').classList.remove('flex'); pendingFinanceAction = null;}
-async function verifyFinancePin() {const input = document.getElementById('finance-pin-input'), pin = input.value; if (!pin || pin.length !== 4) return; try {const r = await fetch('/api/auth', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pin, type: 'finance'})}); const data = await r.json(); if (data.ok) {isFinanceUnlocked = true; document.getElementById('financePinModal').classList.add('hidden'); document.getElementById('financePinModal').classList.remove('flex'); showToast('🔓 Maliyyə kilidi açıldı!', 'success'); renderApp(); if (pendingFinanceAction) {const cb = pendingFinanceAction; pendingFinanceAction = null; setTimeout(cb, 100);} } else throw new Error('wrong');} catch {document.getElementById('finance-pin-error').classList.remove('hidden'); input.style.borderColor = 'rgba(239,68,68,.5)'; input.value = ''; setTimeout(() => input.style.borderColor = '', 1200); setTimeout(() => input.focus(), 100);} }
+async function verifyFinancePin() {const input = document.getElementById('finance-pin-input'), pin = input.value; if (!pin || pin.length !== 4) return; try {const r = await fetch('/api/auth', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pin, type: 'finance'})}); const data = await r.json(); if (data.ok) {isFinanceUnlocked = true; document.getElementById('financePinModal').classList.add('hidden'); document.getElementById('financePinModal').classList.remove('flex'); showToast('🔓 Maliyyə kilidi açıldı!', 'success'); renderApp(); updateFinanceSectionVisibility(); if (pendingFinanceAction) {const cb = pendingFinanceAction; pendingFinanceAction = null; setTimeout(cb, 100);} } else throw new Error('wrong');} catch {document.getElementById('finance-pin-error').classList.remove('hidden'); input.style.borderColor = 'rgba(239,68,68,.5)'; input.value = ''; setTimeout(() => input.style.borderColor = '', 1200); setTimeout(() => input.focus(), 100);} }
 
 function lockAdminPanel() {isAdminLoggedIn = false; isFinanceUnlocked = false; sessionToken = ''; sessionStorage.removeItem('cz_token'); document.getElementById('admin-panel').classList.add('hidden'); document.getElementById('lockScreen').classList.remove('hidden'); document.getElementById('lock-pin-input').value = ''; document.getElementById('lock-error-msg').classList.add('hidden'); setTimeout(() => document.getElementById('lock-pin-input').focus(), 150); showToast('🔒 Panel kilidlendi.');}
 
@@ -1100,7 +1096,8 @@ function openModal(id = null) {
       const F = (fid, val) => {const el = document.getElementById(fid); if (el) el.value = val || '';};
       F('form-owner', car.owner); F('form-model', car.model); F('form-vin', car.vin); F('form-location', car.location); F('form-shipping-port', car.shippingPort); F('form-container', car.container); F('form-tracking-company', car.trackingCompanyId || '');
       F('form-udus', formatDateDMY(car.udus)); F('form-anbar', formatDateDMY(car.anbar)); F('form-poti', formatDateDMY(car.poti)); F('form-baki', formatDateDMY(car.baki));
-      F('form-status', car.status || 'Auksionda'); F('form-image-url', car.imageUrl || ''); F('form-car-cost', car.carCost || ''); F('form-real-shipping', car.realShipping || ''); F('form-client-shipping', car.clientShipping || ''); F('form-real-insurance', car.realInsurance || ''); F('form-client-insurance', car.clientInsurance || ''); F('form-real-poti-baku', car.realPotiBaku || ''); F('form-client-poti-baku', car.clientPotiBaku || ''); F('form-service-fee', car.serviceFee || ''); F('form-extra-cost', car.extraCost || ''); F('form-link', car.link || '');
+      F('form-status', car.status || 'Auksionda'); F('form-image-url', car.imageUrl || '');
+      F('form-car-cost', car.carCost || ''); F('form-real-shipping', car.realShipping || ''); F('form-client-shipping', car.clientShipping || ''); F('form-real-insurance', car.realInsurance || ''); F('form-client-insurance', car.clientInsurance || ''); F('form-real-poti-baku', car.realPotiBaku || ''); F('form-client-poti-baku', car.clientPotiBaku || ''); F('form-service-fee', car.serviceFee || ''); F('form-extra-cost', car.extraCost || ''); F('form-link', car.link || '');
       document.getElementById('form-etibarname').checked = !!car.etibarname;
       document.getElementById('form-shipping-paid').checked = !!car.shippingPaid;
       const coDate = formatDateDMY(car.containerOpenDate);
@@ -1115,6 +1112,7 @@ function openModal(id = null) {
     setContainerOpenState(false, true);
   }
   renderAttachedDocsList();
+  updateFinanceSectionVisibility();
   document.getElementById('carModal').classList.remove('hidden');
   document.getElementById('carModal').classList.add('flex');
 }
@@ -1125,6 +1123,37 @@ async function processSaveCar(id, imageUrl) {
   const existing = id ? cars.find(c => c.id === parseInt(id)) : null;
   const trackingCoId = document.getElementById('form-tracking-company').value ? parseInt(document.getElementById('form-tracking-company').value) : null;
   const trackingCo = trackingCoId ? findTrackingCompany(trackingCoId) : null;
+
+  // ═══ MALİYYƏ SAHƏLƏRİ ═══
+  let financeData;
+  if (isFinanceUnlocked) {
+    financeData = {
+      carCost: parseFloat(document.getElementById('form-car-cost').value) || 0,
+      realShipping: parseFloat(document.getElementById('form-real-shipping').value) || 0,
+      clientShipping: parseFloat(document.getElementById('form-client-shipping').value) || 0,
+      realInsurance: parseFloat(document.getElementById('form-real-insurance').value) || 0,
+      clientInsurance: parseFloat(document.getElementById('form-client-insurance').value) || 0,
+      realPotiBaku: parseFloat(document.getElementById('form-real-poti-baku').value) || 0,
+      clientPotiBaku: parseFloat(document.getElementById('form-client-poti-baku').value) || 0,
+      serviceFee: parseFloat(document.getElementById('form-service-fee').value) || 0,
+      extraCost: parseFloat(document.getElementById('form-extra-cost').value) || 0
+    };
+  } else if (existing) {
+    financeData = {
+      carCost: existing.carCost || 0,
+      realShipping: existing.realShipping || 0,
+      clientShipping: existing.clientShipping || 0,
+      realInsurance: existing.realInsurance || 0,
+      clientInsurance: existing.clientInsurance || 0,
+      realPotiBaku: existing.realPotiBaku || 0,
+      clientPotiBaku: existing.clientPotiBaku || 0,
+      serviceFee: existing.serviceFee || 0,
+      extraCost: existing.extraCost || 0
+    };
+  } else {
+    financeData = {carCost: 0, realShipping: 0, clientShipping: 0, realInsurance: 0, clientInsurance: 0, realPotiBaku: 0, clientPotiBaku: 0, serviceFee: 0, extraCost: 0};
+  }
+
   const carData = {
     ...(existing || {}),
     id: id ? parseInt(id) : Date.now(),
@@ -1146,15 +1175,7 @@ async function processSaveCar(id, imageUrl) {
     containerOpenDate: containerOpenState ? formatDateDMY(document.getElementById('form-container-open').value.trim()) : '',
     status: document.getElementById('form-status').value,
     imageUrl: imageUrl,
-    carCost: parseFloat(document.getElementById('form-car-cost').value) || 0,
-    realShipping: parseFloat(document.getElementById('form-real-shipping').value) || 0,
-    clientShipping: parseFloat(document.getElementById('form-client-shipping').value) || 0,
-    realInsurance: parseFloat(document.getElementById('form-real-insurance').value) || 0,
-    clientInsurance: parseFloat(document.getElementById('form-client-insurance').value) || 0,
-    realPotiBaku: parseFloat(document.getElementById('form-real-poti-baku').value) || 0,
-    clientPotiBaku: parseFloat(document.getElementById('form-client-poti-baku').value) || 0,
-    serviceFee: parseFloat(document.getElementById('form-service-fee').value) || 0,
-    extraCost: parseFloat(document.getElementById('form-extra-cost').value) || 0,
+    ...financeData,
     link: document.getElementById('form-link').value.trim(),
     documents: tempAttachedDocs,
     etibarname: document.getElementById('form-etibarname').checked,
