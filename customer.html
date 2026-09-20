@@ -83,11 +83,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
     <div class="lg:col-span-2 relative overflow-hidden rounded-3xl shadow-2xl bg-slate-900 min-h-[400px]">
       <div id="hero-bg" class="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-950"></div>
       <img id="hero-img" src="" alt=""
-        class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700"
+        class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
         referrerpolicy="no-referrer"
-        crossorigin="anonymous"
-        onload="this.classList.remove('opacity-0')"
-        onerror="this.style.display='none'">
+        style="opacity:0;display:none">
       <div class="absolute inset-0 gradient-hero"></div>
       <div class="absolute top-4 left-4 right-4 flex justify-between items-start gap-2">
         <span id="status-badge" class="text-xs font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-md bg-white/95 border border-white/50"></span>
@@ -282,6 +280,9 @@ async function loadCar(token) {
       }
     };
 
+    // Konsolda datanı yoxlamaq üçün:
+    console.log('=== CUSTDATA ===', JSON.stringify(custData, null, 2));
+
     renderAll();
     document.getElementById('loading').classList.add('hidden');
     document.getElementById('content').classList.remove('hidden');
@@ -313,17 +314,38 @@ function renderHero() {
   const img = document.getElementById('hero-img');
   const bg = document.getElementById('hero-bg');
 
-  // Əsas şəkil yoxdursa, auksion şəkillərinin ilkini istifadə et
+  // Hero üçün şəkil seçimi: əvvəl imageUrl, yoxdursa auksion ilk şəkil
   let heroSrc = d.imageUrl;
   if (!heroSrc && d.ph?.auction?.images?.length) {
     heroSrc = d.ph.auction.images[0];
   }
 
+  console.log('[HERO] imageUrl:', d.imageUrl);
+  console.log('[HERO] auction images:', d.ph?.auction?.images);
+  console.log('[HERO] seçilən şəkil:', heroSrc);
+
   if (heroSrc) {
-    img.src = heroSrc;
+    // Əvvəlcə gizlət, sonra yüklə
+    img.style.opacity = '0';
     img.style.display = 'block';
-    bg.style.display = 'none';
+
+    // Yeni Image obyekti ilə yüklə (CORS problemi olmadan)
+    const testImg = new Image();
+    testImg.referrerPolicy = 'no-referrer';
+    testImg.onload = () => {
+      img.src = heroSrc;
+      img.style.opacity = '1';
+      bg.style.display = 'none';
+      console.log('[HERO] ✅ Şəkil uğurla yükləndi');
+    };
+    testImg.onerror = () => {
+      console.warn('[HERO] ❌ Şəkil yüklənə bilmədi:', heroSrc);
+      img.style.display = 'none';
+      bg.style.display = 'block';
+    };
+    testImg.src = heroSrc;
   } else {
+    console.warn('[HERO] ⚠️ Heç bir şəkil tapılmadı');
     img.style.display = 'none';
     bg.style.display = 'block';
   }
@@ -502,7 +524,7 @@ function renderPhotos() {
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         ${images.map((url, i) => `
           <div class="photo-grid-item group" onclick="openLightbox(${i})">
-            <img src="${url}" loading="lazy" alt="" referrerpolicy="no-referrer" crossorigin="anonymous">
+            <img src="${url}" loading="lazy" alt="" referrerpolicy="no-referrer">
             <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition"></div>
             <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition">
               <span class="text-[10px] font-bold text-white bg-black/50 backdrop-blur px-2 py-0.5 rounded-full">${i + 1} / ${images.length}</span>
