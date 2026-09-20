@@ -593,20 +593,34 @@ function getCarFolderWithCategory(car, category) {
   return getCarFolder(car) + '/' + category;
 }
 
+/* ✅ YENİLƏNDİ: DOMContentLoaded — əvvəlcə trackingCompanies yüklənir, SONRA loadDataFromCloud */
 window.addEventListener('DOMContentLoaded', async () => {
-  if (sessionToken) {isAdminLoggedIn = true; document.getElementById('lockScreen').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); updateAdminUI(); await loadDataFromCloud();}
-  else {document.getElementById('lockScreen').classList.remove('hidden'); setTimeout(() => document.getElementById('lock-pin-input').focus(), 150);}
+  // ✅ ƏVVƏLCƏ trackingCompanies yüklə — normalizeCars onlardan istifadə edir
+  await loadTrackingCompanies();
+  renderTrackingCompanySelect();
+
+  if (sessionToken) {
+    isAdminLoggedIn = true;
+    document.getElementById('lockScreen').classList.add('hidden');
+    document.getElementById('admin-panel').classList.remove('hidden');
+    updateAdminUI();
+    await loadDataFromCloud();
+  } else {
+    document.getElementById('lockScreen').classList.remove('hidden');
+    setTimeout(() => document.getElementById('lock-pin-input').focus(), 150);
+  }
+
   const lockInput = document.getElementById('lock-pin-input');
   lockInput.addEventListener('input', e => {const v = e.target.value.replace(/\D/g, '').slice(0, 4); e.target.value = v; document.getElementById('lock-error-msg').classList.add('hidden'); if (v.length === 4) setTimeout(() => verifyLockPin(), 200);});
   const financePinInput = document.getElementById('finance-pin-input');
   if (financePinInput) {financePinInput.addEventListener('input', e => {const v = e.target.value.replace(/\D/g, '').slice(0, 4); e.target.value = v; document.getElementById('finance-pin-error').classList.add('hidden'); if (v.length === 4) setTimeout(() => verifyFinancePin(), 200);});}
-  await loadTrackingCompanies(); renderTrackingCompanySelect();
   const docInput = document.getElementById('doc-file-input');
   if (docInput) {docInput.addEventListener('change', e => {if (!e.target.files || !e.target.files[0]) return; const file = e.target.files[0]; const docType = document.getElementById('doc-type-select').value; const reader = new FileReader(); reader.onload = evt => {tempAttachedDocs.push({type: docType, fileName: file.name, data: evt.target.result}); renderAttachedDocsList(); showToast('Sənəd əlavə olundu!');}; reader.readAsDataURL(file);});}
   document.addEventListener('keydown', e => {const lb = document.getElementById('lightbox'); if (!lb.classList.contains('hidden')) {if (e.key === 'ArrowRight') lbNext(); else if (e.key === 'ArrowLeft') lbPrev(); else if (e.key === 'Escape') closeLightbox();} });
 });
 
-async function verifyLockPin() {const input = document.getElementById('lock-pin-input'), pin = input.value; if (!pin || pin.length !== 4) return; try {const r = await fetch('/api/auth', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pin})}); const data = await r.json(); if (data.ok) {sessionToken = data.token; sessionStorage.setItem('cz_token', sessionToken); isAdminLoggedIn = true; document.getElementById('lockScreen').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); document.body.style.overflow = ''; await loadDataFromCloud(); updateAdminUI(); showToast('🔓 Xoş gəldiniz!', 'success');} else throw new Error('wrong');} catch {document.getElementById('lock-error-msg').classList.remove('hidden'); input.classList.add('border-rose-500'); input.value = ''; setTimeout(() => input.classList.remove('border-rose-500'), 1200); setTimeout(() => input.focus(), 100);} }
+/* ✅ YENİLƏNDİ: verifyLockPin — trackingCompanies yüklənmiş olduğundan əmin ol */
+async function verifyLockPin() {const input = document.getElementById('lock-pin-input'), pin = input.value; if (!pin || pin.length !== 4) return; try {const r = await fetch('/api/auth', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pin})}); const data = await r.json(); if (data.ok) {sessionToken = data.token; sessionStorage.setItem('cz_token', sessionToken); isAdminLoggedIn = true; document.getElementById('lockScreen').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); document.body.style.overflow = ''; if (!trackingCompanies.length) await loadTrackingCompanies(); await loadDataFromCloud(); updateAdminUI(); showToast('🔓 Xoş gəldiniz!', 'success');} else throw new Error('wrong');} catch {document.getElementById('lock-error-msg').classList.remove('hidden'); input.classList.add('border-rose-500'); input.value = ''; setTimeout(() => input.classList.remove('border-rose-500'), 1200); setTimeout(() => input.focus(), 100);} }
 
 function openFinancePinModal(callback) {pendingFinanceAction = callback || null; document.getElementById('finance-pin-input').value = ''; document.getElementById('finance-pin-error').classList.add('hidden'); document.getElementById('financePinModal').classList.remove('hidden'); setTimeout(() => document.getElementById('finance-pin-input').focus(), 100);}
 function closeFinancePinModal() {document.getElementById('financePinModal').classList.add('hidden'); pendingFinanceAction = null;}
@@ -836,7 +850,7 @@ function adjustDateField(id, delta) {const el = document.getElementById(id); if 
 function diffDays(d1, d2) {const a = parseAppDate(d1), b = parseAppDate(d2); if (!a || !b) return null; return Math.ceil((b - a) / 86400000);}
 function getDaysToPoti(p) {const dt = parseAppDate(p); if (!dt) return null; const t = new Date(); t.setHours(0, 0, 0, 0); dt.setHours(0, 0, 0, 0); return Math.ceil((dt - t) / 86400000);}
 
-/* ✅ YENİLƏNDİ: normalizeCars — köhnə avtomobillər üçün tracking məlumatlarını trackingCompanies-dən tapır */
+/* ✅ normalizeCars — köhnə avtomobillər üçün tracking məlumatlarını trackingCompanies-dən tapır */
 function normalizeCars(list) {
   if (!Array.isArray(list)) return [];
   return list.map(c => {
@@ -846,7 +860,6 @@ function normalizeCars(list) {
     const container = c.container || '';
     const hasTracking = !!(container && c.trackingCompanyId);
 
-    // ✅ Köhnə avtomobillər üçün tracking məlumatlarını trackingCompanies-dən tap
     let companyName = c.trackingCompanyName || null;
     let companyUrl = c.trackingUrl || null;
     let paramsTemplate = c.trackingParamsTemplate || null;
