@@ -48,7 +48,6 @@ export default async function handler(req, res) {
     if (!car.photos.auction) car.photos.auction = { images: [], videos: [] };
     if (!car.photos.auction.images) car.photos.auction.images = [];
 
-    /* Mövcud URL-ləri yoxla (təkrar olmasın) */
     const existingUrls = new Set(
       car.photos.auction.images.map(p => typeof p === 'string' ? p : p.url)
     );
