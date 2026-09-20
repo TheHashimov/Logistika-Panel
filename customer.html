@@ -81,9 +81,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 fade-up">
     <!-- HERO -->
     <div class="lg:col-span-2 relative overflow-hidden rounded-3xl shadow-2xl bg-slate-900 min-h-[400px]">
-      <!-- Gradient fallback arxa fon -->
       <div id="hero-bg" class="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-950"></div>
-      <!-- Hero şəkil -->
       <img id="hero-img" src="" alt=""
         class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700"
         referrerpolicy="no-referrer"
@@ -226,7 +224,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
 
 <script>
 let custData = null;
-let custTab = 'pikap';
+let custTab = 'auction';   /* ← Default tab: AUKSION */
 let lbPhotos = [], lbIndex = 0, lbTouchStart = 0;
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -265,7 +263,10 @@ async function loadCar(token) {
 
     const ph = car.photos || {};
     const normalizeCat = cat => Array.isArray(cat) ? { images: cat, videos: [] } : { images: cat?.images || [], videos: cat?.videos || [] };
-    const catP = normalizeCat(ph.pikap), catA = normalizeCat(ph.anbar), catT = normalizeCat(ph.poti);
+    const catAuc = normalizeCat(ph.auction);
+    const catP = normalizeCat(ph.pikap);
+    const catA = normalizeCat(ph.anbar);
+    const catT = normalizeCat(ph.poti);
     const mapVid = v => typeof v === 'string' ? { url: v, thumb: getVideoThumb(v) } : { url: v.url, thumb: v.thumb || getVideoThumb(v.url) };
 
     custData = {
@@ -276,9 +277,10 @@ async function loadCar(token) {
       imageUrl: car.imageUrl || car.image || '',
       auctionLink: car.link || '',
       ph: {
-        pikap: { images: catP.images.map(p => typeof p === 'string' ? p : p.url), videos: catP.videos.map(mapVid) },
-        anbar: { images: catA.images.map(p => typeof p === 'string' ? p : p.url), videos: catA.videos.map(mapVid) },
-        poti: { images: catT.images.map(p => typeof p === 'string' ? p : p.url), videos: catT.videos.map(mapVid) }
+        auction: { images: catAuc.images.map(p => typeof p === 'string' ? p : p.url), videos: catAuc.videos.map(mapVid) },
+        pikap:   { images: catP.images.map(p => typeof p === 'string' ? p : p.url),   videos: catP.videos.map(mapVid) },
+        anbar:   { images: catA.images.map(p => typeof p === 'string' ? p : p.url),   videos: catA.videos.map(mapVid) },
+        poti:    { images: catT.images.map(p => typeof p === 'string' ? p : p.url),   videos: catT.videos.map(mapVid) }
       }
     };
 
@@ -310,19 +312,17 @@ function renderAll() {
 function renderHero() {
   const d = custData;
 
-  /* Şəkil + gradient fallback */
   const img = document.getElementById('hero-img');
   const bg = document.getElementById('hero-bg');
   if (d.imageUrl) {
     img.src = d.imageUrl;
     img.style.display = 'block';
-    bg.style.display = 'none';   /* gradient gizlət */
+    bg.style.display = 'none';
   } else {
     img.style.display = 'none';
-    bg.style.display = 'block';  /* gradient göstər */
+    bg.style.display = 'block';
   }
 
-  /* Status badge */
   const colors = {
     'Auksionda': 'bg-amber-100 text-amber-900',
     'Anbara gedir': 'bg-yellow-100 text-yellow-900',
@@ -335,12 +335,10 @@ function renderHero() {
   badge.textContent = d.s || 'Gözlənilir';
   badge.className = `text-xs font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-md border border-white/50 ${colors[d.s] || 'bg-white text-slate-900'}`;
 
-  /* Ad + Model + VIN */
   document.getElementById('owner-name').textContent = d.n || 'Müştəri';
   document.getElementById('car-model').textContent = d.m || 'Avtomobil';
   document.getElementById('vin-pill').textContent = `VIN: ${d.v || '-'}`;
 
-  /* Hərrac linki */
   const auctionBtn = document.getElementById('auction-btn');
   if (d.auctionLink && d.auctionLink.trim()) {
     auctionBtn.href = d.auctionLink;
@@ -349,7 +347,6 @@ function renderHero() {
     auctionBtn.classList.add('hidden');
   }
 
-  /* Cari mərhələ */
   const stageMap = {
     'Auksionda': '🏷️ Auksion Uduşu',
     'Anbara gedir': '🚛 Anbara Yolda',
@@ -360,12 +357,10 @@ function renderHero() {
   };
   document.getElementById('current-stage').textContent = stageMap[d.s] || d.s || '-';
 
-  /* Detallar */
   document.getElementById('location').textContent = d.location || '-';
   document.getElementById('shipping-port').textContent = d.shippingPort || '-';
   document.getElementById('container').textContent = d.container || '-';
 
-  /* Gün sayğacı */
   const daysEl = document.getElementById('days-counter');
   if (d.poti && d.status !== 'Bakıdadır') {
     const daysLeft = getDaysToPoti(d.poti);
@@ -443,14 +438,15 @@ function renderTimeline() {
 /* TABS + PHOTOS */
 function renderTabs() {
   const ph = custData.ph || {};
-  const totalVideos = (ph.pikap?.videos?.length || 0) + (ph.anbar?.videos?.length || 0) + (ph.poti?.videos?.length || 0);
-  const totalImages = (ph.pikap?.images?.length || 0) + (ph.anbar?.images?.length || 0) + (ph.poti?.images?.length || 0);
+  const totalVideos = (ph.auction?.videos?.length || 0) + (ph.pikap?.videos?.length || 0) + (ph.anbar?.videos?.length || 0) + (ph.poti?.videos?.length || 0);
+  const totalImages = (ph.auction?.images?.length || 0) + (ph.pikap?.images?.length || 0) + (ph.anbar?.images?.length || 0) + (ph.poti?.images?.length || 0);
 
   const tabs = [
-    { key: 'pikap', label: '📦 Pikap', count: (ph.pikap?.images?.length || 0) + (ph.pikap?.videos?.length || 0) },
-    { key: 'anbar', label: '🏭 Anbar', count: (ph.anbar?.images?.length || 0) + (ph.anbar?.videos?.length || 0) },
-    { key: 'poti', label: '🇬🇪 Poti', count: (ph.poti?.images?.length || 0) + (ph.poti?.videos?.length || 0) },
-    { key: 'videolar', label: '🎬 Video', count: totalVideos }
+    { key: 'auction', label: '🏷️ Auksion', count: (ph.auction?.images?.length || 0) + (ph.auction?.videos?.length || 0) },
+    { key: 'pikap',   label: '📦 Pikap',   count: (ph.pikap?.images?.length || 0) + (ph.pikap?.videos?.length || 0) },
+    { key: 'anbar',   label: '🏭 Anbar',   count: (ph.anbar?.images?.length || 0) + (ph.anbar?.videos?.length || 0) },
+    { key: 'poti',    label: '🇬🇪 Poti',    count: (ph.poti?.images?.length || 0) + (ph.poti?.videos?.length || 0) },
+    { key: 'videolar',label: '🎬 Video',   count: totalVideos }
   ];
 
   document.getElementById('tabs').innerHTML = tabs.map(t => `
@@ -478,11 +474,18 @@ function renderPhotos() {
   const images = cat.images || [], videos = cat.videos || [];
 
   if (!images.length && !videos.length) {
+    const emptyMsg = {
+      auction: { icon: '🏷️', title: 'Hələ auksion şəkli yoxdur', hint: 'Admin extension vasitəsilə yükləyəcək' },
+      pikap:   { icon: '📦', title: 'Pikap şəkilləri yoxdur',      hint: 'Admin tərəfindən yüklənəcək' },
+      anbar:   { icon: '🏭', title: 'Anbar şəkilləri yoxdur',      hint: 'Admin tərəfindən yüklənəcək' },
+      poti:    { icon: '🇬🇪', title: 'Poti şəkilləri yoxdur',       hint: 'Admin tərəfindən yüklənəcək' }
+    }[custTab] || { icon: '📷', title: 'Media yoxdur', hint: '' };
+
     area.innerHTML = `
       <div class="text-center py-20">
-        <div class="w-24 h-24 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-5xl">📷</div>
-        <h3 class="text-base font-bold text-slate-700">Bu kateqoriyada media yoxdur</h3>
-        <p class="text-xs text-slate-400 mt-1">Admin tərəfindən yüklənəcək</p>
+        <div class="w-24 h-24 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-5xl">${emptyMsg.icon}</div>
+        <h3 class="text-base font-bold text-slate-700">${emptyMsg.title}</h3>
+        <p class="text-xs text-slate-400 mt-1">${emptyMsg.hint}</p>
       </div>`;
     return;
   }
@@ -532,9 +535,10 @@ function renderAllVideos() {
   const ph = custData.ph || {};
   const area = document.getElementById('photo-area');
   const sections = [
-    { key: 'pikap', label: '📦 Pikap', videos: ph.pikap?.videos || [] },
-    { key: 'anbar', label: '🏭 Anbar', videos: ph.anbar?.videos || [] },
-    { key: 'poti', label: '🇬🇪 Poti', videos: ph.poti?.videos || [] }
+    { key: 'auction', label: '🏷️ Auksion', videos: ph.auction?.videos || [] },
+    { key: 'pikap',   label: '📦 Pikap',   videos: ph.pikap?.videos || [] },
+    { key: 'anbar',   label: '🏭 Anbar',   videos: ph.anbar?.videos || [] },
+    { key: 'poti',    label: '🇬🇪 Poti',    videos: ph.poti?.videos || [] }
   ];
   const total = sections.reduce((s, x) => s + x.videos.length, 0);
 
@@ -632,7 +636,12 @@ async function downloadTabZip() {
 
 async function downloadAllZip() {
   const ph = custData.ph || {};
-  const all = { pikap: ph.pikap?.images || [], anbar: ph.anbar?.images || [], poti: ph.poti?.images || [] };
+  const all = {
+    auction: ph.auction?.images || [],
+    pikap:   ph.pikap?.images || [],
+    anbar:   ph.anbar?.images || [],
+    poti:    ph.poti?.images || []
+  };
   if (!Object.values(all).some(a => a.length > 0)) { showToast('Şəkil yoxdur', 'error'); return; }
   await downloadZip(all, custData.m || 'Avtomobil');
 }
@@ -640,7 +649,7 @@ async function downloadAllZip() {
 async function downloadZip(byCategory, baseName) {
   showToast('ZIP hazırlanır...', 'info');
   const zip = new JSZip();
-  const names = { pikap: 'Pikap', anbar: 'Anbar', poti: 'Poti' };
+  const names = { auction: 'Auksion', pikap: 'Pikap', anbar: 'Anbar', poti: 'Poti' };
   let total = 0;
   for (const [cat, urls] of Object.entries(byCategory)) {
     if (!urls.length) continue;
