@@ -2,269 +2,344 @@
 <html lang="az">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<meta name="theme-color" content="#0f172a">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0f1e">
 <title>AuctionLand — Avtomobil İzləmə</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-*{box-sizing:border-box}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a}
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{overscroll-behavior-y:none}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#f5f7fb;color:#0f172a;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* ── PREMIUM SHADOWS ── */
+.shadow-soft{box-shadow:0 1px 2px rgba(15,23,42,.04),0 4px 12px rgba(15,23,42,.04)}
+.shadow-premium{box-shadow:0 1px 2px rgba(15,23,42,.04),0 6px 16px rgba(15,23,42,.05),0 16px 40px rgba(15,23,42,.06)}
+.shadow-premium-lg{box-shadow:0 2px 4px rgba(15,23,42,.04),0 12px 28px rgba(15,23,42,.08),0 32px 64px rgba(15,23,42,.10)}
+.shadow-gold{box-shadow:0 4px 20px rgba(200,162,90,.25)}
+.shadow-emerald-glow{box-shadow:0 4px 20px rgba(16,185,129,.35)}
+
+/* ── MOBILE FIX ── */
+button,a,[onclick],.tap,.photo-grid-item,img,.photo-thumb,#lb-img{ touch-action:manipulation;-webkit-touch-callout:none }
+img,button,a,.tap{user-select:none;-webkit-user-select:none}
+
+/* ── SCROLLBAR ── */
 .cs::-webkit-scrollbar{width:5px;height:5px}
-.cs::-webkit-scrollbar-track{background:#e2e8f0}
-.cs::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px}
-@keyframes fadeUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
-.fade-up{animation:fadeUp .5s ease}
-@keyframes pulse-ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.8);opacity:0}}
-.pulse-ring{animation:pulse-ring 1.8s cubic-bezier(.4,0,.6,1) infinite}
+.cs::-webkit-scrollbar-track{background:transparent}
+.cs::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .6s cubic-bezier(.16,1,.3,1) both}
+@keyframes pulse-ring{0%{transform:scale(1);opacity:.7}100%{transform:scale(2);opacity:0}}
+.pulse-ring{animation:pulse-ring 2s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes shine{0%{transform:translateX(-100%) skewX(-15deg)}100%{transform:translateX(300%) skewX(-15deg)}}
+.shine::after{content:'';position:absolute;top:0;left:0;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);animation:shine 5s infinite;pointer-events:none}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.shimmer{background:linear-gradient(90deg,#f1f5f9 0%,#e2e8f0 50%,#f1f5f9 100%);background-size:200% 100%;animation:shimmer 1.5s infinite}
-.photo-grid-item{aspect-ratio:1;overflow:hidden;border-radius:16px;cursor:pointer;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.08);transition:all .3s cubic-bezier(.4,0,.2,1)}
-.photo-grid-item:hover{box-shadow:0 20px 40px rgba(0,0,0,.15);transform:translateY(-4px)}
-.photo-grid-item img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
-.photo-grid-item:hover img{transform:scale(1.1)}
-.gradient-hero{background:linear-gradient(to top,rgba(15,23,42,.95) 0%,rgba(15,23,42,.7) 40%,transparent 100%)}
+.shimmer{background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.5) 50%,transparent 100%);background-size:200% 100%;animation:shimmer 2.5s infinite}
+@keyframes glow{0%,100%{opacity:.4}50%{opacity:.9}}
+.glow-pulse{animation:glow 2.5s ease-in-out infinite}
+
+/* ── HERO ── */
+.gradient-hero{background:linear-gradient(to top,rgba(6,10,25,.98) 0%,rgba(6,10,25,.72) 35%,rgba(6,10,25,.15) 65%,transparent 100%)}
+.gold-text{background:linear-gradient(135deg,#e0c589,#c8a25a,#a67c37);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* ── PHOTO GRID ── */
+.photo-grid-item{aspect-ratio:1;overflow:hidden;border-radius:20px;cursor:pointer;position:relative;transition:all .4s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 2px rgba(15,23,42,.06),0 4px 12px rgba(15,23,42,.05)}
+.photo-grid-item:hover{box-shadow:0 2px 4px rgba(15,23,42,.06),0 20px 40px rgba(15,23,42,.14);transform:translateY(-4px)}
+.photo-grid-item img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.4,0,.2,1);pointer-events:none}
+.photo-grid-item:hover img{transform:scale(1.08)}
+
+/* ── TIMELINE LINE ── */
+.timeline-line{background:linear-gradient(to bottom,currentColor 0%,currentColor 60%,transparent 100%)}
+
+/* ── DOC PILLS ── */
+.doc-pill{transition:all .3s ease}
+.doc-pill:hover{transform:translateY(-2px)}
+
+/* ── PREMIUM CARD DECOR ── */
+.card-hairline{position:relative}
+.card-hairline::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(255,255,255,.3) 50%,rgba(255,255,255,0) 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
 </style>
 </head>
 <body class="min-h-screen">
 
-<header class="bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="bg-white/70 backdrop-blur-2xl border-b border-slate-200/60 sticky top-0 z-40" style="box-shadow:0 1px 0 rgba(15,23,42,.03),0 4px 16px rgba(15,23,42,.03)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div class="bg-gradient-to-br from-red-600 to-red-700 p-2.5 rounded-xl text-white text-lg shadow-lg shadow-red-500/30">
-        <i class="fa-solid fa-car-side"></i>
+      <div class="relative">
+        <div class="bg-gradient-to-br from-red-600 to-red-700 p-2.5 rounded-2xl text-white text-lg shadow-lg shadow-red-500/25">
+          <i class="fa-solid fa-car-side"></i>
+        </div>
+        <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-white"></span>
       </div>
       <div>
-        <h1 class="text-xl font-black text-slate-900 tracking-tight">AUCTION<span class="text-red-600">LAND</span></h1>
-        <p class="text-[11px] text-slate-500 font-semibold">Premium İzləmə Paneli</p>
+        <h1 class="text-xl font-black text-slate-900 tracking-tight leading-none">AUCTION<span class="text-red-600">LAND</span></h1>
+        <p class="text-[10px] text-slate-500 font-bold tracking-[0.15em] uppercase mt-0.5">Premium Logistika</p>
       </div>
     </div>
-    <div class="flex items-center gap-2">
-      <span id="live-badge" class="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
-        <span class="relative flex h-2 w-2">
-          <span class="pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        Canlı İzləmə
+    <span id="live-badge" class="hidden sm:flex items-center gap-2 text-[10px] font-black text-emerald-700 bg-emerald-50/80 backdrop-blur border border-emerald-200/60 px-3 py-1.5 rounded-full tracking-wider uppercase">
+      <span class="relative flex h-2 w-2">
+        <span class="pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
       </span>
-    </div>
+      Canlı
+    </span>
   </div>
+  <div class="h-px bg-gradient-to-r from-transparent via-amber-300/40 to-transparent"></div>
 </header>
 
-<div id="loading" class="flex flex-col items-center justify-center min-h-[70vh] space-y-5">
+<!-- ═══════════ LOADING ═══════════ -->
+<div id="loading" class="flex flex-col items-center justify-center min-h-[70vh] space-y-6">
   <div class="relative">
-    <div class="w-20 h-20 border-4 border-slate-200 rounded-full"></div>
-    <div class="absolute top-0 left-0 w-20 h-20 border-4 border-transparent border-t-red-600 rounded-full animate-spin"></div>
+    <div class="w-24 h-24 border-[3px] border-slate-200/70 rounded-full"></div>
+    <div class="absolute top-0 left-0 w-24 h-24 border-[3px] border-transparent border-t-red-600 border-r-amber-400/50 rounded-full animate-spin"></div>
+    <div class="absolute inset-0 flex items-center justify-center text-red-600 text-2xl">
+      <i class="fa-solid fa-car-side opacity-40"></i>
+    </div>
   </div>
   <div class="text-center">
-    <p class="text-base font-bold text-slate-700">Məlumatlar yüklənir</p>
-    <p class="text-xs text-slate-400 mt-1">Zəhmət olmasa gözləyin...</p>
+    <p class="text-sm font-black text-slate-700 tracking-wide">Məlumatlar yüklənir</p>
+    <p class="text-[11px] text-slate-400 mt-1 font-medium">Zəhmət olmasa gözləyin...</p>
   </div>
 </div>
 
-<div id="error-box" class="hidden flex-col items-center justify-center min-h-[70vh] space-y-4 px-4">
-  <div class="w-24 h-24 bg-rose-100 rounded-3xl flex items-center justify-center text-5xl">⚠️</div>
+<!-- ═══════════ ERROR ═══════════ -->
+<div id="error-box" class="hidden flex-col items-center justify-center min-h-[70vh] space-y-5 px-4">
+  <div class="w-24 h-24 bg-gradient-to-br from-rose-100 to-rose-50 rounded-3xl flex items-center justify-center text-5xl shadow-premium">⚠️</div>
   <h2 class="text-2xl font-black text-slate-800">Avtomobil Tapılmadı</h2>
-  <p id="error-msg" class="text-sm text-slate-500 text-center max-w-md"></p>
+  <p id="error-msg" class="text-sm text-slate-500 text-center max-w-md font-medium"></p>
 </div>
 
-<main id="content" class="hidden max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+<!-- ═══════════ MAIN ═══════════ -->
+<main id="content" class="hidden max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 fade-up">
-    <div class="lg:col-span-2 relative overflow-hidden rounded-3xl shadow-2xl bg-slate-900 min-h-[400px]">
-      <div id="hero-bg" class="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-950"></div>
+  <!-- HERO + RIGHT CARD -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-up">
+
+    <!-- HERO -->
+    <div class="lg:col-span-2 relative overflow-hidden rounded-[28px] shadow-premium-lg bg-slate-900 min-h-[440px] shine">
+      <div id="hero-bg" class="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950"></div>
+      <!-- Radial glow -->
+      <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(circle at 70% 40%, rgba(200,162,90,.10), transparent 55%)"></div>
       <img id="hero-img" src="" alt=""
-        class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+        class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
         referrerpolicy="no-referrer"
         style="opacity:0;display:none">
       <div class="absolute inset-0 gradient-hero"></div>
-      <div class="absolute top-4 left-4 right-4 flex justify-between items-start gap-2">
-        <span id="status-badge" class="text-xs font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-md bg-white/95 border border-white/50"></span>
-        <span class="flex items-center gap-1.5 text-[11px] font-bold bg-emerald-500 text-white px-3 py-1.5 rounded-full shadow-lg shadow-emerald-500/30">
-          <i class="fa-solid fa-shield-halved"></i> Təsdiqlənmiş
+
+      <!-- TOP BADGES -->
+      <div class="absolute top-5 left-5 right-5 flex justify-between items-start gap-2 z-10">
+        <span id="status-badge" class="text-[11px] font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-xl bg-white/95 border border-white/60 tracking-wide"></span>
+        <span class="flex items-center gap-1.5 text-[10px] font-black bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-3 py-2 rounded-full shadow-emerald-glow tracking-wider uppercase">
+          <i class="fa-solid fa-shield-halved text-[9px]"></i> Təsdiqlənmiş
         </span>
       </div>
-      <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-white">
-        <p class="text-[11px] font-bold uppercase tracking-widest text-white/70 mb-2 flex items-center gap-2">
+
+      <!-- BOTTOM INFO -->
+      <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-9 text-white z-10">
+        <div class="inline-flex items-center gap-2 text-[10px] font-black tracking-[0.25em] uppercase text-amber-300/90 mb-3">
+          <span class="w-6 h-px bg-amber-300/50"></span>
           <i class="fa-solid fa-user"></i> Müştəri
-        </p>
-        <h2 id="owner-name" class="text-2xl sm:text-4xl font-black tracking-tight mb-1">-</h2>
-        <h3 id="car-model" class="text-lg sm:text-2xl font-bold text-white/90 mb-4">-</h3>
+        </div>
+        <h2 id="owner-name" class="text-3xl sm:text-5xl font-black tracking-tight leading-[1.05] mb-2">-</h2>
+        <h3 id="car-model" class="text-lg sm:text-2xl font-bold text-white/80 mb-5">-</h3>
         <div class="flex flex-wrap items-center gap-2">
-          <span id="vin-pill" class="text-[11px] font-mono font-bold bg-white/15 backdrop-blur-md border border-white/25 px-3 py-1.5 rounded-lg"></span>
-          <button onclick="copyVin()" class="text-[10px] font-bold bg-white/15 hover:bg-white/25 backdrop-blur border border-white/25 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
-            <i class="fa-solid fa-copy"></i> Kopyala
+          <span id="vin-pill" class="text-[11px] font-mono font-bold bg-white/10 backdrop-blur-xl border border-white/20 px-3.5 py-2 rounded-xl tracking-wider"></span>
+          <button onclick="copyVin()" class="text-[10px] font-black bg-white/10 hover:bg-white/20 active:scale-95 backdrop-blur-xl border border-white/20 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 uppercase tracking-wider">
+            <i class="fa-solid fa-copy text-[9px]"></i> Kopyala
           </button>
           <a id="auction-btn" href="" target="_blank" rel="noopener noreferrer"
-            class="hidden text-[11px] font-bold bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-amber-500/30">
-            <i class="fa-solid fa-gavel"></i> Hərraca Bax
-            <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+            class="hidden text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-gold tracking-wider uppercase active:scale-95">
+            <i class="fa-solid fa-gavel text-[10px]"></i> Hərraca Bax
+            <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
           </a>
         </div>
       </div>
     </div>
 
-    <div class="bg-white rounded-3xl shadow-lg border border-slate-200 p-5 space-y-4 fade-up">
-      <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
-        <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-500/30">
+    <!-- RIGHT SIDE CARD -->
+    <div class="bg-white rounded-[28px] shadow-premium border border-slate-200/60 p-5 sm:p-6 space-y-5 fade-up flex flex-col">
+
+      <!-- CURRENT STAGE -->
+      <div class="flex items-center gap-3.5 pb-5 border-b border-slate-100">
+        <div class="w-13 h-13 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-500/30" style="width:52px;height:52px">
           <i class="fa-solid fa-route"></i>
         </div>
-        <div class="min-w-0">
-          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cari Mərhələ</p>
-          <p id="current-stage" class="text-base font-black text-slate-900 truncate">-</p>
+        <div class="min-w-0 flex-1">
+          <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Cari Mərhələ</p>
+          <p id="current-stage" class="text-base font-black text-slate-900 truncate mt-0.5">-</p>
         </div>
       </div>
 
-      <div id="days-counter" class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 text-center hidden">
-        <p id="days-label" class="text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-1">Potiyə Qalan</p>
-        <p id="days-num" class="text-4xl font-black text-amber-600">0</p>
-        <p id="days-suffix" class="text-xs font-bold text-amber-700">gün</p>
+      <!-- DAYS COUNTER -->
+      <div id="days-counter" class="relative overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 border border-amber-200/70 rounded-2xl p-4 text-center hidden">
+        <div class="absolute top-0 right-0 w-20 h-20 bg-amber-200/30 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+        <p id="days-label" class="text-[10px] font-black text-amber-700 uppercase tracking-[0.15em] mb-1.5 relative">Potiyə Qalan</p>
+        <p id="days-num" class="text-4xl font-black text-amber-600 leading-none relative">0</p>
+        <p id="days-suffix" class="text-[11px] font-bold text-amber-700/80 mt-1 relative">gün</p>
       </div>
 
-      <div class="space-y-3 pt-2">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 bg-amber-100 text-amber-700 rounded-lg flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-location-dot"></i></div>
+      <!-- INFO ROWS -->
+      <div class="space-y-2.5">
+        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors">
+          <div class="w-9 h-9 bg-gradient-to-br from-amber-100 to-amber-200/70 text-amber-700 rounded-xl flex items-center justify-center text-xs shrink-0 shadow-sm">
+            <i class="fa-solid fa-location-dot"></i>
+          </div>
           <div class="flex-1 min-w-0">
-            <p class="text-[10px] font-bold text-slate-400 uppercase">Yerləşmə</p>
-            <p id="location" class="text-xs font-bold text-slate-900 truncate">-</p>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Yerləşmə</p>
+            <p id="location" class="text-xs font-bold text-slate-900 truncate mt-0.5">-</p>
           </div>
         </div>
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-anchor"></i></div>
+        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors">
+          <div class="w-9 h-9 bg-gradient-to-br from-blue-100 to-blue-200/70 text-blue-700 rounded-xl flex items-center justify-center text-xs shrink-0 shadow-sm">
+            <i class="fa-solid fa-anchor"></i>
+          </div>
           <div class="flex-1 min-w-0">
-            <p class="text-[10px] font-bold text-slate-400 uppercase">Liman</p>
-            <p id="shipping-port" class="text-xs font-bold text-slate-900 truncate">-</p>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Liman</p>
+            <p id="shipping-port" class="text-xs font-bold text-slate-900 truncate mt-0.5">-</p>
           </div>
         </div>
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 bg-indigo-100 text-indigo-700 rounded-lg flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-box"></i></div>
+        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors">
+          <div class="w-9 h-9 bg-gradient-to-br from-indigo-100 to-indigo-200/70 text-indigo-700 rounded-xl flex items-center justify-center text-xs shrink-0 shadow-sm">
+            <i class="fa-solid fa-box"></i>
+          </div>
           <div class="flex-1 min-w-0">
-            <p class="text-[10px] font-bold text-slate-400 uppercase">Konteyner</p>
-            <p id="container" class="text-xs font-mono font-bold text-slate-900 truncate">-</p>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Konteyner</p>
+            <p id="container" class="text-xs font-mono font-bold text-slate-900 truncate mt-0.5">-</p>
           </div>
         </div>
       </div>
 
-      <!-- ═══════════ SƏNƏDLƏŞMƏ & ÖDƏNİŞLƏR ═══════════ -->
-      <div class="pt-4 border-t border-slate-100">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+      <!-- ═══ SƏNƏDLƏŞMƏ & ÖDƏNİŞLƏR ═══ -->
+      <div class="pt-5 border-t border-slate-100">
+        <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3.5 flex items-center gap-2">
+          <span class="w-1 h-1 rounded-full bg-amber-400"></span>
           <i class="fa-solid fa-clipboard-check"></i>
           Sənədləşmə & Ödənişlər
         </p>
 
-        <!-- Etibarnamə -->
-        <div id="doc-etibarname" class="flex items-center justify-between rounded-xl p-3 mb-2 transition-all border">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div id="doc-etibarname-icon" class="w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0">
+        <div class="grid grid-cols-3 gap-2.5">
+          <!-- ETİBARNAMƏ -->
+          <div id="doc-etibarname" class="doc-pill flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-300">
+            <div id="doc-etibarname-icon" class="w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 mb-2 transition-all duration-300">
               <i class="fa-solid fa-file-signature"></i>
             </div>
-            <div class="min-w-0">
-              <p class="text-[11px] font-black text-slate-800">Etibarnamə</p>
-              <p id="doc-etibarname-sub" class="text-[10px] font-semibold text-slate-500 truncate">-</p>
-            </div>
+            <p class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1 leading-none">Etibarnamə</p>
+            <p id="doc-etibarname-badge" class="text-[10px] font-black leading-none">-</p>
+            <p id="doc-etibarname-sub" class="text-[8px] truncate mt-1 opacity-80 font-medium leading-none w-full">-</p>
           </div>
-          <span id="doc-etibarname-badge" class="text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0">-</span>
-        </div>
 
-        <!-- Yol Xərci -->
-        <div id="doc-shipping" class="flex items-center justify-between rounded-xl p-3 mb-2 transition-all border">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div id="doc-shipping-icon" class="w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0">
+          <!-- YOL XƏRCİ -->
+          <div id="doc-shipping" class="doc-pill flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-300">
+            <div id="doc-shipping-icon" class="w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 mb-2 transition-all duration-300">
               <i class="fa-solid fa-money-bill-wave"></i>
             </div>
-            <div class="min-w-0">
-              <p class="text-[11px] font-black text-slate-800">Yol Xərci</p>
-              <p id="doc-shipping-sub" class="text-[10px] font-semibold text-slate-500 truncate">-</p>
-            </div>
+            <p class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1 leading-none">Yol Xərci</p>
+            <p id="doc-shipping-badge" class="text-[10px] font-black leading-none">-</p>
+            <p id="doc-shipping-sub" class="text-[8px] truncate mt-1 opacity-80 font-medium leading-none w-full">-</p>
           </div>
-          <span id="doc-shipping-badge" class="text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0">-</span>
-        </div>
 
-        <!-- KONTEYNER AÇILIŞI -->
-        <div id="doc-container-open" class="flex items-center justify-between rounded-xl p-3 transition-all border">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div id="doc-container-open-icon" class="w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0">
+          <!-- KONTEYNER AÇILIŞI -->
+          <div id="doc-container-open" class="doc-pill flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-300">
+            <div id="doc-container-open-icon" class="w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 mb-2 transition-all duration-300">
               <i class="fa-solid fa-box-open"></i>
             </div>
-            <div class="min-w-0">
-              <p class="text-[11px] font-black text-slate-800">Konteyner Açılışı</p>
-              <p id="doc-container-open-sub" class="text-[10px] font-semibold text-slate-500 truncate">-</p>
-            </div>
+            <p class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1 leading-none">Konteyner</p>
+            <p id="doc-container-open-badge" class="text-[10px] font-black leading-none">-</p>
+            <p id="doc-container-open-sub" class="text-[8px] truncate mt-1 opacity-80 font-medium leading-none w-full">-</p>
           </div>
-          <span id="doc-container-open-badge" class="text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0">-</span>
         </div>
       </div>
-      <!-- ═══════════ SƏNƏDLƏŞMƏ BLOK BİTİR ═══════════ -->
 
+      <!-- TRACK BUTTON -->
       <button id="track-container-btn" onclick="trackContainer()"
-        class="hidden w-full mt-3 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-xs font-bold items-center justify-center gap-2 transition shadow-md shadow-indigo-500/20">
+        class="hidden w-full mt-auto py-3 bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 hover:from-indigo-700 hover:to-indigo-900 text-white rounded-2xl text-[11px] font-black items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/25 active:scale-[0.98] uppercase tracking-wider">
         <i class="fa-solid fa-anchor"></i>
         <span id="track-btn-label">Konteyneri İzlə</span>
-        <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-80"></i>
+        <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-70"></i>
       </button>
     </div>
   </div>
 
-  <div class="bg-white rounded-3xl shadow-lg border border-slate-200 p-6 sm:p-8 fade-up">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-      <div>
-        <h3 class="text-lg font-black text-slate-900">Logistika Yol Xəritəsi</h3>
-        <p class="text-xs text-slate-500 mt-0.5">Avtomobilinizin səyahət tarixçəsi</p>
+  <!-- ═══════════ TIMELINE ═══════════ -->
+  <div class="bg-white rounded-[28px] shadow-premium border border-slate-200/60 p-6 sm:p-8 fade-up">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 bg-gradient-to-br from-slate-800 to-slate-950 text-white rounded-2xl flex items-center justify-center text-base shadow-lg shadow-slate-900/20">
+          <i class="fa-solid fa-route"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-black text-slate-900 tracking-tight">Logistika Yol Xəritəsi</h3>
+          <p class="text-[11px] text-slate-500 font-medium mt-0.5">Avtomobilinizin səyahət tarixçəsi</p>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-[11px] font-bold text-slate-500">Ümumi İrəliləyiş</span>
-        <span id="progress-pct" class="text-sm font-black bg-slate-900 text-white px-3 py-1.5 rounded-full">0%</span>
+      <div class="flex items-center gap-3">
+        <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Ümumi İrəliləyiş</span>
+        <span id="progress-pct" class="text-sm font-black bg-gradient-to-br from-slate-800 to-slate-950 text-white px-4 py-2 rounded-full shadow-md tracking-wider">0%</span>
       </div>
     </div>
     <div id="timeline" class="space-y-1"></div>
   </div>
 
-  <div class="bg-white rounded-3xl shadow-lg border border-slate-200 p-6 sm:p-8 fade-up">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-      <div>
-        <h3 class="text-lg font-black text-slate-900">Avtomobil Media</h3>
-        <p class="text-xs text-slate-500 mt-0.5">Şəkillər və videolar kateqoriyalara görə</p>
+  <!-- ═══════════ MEDIA ═══════════ -->
+  <div class="bg-white rounded-[28px] shadow-premium border border-slate-200/60 p-6 sm:p-8 fade-up">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 bg-gradient-to-br from-slate-800 to-slate-950 text-white rounded-2xl flex items-center justify-center text-base shadow-lg shadow-slate-900/20">
+          <i class="fa-solid fa-images"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-black text-slate-900 tracking-tight">Avtomobil Media</h3>
+          <p class="text-[11px] text-slate-500 font-medium mt-0.5">Şəkillər və videolar kateqoriyalara görə</p>
+        </div>
       </div>
       <div id="dl-bar" class="hidden flex gap-2">
-        <button onclick="downloadTabZip()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-md shadow-indigo-500/20">
-          <i class="fa-solid fa-file-zipper"></i> Kateqoriya ZIP
+        <button onclick="downloadTabZip()" class="px-4 py-2.5 bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-[10px] font-black flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/25 active:scale-95 uppercase tracking-wider">
+          <i class="fa-solid fa-file-zipper"></i> Kateqoriya
         </button>
-        <button onclick="downloadAllZip()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-md">
-          <i class="fa-solid fa-box-archive"></i> Hamısı ZIP
+        <button onclick="downloadAllZip()" class="px-4 py-2.5 bg-gradient-to-br from-slate-800 to-slate-950 hover:from-slate-900 hover:to-black text-white rounded-xl text-[10px] font-black flex items-center gap-2 transition-all shadow-lg shadow-slate-900/20 active:scale-95 uppercase tracking-wider">
+          <i class="fa-solid fa-box-archive"></i> Hamısı
         </button>
       </div>
     </div>
-    <div class="bg-slate-100 border border-slate-200 rounded-2xl p-1.5 flex gap-1.5 mb-6" id="tabs"></div>
+    <div class="bg-slate-100/70 border border-slate-200/70 rounded-2xl p-1.5 flex gap-1.5 mb-6" id="tabs"></div>
     <div id="photo-area"></div>
   </div>
 
-  <p class="text-center text-xs text-slate-400 font-medium pt-6 pb-4">© AuctionLand Logistika • Premium Müştəri Paneli</p>
+  <p class="text-center text-[10px] text-slate-400 font-bold pt-8 pb-4 tracking-[0.2em] uppercase">© AuctionLand Logistika • Premium Müştəri Paneli</p>
 </main>
 
-<div id="lightbox" class="hidden fixed inset-0 z-[100] bg-black flex flex-col select-none">
-  <div class="flex items-center justify-between px-4 py-3 bg-black/60 shrink-0">
-    <span id="lb-counter" class="text-white text-sm font-bold">1 / 1</span>
-    <button onclick="lbDownload()" class="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-sm font-bold transition">
-      <i class="fa-solid fa-arrow-down-to-line"></i> Yüklə
+<!-- ═══════════ LIGHTBOX ═══════════ -->
+<div id="lightbox" class="hidden fixed inset-0 z-[100] bg-black/98 backdrop-blur-md flex flex-col select-none">
+  <div class="flex items-center justify-between px-5 py-4 bg-gradient-to-b from-black/80 to-transparent shrink-0">
+    <span id="lb-counter" class="text-white text-sm font-black bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-full tracking-wider">1 / 1</span>
+    <button onclick="lbDownload()" class="flex items-center gap-2 px-4 py-2.5 bg-white/12 hover:bg-white/20 active:scale-95 text-white rounded-xl text-xs font-black transition-all backdrop-blur-xl border border-white/15 tracking-wider uppercase">
+      <i class="fa-solid fa-arrow-down-to-line text-[10px]"></i> Yüklə
     </button>
-    <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center text-white/70 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+    <button onclick="closeLightbox()" class="w-11 h-11 flex items-center justify-center text-white/80 hover:text-white text-xl bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-full transition-all">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
   </div>
-  <div class="flex-1 flex items-center justify-center relative overflow-hidden" id="lb-area">
-    <button onclick="lbPrev()" class="absolute left-2 z-10 w-12 h-12 flex items-center justify-center bg-black/40 hover:bg-black/70 text-white rounded-full text-lg transition">
+  <div class="flex-1 flex items-center justify-center relative overflow-hidden" id="lb-area" style="touch-action:manipulation">
+    <button onclick="lbPrev()" class="absolute left-3 z-10 w-12 h-12 flex items-center justify-center bg-black/40 hover:bg-black/70 active:scale-90 text-white rounded-full text-base transition-all backdrop-blur-md border border-white/10">
       <i class="fa-solid fa-chevron-left"></i></button>
-    <img id="lb-img" src="" class="max-h-full max-w-full object-contain px-14" draggable="false">
-    <button onclick="lbNext()" class="absolute right-2 z-10 w-12 h-12 flex items-center justify-center bg-black/40 hover:bg-black/70 text-white rounded-full text-lg transition">
+    <img id="lb-img" src="" class="max-h-full max-w-full object-contain px-16" draggable="false"
+      style="touch-action:manipulation;-webkit-user-drag:none;user-select:none;-webkit-user-select:none">
+    <button onclick="lbNext()" class="absolute right-3 z-10 w-12 h-12 flex items-center justify-center bg-black/40 hover:bg-black/70 active:scale-90 text-white rounded-full text-base transition-all backdrop-blur-md border border-white/10">
       <i class="fa-solid fa-chevron-right"></i></button>
   </div>
-  <div id="lb-dots" class="flex justify-center gap-2 py-4 shrink-0"></div>
+  <div id="lb-dots" class="flex justify-center gap-2 py-5 shrink-0"></div>
 </div>
 
-<div id="toast" class="fixed bottom-6 right-6 z-[200] transform translate-y-24 opacity-0 transition-all duration-300 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 max-w-xs">
+<!-- ═══════════ TOAST ═══════════ -->
+<div id="toast" class="fixed bottom-6 right-6 left-6 sm:left-auto z-[200] transform translate-y-24 opacity-0 transition-all duration-400 bg-slate-900/95 backdrop-blur-xl text-white px-5 py-4 rounded-2xl shadow-premium-lg flex items-center gap-3 border border-slate-700/50 max-w-md sm:max-w-xs">
   <div id="toast-icon-wrap" class="bg-emerald-500 p-1.5 rounded-full shrink-0"><i id="toast-icon" class="fa-solid fa-check text-xs text-white"></i></div>
-  <span id="toast-msg" class="text-sm font-medium"></span>
+  <span id="toast-msg" class="text-sm font-semibold"></span>
 </div>
 
 <script>
@@ -272,32 +347,14 @@ let custData = null;
 let custTab = 'auction';
 let lbPhotos = [], lbIndex = 0, lbTouchStart = 0;
 
-/* ═══════════════════════════════════════════════════════════
-   HARDCODED DEFAULT ŞİRKƏTLƏR
-   ═══════════════════════════════════════════════════════════ */
 const DEFAULT_TRACKING_COMPANIES = {
-  1: {
-    id: 1,
-    name: 'MSC',
-    url: 'https://www.msc.com/en/track-a-shipment',
-    base64Params: true,
-    paramsTemplate: 'trackingNumber={konteyner}&trackingMode=0'
-  },
-  2: {
-    id: 2,
-    name: 'Maersk',
-    url: 'https://www.maersk.com/tracking/'
-  }
+  1: { id: 1, name: 'MSC', url: 'https://www.msc.com/en/track-a-shipment', base64Params: true, paramsTemplate: 'trackingNumber={konteyner}&trackingMode=0' },
+  2: { id: 2, name: 'Maersk', url: 'https://www.maersk.com/tracking/' }
 };
 
 function resolveTrackingCompany(d) {
   if (d.trackingCompanyName && d.trackingUrl) {
-    return {
-      name: d.trackingCompanyName,
-      url: d.trackingUrl,
-      base64Params: !!d.trackingBase64,
-      paramsTemplate: d.trackingParamsTemplate || null
-    };
+    return { name: d.trackingCompanyName, url: d.trackingUrl, base64Params: !!d.trackingBase64, paramsTemplate: d.trackingParamsTemplate || null };
   }
   if (d.trackingCompanyId && DEFAULT_TRACKING_COMPANIES[d.trackingCompanyId]) {
     return DEFAULT_TRACKING_COMPANIES[d.trackingCompanyId];
@@ -308,10 +365,7 @@ function resolveTrackingCompany(d) {
 window.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   const token = params.get('t');
-  if (!token || token.length < 16) {
-    showError('Link etibarsızdır. Zəhmət olmasa doğru linkdən istifadə edin.');
-    return;
-  }
+  if (!token || token.length < 16) { showError('Link etibarsızdır. Zəhmət olmasa doğru linkdən istifadə edin.'); return; }
   await loadCar(token);
 
   document.addEventListener('keydown', e => {
@@ -328,7 +382,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   lbArea?.addEventListener('touchend', e => {
     const diff = lbTouchStart - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 50) diff > 0 ? lbNext() : lbPrev();
-  });
+  }, { passive: true });
 });
 
 async function loadCar(token) {
@@ -366,14 +420,10 @@ async function loadCar(token) {
       }
     };
 
-    console.log('=== CUSTDATA ===', JSON.stringify(custData, null, 2));
-
     renderAll();
     document.getElementById('loading').classList.add('hidden');
     document.getElementById('content').classList.remove('hidden');
-  } catch (e) {
-    showError(e.message);
-  }
+  } catch (e) { showError(e.message); }
 }
 
 function showError(msg) {
@@ -385,40 +435,23 @@ function showError(msg) {
   document.getElementById('error-msg').textContent = msg;
 }
 
-function renderAll() {
-  renderHero();
-  renderDocStatus();
-  renderTimeline();
-  renderTabs();
-  renderPhotos();
-}
+function renderAll() { renderHero(); renderDocStatus(); renderTimeline(); renderTabs(); renderPhotos(); }
 
 function renderHero() {
   const d = custData;
-
   const img = document.getElementById('hero-img');
   const bg = document.getElementById('hero-bg');
 
   let heroSrc = d.imageUrl;
-  if (!heroSrc && d.ph?.auction?.images?.length) {
-    heroSrc = d.ph.auction.images[0];
-  }
+  if (!heroSrc && d.ph?.auction?.images?.length) heroSrc = d.ph.auction.images[0];
 
   if (heroSrc) {
     img.style.opacity = '0';
     img.style.display = 'block';
-
     const testImg = new Image();
     testImg.referrerPolicy = 'no-referrer';
-    testImg.onload = () => {
-      img.src = heroSrc;
-      img.style.opacity = '1';
-      bg.style.display = 'none';
-    };
-    testImg.onerror = () => {
-      img.style.display = 'none';
-      bg.style.display = 'block';
-    };
+    testImg.onload = () => { img.src = heroSrc; img.style.opacity = '1'; bg.style.display = 'none'; };
+    testImg.onerror = () => { img.style.display = 'none'; bg.style.display = 'block'; };
     testImg.src = heroSrc;
   } else {
     img.style.display = 'none';
@@ -435,30 +468,22 @@ function renderHero() {
   };
   const badge = document.getElementById('status-badge');
   badge.textContent = d.s || 'Gözlənilir';
-  badge.className = `text-xs font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-md border border-white/50 ${colors[d.s] || 'bg-white text-slate-900'}`;
+  badge.className = `text-[11px] font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-xl bg-white/95 border border-white/60 tracking-wide ${colors[d.s] || 'text-slate-900'}`;
 
   document.getElementById('owner-name').textContent = d.n || 'Müştəri';
   document.getElementById('car-model').textContent = d.m || 'Avtomobil';
   document.getElementById('vin-pill').textContent = `VIN: ${d.v || '-'}`;
 
   const auctionBtn = document.getElementById('auction-btn');
-  if (d.auctionLink && d.auctionLink.trim()) {
-    auctionBtn.href = d.auctionLink;
-    auctionBtn.classList.remove('hidden');
-  } else {
-    auctionBtn.classList.add('hidden');
-  }
+  if (d.auctionLink && d.auctionLink.trim()) { auctionBtn.href = d.auctionLink; auctionBtn.classList.remove('hidden'); }
+  else auctionBtn.classList.add('hidden');
 
   const stageMap = {
-    'Auksionda': '🏷️ Auksion Uduşu',
-    'Anbara gedir': '🚛 Anbara Yolda',
-    'Anbarda': '🏭 Anbarda / Portda',
-    'Gəmidə': '🚢 Gəmidə (Okean)',
-    'Potidədir': '🇬🇪 Potidə Gözləyir',
-    'Bakıdadır': '🇦🇿 Bakıya Çatdı'
+    'Auksionda': '🏷️ Auksion Uduşu', 'Anbara gedir': '🚛 Anbara Yolda',
+    'Anbarda': '🏭 Anbarda / Portda', 'Gəmidə': '🚢 Gəmidə (Okean)',
+    'Potidədir': '🇬🇪 Potidə Gözləyir', 'Bakıdadır': '🇦🇿 Bakıya Çatdı'
   };
   document.getElementById('current-stage').textContent = stageMap[d.s] || d.s || '-';
-
   document.getElementById('location').textContent = d.location || '-';
   document.getElementById('shipping-port').textContent = d.shippingPort || '-';
   document.getElementById('container').textContent = d.container || '-';
@@ -467,7 +492,6 @@ function renderHero() {
   const trackLabel = document.getElementById('track-btn-label');
   const hasContainer = d.container && d.container.trim() && d.container !== '-';
   const company = resolveTrackingCompany(d);
-
   if (hasContainer && company) {
     trackBtn.classList.remove('hidden');
     trackBtn.classList.add('flex');
@@ -495,10 +519,6 @@ function renderHero() {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   SƏNƏDLƏŞMƏ & ÖDƏNİŞLƏR STATUSU
-   ═══════════════════════════════════════════════════════════ */
-
 function isDone(val) {
   if (val === null || val === undefined) return false;
   if (val === false || val === 0 || val === '0') return false;
@@ -523,85 +543,47 @@ function updateDocRow(rowId, done, rawValue, doneText, notDoneText, doneSub) {
   const icon = document.getElementById(rowId + '-icon');
   const sub = document.getElementById(rowId + '-sub');
   const badge = document.getElementById(rowId + '-badge');
-
   if (!row) return;
 
   const dateStr = formatDate(rawValue);
 
   if (done) {
-    row.className = 'flex items-center justify-between rounded-xl p-3 mb-2 transition-all border bg-emerald-50 border-emerald-200';
-    icon.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0 bg-emerald-500 text-white shadow-sm shadow-emerald-500/30';
-    sub.textContent = doneSub || (dateStr ? `Tarix: ${dateStr}` : 'Təsdiqlənib');
-    sub.className = 'text-[10px] font-semibold text-emerald-700 truncate';
-    badge.textContent = '✅ ' + doneText;
-    badge.className = 'text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0 bg-emerald-600 text-white';
+    row.className = 'doc-pill flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-300 bg-gradient-to-br from-emerald-50 to-emerald-100/40 border-emerald-200/70 shadow-soft';
+    icon.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 mb-2 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/30 transition-all duration-300';
+    sub.textContent = doneSub || (dateStr ? `📅 ${dateStr}` : 'Təsdiqlənib');
+    sub.className = 'text-[8px] font-bold text-emerald-700/70 truncate mt-1 leading-none w-full';
+    badge.textContent = '✓ ' + doneText;
+    badge.className = 'text-[10px] font-black text-emerald-800 leading-none';
   } else {
-    row.className = 'flex items-center justify-between rounded-xl p-3 mb-2 transition-all border bg-rose-50 border-rose-200';
-    icon.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0 bg-rose-500 text-white shadow-sm shadow-rose-500/30';
+    row.className = 'doc-pill flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-300 bg-gradient-to-br from-rose-50 to-rose-100/40 border-rose-200/70 shadow-soft';
+    icon.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 mb-2 bg-gradient-to-br from-rose-400 to-rose-600 text-white shadow-lg shadow-rose-500/30 transition-all duration-300';
     sub.textContent = 'Gözlənilir';
-    sub.className = 'text-[10px] font-semibold text-rose-700 truncate';
-    badge.textContent = '❌ ' + notDoneText;
-    badge.className = 'text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0 bg-rose-600 text-white';
+    sub.className = 'text-[8px] font-bold text-rose-700/70 truncate mt-1 leading-none w-full';
+    badge.textContent = '✕ ' + notDoneText;
+    badge.className = 'text-[10px] font-black text-rose-800 leading-none';
   }
 }
 
 function renderDocStatus() {
   const d = custData || {};
 
-  // Etibarnamə
-  const etRaw = d.etibarname;
-  const etDone = isDone(etRaw);
-  updateDocRow(
-    'doc-etibarname',
-    etDone,
-    etRaw,
-    'Verilib',
-    'Verilməyib',
-    etDone ? null : 'Hələ təqdim edilməyib'
-  );
+  updateDocRow('doc-etibarname', isDone(d.etibarname), d.etibarname, 'Verilib', 'Verilməyib', isDone(d.etibarname) ? null : 'Gözlənilir');
 
-  // Yol Xərci
   const spRaw = d.shippingPaid;
   const spDone = isDone(spRaw);
   let spSub = null;
   if (spDone) {
     const num = parseFloat(String(spRaw).replace(/[^\d.]/g, ''));
-    if (!isNaN(num) && num > 0) {
-      spSub = `Ödənilib: $${num.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-    }
+    if (!isNaN(num) && num > 0) spSub = `$${num.toLocaleString('en-US')}`;
   }
-  updateDocRow(
-    'doc-shipping',
-    spDone,
-    spRaw,
-    'Ödənilib',
-    'Ödənilməyib',
-    spSub
-  );
+  updateDocRow('doc-shipping', spDone, spRaw, 'Ödənilib', 'Ödənilməyib', spSub);
 
-  // KONTEYNER AÇILIŞI
   const coRaw = d.containerOpenDate;
   const coDone = isDone(coRaw);
-  const coSub = coDone
-    ? (formatDate(coRaw) ? `Açılış: ${formatDate(coRaw)}` : 'Konteyner açılıb')
-    : 'Konteyner hələ açılmayıb';
-  updateDocRow(
-    'doc-container-open',
-    coDone,
-    coRaw,
-    'Açılıb',
-    'Açılmayıb',
-    coSub
-  );
-
-  console.log('[DOC STATUS] etibarname:', etRaw, '→', etDone);
-  console.log('[DOC STATUS] shippingPaid:', spRaw, '→', spDone);
-  console.log('[DOC STATUS] containerOpenDate:', coRaw, '→', coDone);
+  const coSub = coDone ? (formatDate(coRaw) ? `📅 ${formatDate(coRaw)}` : 'Açılıb') : null;
+  updateDocRow('doc-container-open', coDone, coRaw, 'Açılıb', 'Açılmayıb', coSub);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   LOGİSTİKA YOL XƏRİTƏSİ (PROGRESS % + GÜN FƏRQİ)
-   ═══════════════════════════════════════════════════════════ */
 function renderTimeline() {
   const d = custData;
   const steps = [
@@ -613,7 +595,6 @@ function renderTimeline() {
 
   let activeStep = 0;
   steps.forEach((s, i) => { if (s.done) activeStep = i + 1; });
-
   const pct = Math.round((activeStep / steps.length) * 100);
   document.getElementById('progress-pct').textContent = `${pct}%`;
 
@@ -626,60 +607,49 @@ function renderTimeline() {
     const isLast = i === steps.length - 1;
 
     let circleCls = '';
-    if (past) circleCls = 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-500/30';
-    else if (active) circleCls = 'bg-gradient-to-br from-indigo-500 to-indigo-700 text-white border-indigo-700 shadow-lg shadow-indigo-500/40 ring-4 ring-indigo-100';
-    else circleCls = 'bg-slate-100 text-slate-400 border-slate-300';
+    if (past) circleCls = 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-500/35';
+    else if (active) circleCls = 'bg-gradient-to-br from-indigo-500 to-indigo-700 text-white border-indigo-600 shadow-lg shadow-indigo-500/40 ring-4 ring-indigo-100';
+    else circleCls = 'bg-white text-slate-300 border-slate-200 shadow-sm';
 
-    const lineCls = past ? 'bg-emerald-400' : 'bg-slate-200';
+    const lineCls = past ? 'bg-gradient-to-b from-emerald-400 to-emerald-300' : 'bg-slate-200';
 
-    /* ─── Gün fərqi — YALNIZ hər iki tarix varsa göstər ─── */
     let dayDiffText = '';
     if (past && !isLast && s.date && steps[i + 1]?.date) {
       const diff = diffDays(s.date, steps[i + 1].date);
       if (diff !== null && !isNaN(diff) && diff >= 0) {
-        dayDiffText = `<p class="text-[11px] text-slate-500 mt-1 font-medium">✓ ${diff} gün çəkdi</p>`;
+        dayDiffText = `<p class="text-[10px] text-slate-500 mt-1.5 font-bold flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>${diff} gün çəkdi</p>`;
       }
     }
 
-    /* ─── Aktiv mərhələ üçün PROGRESS % ─── */
     let progressHtml = '';
     if (active && s.date) {
-      // Ən yaxın keçmiş tarixi tap (əvvəlki tamamlanmış addım)
       let prevDate = null;
-      for (let j = i - 1; j >= 0; j--) {
-        if (steps[j].date && steps[j].date.trim()) { prevDate = steps[j].date; break; }
-      }
-
+      for (let j = i - 1; j >= 0; j--) if (steps[j].date && steps[j].date.trim()) { prevDate = steps[j].date; break; }
       if (prevDate) {
         const total = diffDays(prevDate, s.date);
         const elapsed = diffDays(prevDate, today);
         const remaining = diffDays(today, s.date);
-
         if (total !== null && total > 0) {
           const clampedElapsed = Math.max(0, Math.min(total, elapsed ?? 0));
           const progressPct = Math.round((clampedElapsed / total) * 100);
-
-          const remainTxt = remaining === null
-            ? ''
-            : (remaining >= 0
-                ? `⏳ Qaldı: <b>${remaining}</b> gün`
-                : `⚠️ <b>${Math.abs(remaining)}</b> gün gecikib`);
-
+          const remainTxt = remaining === null ? '' : (remaining >= 0 ? `⏳ <b>${remaining}</b> gün qaldı` : `⚠️ <b>${Math.abs(remaining)}</b> gün gecikib`);
           const remainColor = remaining >= 0 ? 'text-amber-700' : 'text-rose-700';
 
           progressHtml = `
-            <div class="mt-3 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl p-3">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-[10px] font-black text-indigo-700 uppercase tracking-wider flex items-center gap-1">
+            <div class="mt-3 bg-gradient-to-br from-indigo-50 via-blue-50 to-indigo-50 border border-indigo-200/70 rounded-2xl p-4 shadow-soft">
+              <div class="flex items-center justify-between mb-2.5">
+                <span class="text-[9px] font-black text-indigo-700 uppercase tracking-[0.15em] flex items-center gap-1.5">
                   <i class="fa-solid fa-chart-line"></i> İrəliləyiş
                 </span>
-                <span class="text-sm font-black text-indigo-900">${progressPct}%</span>
+                <span class="text-base font-black text-indigo-900 tabular-nums">${progressPct}%</span>
               </div>
-              <div class="w-full h-2 bg-white rounded-full overflow-hidden border border-indigo-100">
-                <div class="h-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-blue-600 rounded-full transition-all duration-500" style="width:${progressPct}%"></div>
+              <div class="w-full h-2.5 bg-white rounded-full overflow-hidden border border-indigo-100 relative">
+                <div class="h-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-blue-600 rounded-full transition-all duration-700 relative overflow-hidden" style="width:${progressPct}%">
+                  <div class="absolute inset-0 shimmer"></div>
+                </div>
               </div>
-              <div class="flex justify-between mt-2 text-[10px] font-bold">
-                <span class="text-indigo-700">📅 Keçdi: ${clampedElapsed} gün</span>
+              <div class="flex justify-between mt-3 text-[10px] font-black">
+                <span class="text-indigo-700 flex items-center gap-1"><i class="fa-solid fa-calendar-check text-[9px]"></i> Keçdi: ${clampedElapsed} gün</span>
                 <span class="${remainColor}">${remainTxt}</span>
               </div>
             </div>`;
@@ -688,21 +658,21 @@ function renderTimeline() {
     }
 
     return `
-      <div class="relative flex items-start gap-4 ${isLast ? '' : 'pb-6'}">
-        ${!isLast ? `<div class="absolute left-5 top-12 bottom-0 w-0.5 ${lineCls}"></div>` : ''}
-        <div class="relative shrink-0 w-10 h-10 rounded-full border-2 flex items-center justify-center text-base font-black ${circleCls} z-10">
-          ${past ? '✓' : active ? '📍' : s.icon}
-          ${active ? '<span class="pulse-ring absolute inset-0 rounded-full bg-indigo-400 opacity-40"></span>' : ''}
+      <div class="relative flex items-start gap-4 ${isLast ? '' : 'pb-7'}">
+        ${!isLast ? `<div class="absolute left-[22px] top-12 bottom-0 w-[3px] ${lineCls} rounded-full"></div>` : ''}
+        <div class="relative shrink-0 w-11 h-11 rounded-full border-2 flex items-center justify-center text-base font-black ${circleCls} z-10">
+          ${past ? '<i class="fa-solid fa-check text-sm"></i>' : active ? '📍' : s.icon}
+          ${active ? '<span class="pulse-ring absolute inset-0 rounded-full bg-indigo-400 opacity-50"></span>' : ''}
         </div>
-        <div class="flex-1 min-w-0 pt-1">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <h4 class="text-sm font-black ${past ? 'text-emerald-800' : active ? 'text-indigo-900' : 'text-slate-400'}">
+        <div class="flex-1 min-w-0 pt-1.5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h4 class="text-[13px] font-black ${past ? 'text-emerald-800' : active ? 'text-indigo-900' : 'text-slate-400'} tracking-tight">
               ${s.label}
-              ${active ? '<span class="ml-2 text-[10px] font-black bg-indigo-600 text-white px-2 py-0.5 rounded-full">CARİ</span>' : ''}
+              ${active ? '<span class="ml-2 text-[9px] font-black bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-2.5 py-1 rounded-full tracking-wider shadow-sm">CARİ</span>' : ''}
             </h4>
             ${s.date
-              ? `<span class="text-xs font-mono font-bold ${past ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-indigo-700 bg-indigo-50 border-indigo-200'} px-2.5 py-1 rounded-lg border">${s.date}</span>`
-              : `<span class="text-xs font-medium text-slate-400 italic">${future ? 'Gözlənilir' : 'Təyin edilməyib'}</span>`}
+              ? `<span class="text-[11px] font-mono font-bold ${past ? 'text-emerald-700 bg-emerald-50/80 border-emerald-200/70' : 'text-indigo-700 bg-indigo-50/80 border-indigo-200/70'} px-3 py-1.5 rounded-lg border tracking-wider">${s.date}</span>`
+              : `<span class="text-[11px] font-bold text-slate-400 italic">${future ? 'Gözlənilir' : 'Təyin edilməyib'}</span>`}
           </div>
           ${dayDiffText}
           ${progressHtml}
@@ -713,13 +683,9 @@ function renderTimeline() {
   document.getElementById('timeline').innerHTML = html;
 }
 
-/* Bugünkü tarix (DD.MM.YYYY) */
 function todayStr() {
   const t = new Date();
-  const day = String(t.getDate()).padStart(2, '0');
-  const mon = String(t.getMonth() + 1).padStart(2, '0');
-  const yr = t.getFullYear();
-  return `${day}.${mon}.${yr}`;
+  return `${String(t.getDate()).padStart(2,'0')}.${String(t.getMonth()+1).padStart(2,'0')}.${t.getFullYear()}`;
 }
 
 function renderTabs() {
@@ -729,30 +695,25 @@ function renderTabs() {
 
   const tabs = [
     { key: 'auction', label: '🏷️ Auksion', count: (ph.auction?.images?.length || 0) + (ph.auction?.videos?.length || 0) },
-    { key: 'anbar',   label: '🏭 Anbar',   count: (ph.anbar?.images?.length || 0) + (ph.anbar?.videos?.length || 0) },
-    { key: 'poti',    label: '🇬🇪 Poti',    count: (ph.poti?.images?.length || 0) + (ph.poti?.videos?.length || 0) },
-    { key: 'videolar',label: '🎬 Video',   count: totalVideos }
+    { key: 'anbar', label: '🏭 Anbar', count: (ph.anbar?.images?.length || 0) + (ph.anbar?.videos?.length || 0) },
+    { key: 'poti', label: '🇬🇪 Poti', count: (ph.poti?.images?.length || 0) + (ph.poti?.videos?.length || 0) },
+    { key: 'videolar', label: '🎬 Video', count: totalVideos }
   ];
 
   document.getElementById('tabs').innerHTML = tabs.map(t => `
-    <button onclick="setTab('${t.key}')" class="flex-1 py-2.5 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${custTab === t.key ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-white'}">
+    <button onclick="setTab('${t.key}')" class="flex-1 py-2.5 px-2 rounded-xl text-[11px] font-black transition-all duration-300 flex items-center justify-center gap-1.5 active:scale-95 tracking-wider ${custTab === t.key ? 'bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-md' : 'text-slate-600 hover:bg-white/70'}">
       ${t.label}
-      <span class="px-1.5 py-0.5 rounded-full text-[10px] ${custTab === t.key ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}">${t.count}</span>
+      <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black ${custTab === t.key ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'}">${t.count}</span>
     </button>`).join('');
 
   if (totalImages > 0) document.getElementById('dl-bar').classList.remove('hidden');
 }
 
-function setTab(tab) {
-  custTab = tab;
-  renderTabs();
-  renderPhotos();
-}
+function setTab(tab) { custTab = tab; renderTabs(); renderPhotos(); }
 
 function renderPhotos() {
   const ph = custData.ph || {};
   const area = document.getElementById('photo-area');
-
   if (custTab === 'videolar') return renderAllVideos();
 
   const cat = ph[custTab] || { images: [], videos: [] };
@@ -760,34 +721,35 @@ function renderPhotos() {
 
   if (!images.length && !videos.length) {
     const emptyMsg = {
-      auction: { icon: '🏷️', title: 'Hələ auksion şəkli yoxdur', hint: 'Admin extension vasitəsilə yükləyəcək' },
-      anbar:   { icon: '🏭', title: 'Anbar şəkilləri yoxdur',      hint: 'Admin tərəfindən yüklənəcək' },
-      poti:    { icon: '🇬🇪', title: 'Poti şəkilləri yoxdur',       hint: 'Admin tərəfindən yüklənəcək' }
+      auction: { icon: '🏷️', title: 'Hələ auksion şəkli yoxdur', hint: 'Admin tərəfindən yüklənəcək' },
+      anbar: { icon: '🏭', title: 'Anbar şəkilləri yoxdur', hint: 'Admin tərəfindən yüklənəcək' },
+      poti: { icon: '🇬🇪', title: 'Poti şəkilləri yoxdur', hint: 'Admin tərəfindən yüklənəcək' }
     }[custTab] || { icon: '📷', title: 'Media yoxdur', hint: '' };
 
-    area.innerHTML = `
-      <div class="text-center py-20">
-        <div class="w-24 h-24 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-5xl">${emptyMsg.icon}</div>
-        <h3 class="text-base font-bold text-slate-700">${emptyMsg.title}</h3>
-        <p class="text-xs text-slate-400 mt-1">${emptyMsg.hint}</p>
-      </div>`;
+    area.innerHTML = `<div class="text-center py-20">
+      <div class="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-4 text-5xl shadow-soft">${emptyMsg.icon}</div>
+      <h3 class="text-base font-black text-slate-700">${emptyMsg.title}</h3>
+      <p class="text-[11px] text-slate-400 mt-1.5 font-medium">${emptyMsg.hint}</p>
+    </div>`;
     return;
   }
 
   area.innerHTML = `
     ${images.length > 0 ? `
-    <div class="mb-6">
-      <h4 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
-        📷 Şəkillər <span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded-full">${images.length}</span>
+    <div class="mb-7">
+      <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2.5">
+        <span class="w-1 h-1 rounded-full bg-indigo-500"></span>
+        📷 Şəkillər
+        <span class="bg-slate-200/80 text-slate-700 text-[10px] px-2.5 py-0.5 rounded-full font-black">${images.length}</span>
       </h4>
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
         ${images.map((url, i) => `
           <div class="photo-grid-item group" onclick="openLightbox(${i})">
             <img src="${url}" loading="lazy" alt="" referrerpolicy="no-referrer">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition"></div>
-            <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition">
-              <span class="text-[10px] font-bold text-white bg-black/50 backdrop-blur px-2 py-0.5 rounded-full">${i + 1} / ${images.length}</span>
-              <span class="w-7 h-7 bg-white/90 rounded-full flex items-center justify-center text-slate-900 text-xs">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <span class="text-[10px] font-black text-white bg-black/60 backdrop-blur px-2.5 py-1 rounded-full tracking-wider">${i + 1} / ${images.length}</span>
+              <span class="w-8 h-8 bg-white/95 rounded-full flex items-center justify-center text-slate-900 text-xs shadow-lg">
                 <i class="fa-solid fa-expand"></i>
               </span>
             </div>
@@ -796,23 +758,25 @@ function renderPhotos() {
     </div>` : ''}
     ${videos.length > 0 ? `
     <div>
-      <h4 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
-        🎬 Videolar <span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded-full">${videos.length}</span>
+      <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2.5">
+        <span class="w-1 h-1 rounded-full bg-purple-500"></span>
+        🎬 Videolar
+        <span class="bg-slate-200/80 text-slate-700 text-[10px] px-2.5 py-0.5 rounded-full font-black">${videos.length}</span>
       </h4>
-      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3.5">
         ${videos.map((v, i) => `
-          <div class="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl border border-slate-200 cursor-pointer transition-all duration-300" style="aspect-ratio:16/9" onclick="window.open('${v.url}','_blank')">
-            <img src="${v.thumb}" class="w-full h-full object-cover" loading="lazy" alt="">
-            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition flex items-center justify-center">
-              <span class="w-14 h-14 bg-white/90 group-hover:bg-white rounded-full flex items-center justify-center text-slate-900 text-xl group-hover:scale-110 transition">
-                <i class="fa-solid fa-play ml-1"></i>
+          <div class="group relative rounded-2xl overflow-hidden shadow-soft hover:shadow-premium border border-slate-200/70 cursor-pointer transition-all duration-300 tap" style="aspect-ratio:16/9" onclick="window.open('${v.url}','_blank')">
+            <img src="${v.thumb}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" alt="">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/75 transition-all"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="w-14 h-14 bg-white/95 group-hover:bg-white rounded-full flex items-center justify-center text-slate-900 text-lg shadow-lg group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-play ml-0.5"></i>
               </span>
             </div>
-            <span class="absolute bottom-2 right-2 text-[10px] font-bold text-white bg-black/50 backdrop-blur px-2 py-0.5 rounded-full">${i + 1} / ${videos.length}</span>
+            <span class="absolute bottom-2.5 right-2.5 text-[10px] font-black text-white bg-black/60 backdrop-blur px-2.5 py-1 rounded-full tracking-wider">${i + 1} / ${videos.length}</span>
           </div>`).join('')}
       </div>
-    </div>` : ''}
-  `;
+    </div>` : ''}`;
 }
 
 function renderAllVideos() {
@@ -820,33 +784,29 @@ function renderAllVideos() {
   const area = document.getElementById('photo-area');
   const sections = [
     { key: 'auction', label: '🏷️ Auksion', videos: ph.auction?.videos || [] },
-    { key: 'anbar',   label: '🏭 Anbar',   videos: ph.anbar?.videos || [] },
-    { key: 'poti',    label: '🇬🇪 Poti',    videos: ph.poti?.videos || [] }
+    { key: 'anbar', label: '🏭 Anbar', videos: ph.anbar?.videos || [] },
+    { key: 'poti', label: '🇬🇪 Poti', videos: ph.poti?.videos || [] }
   ];
   const total = sections.reduce((s, x) => s + x.videos.length, 0);
-
   if (total === 0) {
-    area.innerHTML = `
-      <div class="text-center py-20">
-        <div class="w-24 h-24 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-5xl">🎬</div>
-        <h3 class="text-base font-bold text-slate-700">Hələ video yoxdur</h3>
-      </div>`;
+    area.innerHTML = `<div class="text-center py-20"><div class="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-4 text-5xl shadow-soft">🎬</div><h3 class="text-base font-black text-slate-700">Hələ video yoxdur</h3></div>`;
     return;
   }
-
   area.innerHTML = sections.filter(s => s.videos.length > 0).map(sec => `
-    <div class="mb-6">
-      <h4 class="text-xs font-black uppercase tracking-widest text-slate-600 mb-3 flex items-center gap-2">
+    <div class="mb-7">
+      <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2.5">
+        <span class="w-1 h-1 rounded-full bg-purple-500"></span>
         ${sec.label}
-        <span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded-full">${sec.videos.length}</span>
+        <span class="bg-slate-200/80 text-slate-700 text-[10px] px-2.5 py-0.5 rounded-full font-black">${sec.videos.length}</span>
       </h4>
-      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3.5">
         ${sec.videos.map(v => `
-          <div class="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl border border-slate-200 cursor-pointer transition-all duration-300" style="aspect-ratio:16/9" onclick="window.open('${v.url}','_blank')">
-            <img src="${v.thumb}" class="w-full h-full object-cover" loading="lazy" alt="">
-            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition flex items-center justify-center">
-              <span class="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center text-slate-900 text-xl">
-                <i class="fa-solid fa-play ml-1"></i>
+          <div class="group relative rounded-2xl overflow-hidden shadow-soft hover:shadow-premium border border-slate-200/70 cursor-pointer transition-all duration-300 tap" style="aspect-ratio:16/9" onclick="window.open('${v.url}','_blank')">
+            <img src="${v.thumb}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" alt="">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/75 transition-all"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="w-14 h-14 bg-white/95 rounded-full flex items-center justify-center text-slate-900 text-lg shadow-lg group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-play ml-0.5"></i>
               </span>
             </div>
           </div>`).join('')}
@@ -867,30 +827,18 @@ function closeLightbox() {
   document.body.style.overflow = '';
 }
 
-function lbNext() {
-  if (!lbPhotos.length) return;
-  lbIndex = (lbIndex + 1) % lbPhotos.length;
-  renderLightbox();
-}
-
-function lbPrev() {
-  if (!lbPhotos.length) return;
-  lbIndex = (lbIndex - 1 + lbPhotos.length) % lbPhotos.length;
-  renderLightbox();
-}
+function lbNext() { if (!lbPhotos.length) return; lbIndex = (lbIndex + 1) % lbPhotos.length; renderLightbox(); }
+function lbPrev() { if (!lbPhotos.length) return; lbIndex = (lbIndex - 1 + lbPhotos.length) % lbPhotos.length; renderLightbox(); }
 
 function renderLightbox() {
   document.getElementById('lb-img').src = lbPhotos[lbIndex];
   document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${lbPhotos.length}`;
   document.getElementById('lb-dots').innerHTML = lbPhotos.map((_, i) =>
-    `<span onclick="lbGoTo(${i})" class="w-2 h-2 rounded-full cursor-pointer transition ${i === lbIndex ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'}"></span>`
+    `<span onclick="lbGoTo(${i})" class="w-2 h-2 rounded-full cursor-pointer transition-all ${i === lbIndex ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'}"></span>`
   ).join('');
 }
 
-function lbGoTo(i) {
-  lbIndex = i;
-  renderLightbox();
-}
+function lbGoTo(i) { lbIndex = i; renderLightbox(); }
 
 async function lbDownload() {
   const url = lbPhotos[lbIndex];
@@ -903,9 +851,7 @@ async function lbDownload() {
     a.download = `auctionland_${Date.now()}.jpg`;
     a.click();
     showToast('Şəkil yükləndi!', 'success');
-  } catch {
-    window.open(url, '_blank');
-  }
+  } catch { window.open(url, '_blank'); }
 }
 
 async function downloadTabZip() {
@@ -917,11 +863,7 @@ async function downloadTabZip() {
 
 async function downloadAllZip() {
   const ph = custData.ph || {};
-  const all = {
-    auction: ph.auction?.images || [],
-    anbar:   ph.anbar?.images || [],
-    poti:    ph.poti?.images || []
-  };
+  const all = { auction: ph.auction?.images || [], anbar: ph.anbar?.images || [], poti: ph.poti?.images || [] };
   if (!Object.values(all).some(a => a.length > 0)) { showToast('Şəkil yoxdur', 'error'); return; }
   await downloadZip(all, custData.m || 'Avtomobil');
 }
@@ -935,12 +877,7 @@ async function downloadZip(byCategory, baseName) {
     if (!urls.length) continue;
     const folder = zip.folder(names[cat] || cat);
     for (let i = 0; i < urls.length; i++) {
-      try {
-        const r = await fetch(urls[i], { mode: 'cors' });
-        const b = await r.blob();
-        folder.file(`${String(i + 1).padStart(3, '0')}.jpg`, b);
-        total++;
-      } catch { }
+      try { const r = await fetch(urls[i], { mode: 'cors' }); const b = await r.blob(); folder.file(`${String(i + 1).padStart(3, '0')}.jpg`, b); total++; } catch { }
     }
   }
   if (!total) { showToast('Şəkillər yüklənə bilmədi', 'error'); return; }
@@ -952,18 +889,9 @@ async function downloadZip(byCategory, baseName) {
 function trackContainer() {
   const d = custData;
   if (!d) return;
-
-  if (!d.container || !d.container.trim() || d.container === '-') {
-    showToast('⚠️ Konteyner kodu yoxdur', 'error');
-    return;
-  }
-
+  if (!d.container || !d.container.trim() || d.container === '-') { showToast('⚠️ Konteyner kodu yoxdur', 'error'); return; }
   const company = resolveTrackingCompany(d);
-  if (!company || !company.url) {
-    showToast('⚠️ İzləmə linki təyin edilməyib', 'error');
-    return;
-  }
-
+  if (!company || !company.url) { showToast('⚠️ İzləmə linki təyin edilməyib', 'error'); return; }
   const companyName = company.name || 'Şirkət';
 
   if (company.base64Params && company.paramsTemplate) {
@@ -975,45 +903,27 @@ function trackContainer() {
     window.open(`${company.url}${sep}params=${encodeURIComponent(b64)}`, '_blank');
     return;
   }
-
-  if (company.url.includes('{konteyner}')) {
-    const url = company.url.split('{konteyner}').join(encodeURIComponent(d.container));
-    window.open(url, '_blank');
-    return;
-  }
-
-  copyToClipboard(d.container)
-    .then(() => showToast('📋 Konteyner kopyalandı — yapışdırın', 'success'))
-    .catch(() => {});
+  if (company.url.includes('{konteyner}')) { window.open(company.url.split('{konteyner}').join(encodeURIComponent(d.container)), '_blank'); return; }
+  copyToClipboard(d.container).then(() => showToast('📋 Konteyner kopyalandı', 'success')).catch(() => {});
   window.open(company.url, '_blank');
 }
 
 function copyToClipboard(text) {
-  if (navigator.clipboard && window.isSecureContext) {
-    return navigator.clipboard.writeText(text);
-  }
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
   return new Promise((resolve, reject) => {
     try {
       const t = document.createElement('textarea');
-      t.value = text;
-      t.style.position = 'fixed';
-      t.style.opacity = '0';
-      document.body.appendChild(t);
-      t.focus();
-      t.select();
-      document.execCommand('copy');
-      document.body.removeChild(t);
-      resolve();
+      t.value = text; t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t); t.focus(); t.select();
+      document.execCommand('copy'); document.body.removeChild(t); resolve();
     } catch (err) { reject(err); }
   });
 }
 
-function getVideoThumb(videoUrl) {
-  if (!videoUrl) return '';
-  if (videoUrl.includes('/video/upload/')) {
-    return videoUrl.replace('/video/upload/', '/video/upload/so_0,w_400/').replace(/\.[^.]+$/, '.jpg');
-  }
-  return videoUrl;
+function getVideoThumb(url) {
+  if (!url) return '';
+  if (url.includes('/video/upload/')) return url.replace('/video/upload/', '/video/upload/so_0,w_400/').replace(/\.[^.]+$/, '.jpg');
+  return url;
 }
 
 function parseDate(str) {
@@ -1025,23 +935,15 @@ function parseDate(str) {
   return null;
 }
 
-function diffDays(d1, d2) {
-  const a = parseDate(d1), b = parseDate(d2);
-  if (!a || !b) return null;
-  return Math.ceil((b - a) / 86400000);
-}
+function diffDays(d1, d2) { const a = parseDate(d1), b = parseDate(d2); if (!a || !b) return null; return Math.ceil((b - a) / 86400000); }
 
 function getDaysToPoti(p) {
-  const dt = parseDate(p);
-  if (!dt) return null;
-  const t = new Date(); t.setHours(0, 0, 0, 0); dt.setHours(0, 0, 0, 0);
+  const dt = parseDate(p); if (!dt) return null;
+  const t = new Date(); t.setHours(0,0,0,0); dt.setHours(0,0,0,0);
   return Math.ceil((dt - t) / 86400000);
 }
 
-function copyVin() {
-  if (!custData?.v) return;
-  navigator.clipboard.writeText(custData.v).then(() => showToast('VIN kopyalandı!', 'success'));
-}
+function copyVin() { if (!custData?.v) return; navigator.clipboard.writeText(custData.v).then(() => showToast('VIN kopyalandı!', 'success')); }
 
 function showToast(msg, type = 'info') {
   const toast = document.getElementById('toast');
