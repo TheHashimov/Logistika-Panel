@@ -183,7 +183,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
           <span id="doc-shipping-badge" class="text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0">-</span>
         </div>
 
-        <!-- 🆕 KONTEYNER AÇILIŞI -->
+        <!-- KONTEYNER AÇILIŞI -->
         <div id="doc-container-open" class="flex items-center justify-between rounded-xl p-3 transition-all border">
           <div class="flex items-center gap-2.5 min-w-0">
             <div id="doc-container-open-icon" class="w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0">
@@ -579,7 +579,7 @@ function renderDocStatus() {
     spSub
   );
 
-  // 🆕 KONTEYNER AÇILIŞI
+  // KONTEYNER AÇILIŞI
   const coRaw = d.containerOpenDate;
   const coDone = isDone(coRaw);
   const coSub = coDone
@@ -599,6 +599,9 @@ function renderDocStatus() {
   console.log('[DOC STATUS] containerOpenDate:', coRaw, '→', coDone);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   LOGİSTİKA YOL XƏRİTƏSİ (PROGRESS % + GÜN FƏRQİ)
+   ═══════════════════════════════════════════════════════════ */
 function renderTimeline() {
   const d = custData;
   const steps = [
@@ -614,6 +617,8 @@ function renderTimeline() {
   const pct = Math.round((activeStep / steps.length) * 100);
   document.getElementById('progress-pct').textContent = `${pct}%`;
 
+  const today = todayStr();
+
   const html = steps.map((s, i) => {
     const past = i < activeStep;
     const active = i === activeStep - 1 && activeStep > 0;
@@ -626,6 +631,61 @@ function renderTimeline() {
     else circleCls = 'bg-slate-100 text-slate-400 border-slate-300';
 
     const lineCls = past ? 'bg-emerald-400' : 'bg-slate-200';
+
+    /* ─── Gün fərqi — YALNIZ hər iki tarix varsa göstər ─── */
+    let dayDiffText = '';
+    if (past && !isLast && s.date && steps[i + 1]?.date) {
+      const diff = diffDays(s.date, steps[i + 1].date);
+      if (diff !== null && !isNaN(diff) && diff >= 0) {
+        dayDiffText = `<p class="text-[11px] text-slate-500 mt-1 font-medium">✓ ${diff} gün çəkdi</p>`;
+      }
+    }
+
+    /* ─── Aktiv mərhələ üçün PROGRESS % ─── */
+    let progressHtml = '';
+    if (active && s.date) {
+      // Ən yaxın keçmiş tarixi tap (əvvəlki tamamlanmış addım)
+      let prevDate = null;
+      for (let j = i - 1; j >= 0; j--) {
+        if (steps[j].date && steps[j].date.trim()) { prevDate = steps[j].date; break; }
+      }
+
+      if (prevDate) {
+        const total = diffDays(prevDate, s.date);
+        const elapsed = diffDays(prevDate, today);
+        const remaining = diffDays(today, s.date);
+
+        if (total !== null && total > 0) {
+          const clampedElapsed = Math.max(0, Math.min(total, elapsed ?? 0));
+          const progressPct = Math.round((clampedElapsed / total) * 100);
+
+          const remainTxt = remaining === null
+            ? ''
+            : (remaining >= 0
+                ? `⏳ Qaldı: <b>${remaining}</b> gün`
+                : `⚠️ <b>${Math.abs(remaining)}</b> gün gecikib`);
+
+          const remainColor = remaining >= 0 ? 'text-amber-700' : 'text-rose-700';
+
+          progressHtml = `
+            <div class="mt-3 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl p-3">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-black text-indigo-700 uppercase tracking-wider flex items-center gap-1">
+                  <i class="fa-solid fa-chart-line"></i> İrəliləyiş
+                </span>
+                <span class="text-sm font-black text-indigo-900">${progressPct}%</span>
+              </div>
+              <div class="w-full h-2 bg-white rounded-full overflow-hidden border border-indigo-100">
+                <div class="h-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-blue-600 rounded-full transition-all duration-500" style="width:${progressPct}%"></div>
+              </div>
+              <div class="flex justify-between mt-2 text-[10px] font-bold">
+                <span class="text-indigo-700">📅 Keçdi: ${clampedElapsed} gün</span>
+                <span class="${remainColor}">${remainTxt}</span>
+              </div>
+            </div>`;
+        }
+      }
+    }
 
     return `
       <div class="relative flex items-start gap-4 ${isLast ? '' : 'pb-6'}">
@@ -644,14 +704,22 @@ function renderTimeline() {
               ? `<span class="text-xs font-mono font-bold ${past ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-indigo-700 bg-indigo-50 border-indigo-200'} px-2.5 py-1 rounded-lg border">${s.date}</span>`
               : `<span class="text-xs font-medium text-slate-400 italic">${future ? 'Gözlənilir' : 'Təyin edilməyib'}</span>`}
           </div>
-          ${past && !isLast && steps[i+1]?.date
-            ? `<p class="text-[11px] text-slate-500 mt-1 font-medium">${diffDays(s.date, steps[i+1].date)} gün çəkdi</p>`
-            : ''}
+          ${dayDiffText}
+          ${progressHtml}
         </div>
       </div>`;
   }).join('');
 
   document.getElementById('timeline').innerHTML = html;
+}
+
+/* Bugünkü tarix (DD.MM.YYYY) */
+function todayStr() {
+  const t = new Date();
+  const day = String(t.getDate()).padStart(2, '0');
+  const mon = String(t.getMonth() + 1).padStart(2, '0');
+  const yr = t.getFullYear();
+  return `${day}.${mon}.${yr}`;
 }
 
 function renderTabs() {
