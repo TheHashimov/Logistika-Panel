@@ -579,7 +579,6 @@ function cleanOldTrash() {const now = Date.now(), limit = TRASH_DAYS * 24 * 60 *
 function emptyPhotos() {const o = {}; ALL_PHOTO_CATS.forEach(k => {o[k] = {images: [], videos: []};}); return o;}
 function ensurePhotosStruct(car) {if (!car.photos || typeof car.photos !== 'object') car.photos = {}; ALL_PHOTO_CATS.forEach(k => {if (!car.photos[k] || typeof car.photos[k] !== 'object') car.photos[k] = {images: [], videos: []}; if (!Array.isArray(car.photos[k].images)) car.photos[k].images = []; if (!Array.isArray(car.photos[k].videos)) car.photos[k].videos = [];});}
 
-/* VIN əsaslı qovluq — extension ilə UYĞUN */
 function getCarFolder(car) {
   if (car.vin && car.vin.trim()) {
     return 'AuctionLand/' + car.vin.replace(/[^A-Z0-9]/gi, '').toUpperCase();
@@ -838,7 +837,51 @@ async function toggleShippingPaidStatus(id) {const i = cars.findIndex(c => c.id 
 function openModal(id = null) {document.getElementById('carForm').reset(); tempAttachedDocs = []; document.getElementById('form-id').value = id || ''; renderTrackingCompanySelect(); if (id) {const car = cars.find(c => c.id === parseInt(id)); if (car) {document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-red-600"></i> Düzəliş'; const F = (fid, val) => {const el = document.getElementById(fid); if (el) el.value = val || '';}; F('form-owner', car.owner); F('form-model', car.model); F('form-vin', car.vin); F('form-location', car.location); F('form-shipping-port', car.shippingPort); F('form-container', car.container); F('form-tracking-company', car.trackingCompanyId || ''); F('form-udus', formatDateDMY(car.udus)); F('form-anbar', formatDateDMY(car.anbar)); F('form-poti', formatDateDMY(car.poti)); F('form-baki', formatDateDMY(car.baki)); F('form-status', car.status || 'Auksionda'); F('form-image-url', car.imageUrl || ''); F('form-car-cost', car.carCost || ''); F('form-real-shipping', car.realShipping || ''); F('form-client-shipping', car.clientShipping || ''); F('form-real-insurance', car.realInsurance || ''); F('form-client-insurance', car.clientInsurance || ''); F('form-real-poti-baku', car.realPotiBaku || ''); F('form-client-poti-baku', car.clientPotiBaku || ''); F('form-service-fee', car.serviceFee || ''); F('form-extra-cost', car.extraCost || ''); F('form-link', car.link || ''); document.getElementById('form-etibarname').checked = !!car.etibarname; document.getElementById('form-shipping-paid').checked = !!car.shippingPaid; tempAttachedDocs = car.documents ? [...car.documents] : [];} } else {document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-car text-red-600"></i> Yeni Avtomobil'; document.getElementById('form-etibarname').checked = false; document.getElementById('form-shipping-paid').checked = false;} renderAttachedDocsList(); document.getElementById('carModal').classList.remove('hidden');}
 function closeModal() {document.getElementById('carModal').classList.add('hidden');}
 async function handleFormSubmit(e) {e.preventDefault(); await processSaveCar(document.getElementById('form-id').value, document.getElementById('form-image-url').value);}
-async function processSaveCar(id, imageUrl) {const existing = id ? cars.find(c => c.id === parseInt(id)) : null; const carData = {...(existing || {}), id: id ? parseInt(id) : Date.now(), owner: document.getElementById('form-owner').value.trim(), model: document.getElementById('form-model').value.trim(), vin: document.getElementById('form-vin').value.trim(), location: document.getElementById('form-location').value.trim(), shippingPort: document.getElementById('form-shipping-port').value.trim(), container: document.getElementById('form-container').value.trim(), trackingCompanyId: document.getElementById('form-tracking-company').value ? parseInt(document.getElementById('form-tracking-company').value) : null, udus: formatDateDMY(document.getElementById('form-udus').value.trim()), anbar: formatDateDMY(document.getElementById('form-anbar').value.trim()), poti: formatDateDMY(document.getElementById('form-poti').value.trim()), baki: formatDateDMY(document.getElementById('form-baki').value.trim()), status: document.getElementById('form-status').value, imageUrl: imageUrl, carCost: parseFloat(document.getElementById('form-car-cost').value) || 0, realShipping: parseFloat(document.getElementById('form-real-shipping').value) || 0, clientShipping: parseFloat(document.getElementById('form-client-shipping').value) || 0, realInsurance: parseFloat(document.getElementById('form-real-insurance').value) || 0, clientInsurance: parseFloat(document.getElementById('form-client-insurance').value) || 0, realPotiBaku: parseFloat(document.getElementById('form-real-poti-baku').value) || 0, clientPotiBaku: parseFloat(document.getElementById('form-client-poti-baku').value) || 0, serviceFee: parseFloat(document.getElementById('form-service-fee').value) || 0, extraCost: parseFloat(document.getElementById('form-extra-cost').value) || 0, link: document.getElementById('form-link').value.trim(), documents: tempAttachedDocs, etibarname: document.getElementById('form-etibarname').checked, shippingPaid: document.getElementById('form-shipping-paid').checked, shareToken: (existing && existing.shareToken) || generateShareToken(), photos: (existing && existing.photos) || emptyPhotos(), _updatedAt: Date.now()}; if (id) {const i = cars.findIndex(c => c.id === parseInt(id)); cars[i] = carData;} else cars.push(carData); closeModal(); await saveData('✅ Yadda saxlanıldı!');}
+async function processSaveCar(id, imageUrl) {
+  const existing = id ? cars.find(c => c.id === parseInt(id)) : null;
+  const trackingCoId = document.getElementById('form-tracking-company').value ? parseInt(document.getElementById('form-tracking-company').value) : null;
+  const trackingCo = trackingCoId ? trackingCompanies.find(x => x.id === trackingCoId) : null;
+  const carData = {
+    ...(existing || {}),
+    id: id ? parseInt(id) : Date.now(),
+    owner: document.getElementById('form-owner').value.trim(),
+    model: document.getElementById('form-model').value.trim(),
+    vin: document.getElementById('form-vin').value.trim(),
+    location: document.getElementById('form-location').value.trim(),
+    shippingPort: document.getElementById('form-shipping-port').value.trim(),
+    container: document.getElementById('form-container').value.trim(),
+    trackingCompanyId: trackingCoId,
+    trackingCompanyName: trackingCo ? trackingCo.name : null,
+    trackingUrl: trackingCo ? trackingCo.url : null,
+    trackingParamsTemplate: trackingCo && trackingCo.paramsTemplate ? trackingCo.paramsTemplate : null,
+    trackingBase64: trackingCo ? !!trackingCo.base64Params : false,
+    udus: formatDateDMY(document.getElementById('form-udus').value.trim()),
+    anbar: formatDateDMY(document.getElementById('form-anbar').value.trim()),
+    poti: formatDateDMY(document.getElementById('form-poti').value.trim()),
+    baki: formatDateDMY(document.getElementById('form-baki').value.trim()),
+    status: document.getElementById('form-status').value,
+    imageUrl: imageUrl,
+    carCost: parseFloat(document.getElementById('form-car-cost').value) || 0,
+    realShipping: parseFloat(document.getElementById('form-real-shipping').value) || 0,
+    clientShipping: parseFloat(document.getElementById('form-client-shipping').value) || 0,
+    realInsurance: parseFloat(document.getElementById('form-real-insurance').value) || 0,
+    clientInsurance: parseFloat(document.getElementById('form-client-insurance').value) || 0,
+    realPotiBaku: parseFloat(document.getElementById('form-real-poti-baku').value) || 0,
+    clientPotiBaku: parseFloat(document.getElementById('form-client-poti-baku').value) || 0,
+    serviceFee: parseFloat(document.getElementById('form-service-fee').value) || 0,
+    extraCost: parseFloat(document.getElementById('form-extra-cost').value) || 0,
+    link: document.getElementById('form-link').value.trim(),
+    documents: tempAttachedDocs,
+    etibarname: document.getElementById('form-etibarname').checked,
+    shippingPaid: document.getElementById('form-shipping-paid').checked,
+    shareToken: (existing && existing.shareToken) || generateShareToken(),
+    photos: (existing && existing.photos) || emptyPhotos(),
+    _updatedAt: Date.now()
+  };
+  if (id) {const i = cars.findIndex(c => c.id === parseInt(id)); cars[i] = carData;} else cars.push(carData);
+  closeModal();
+  await saveData('✅ Yadda saxlanıldı!');
+}
 function editCar(id) {openModal(id);}
 function promptDeleteCar(id) {const car = cars.find(c => c.id === id); if (!car) return; if (!confirm(`"${car.model}" avtomobilini SƏBƏTƏ atmaq istəyirsiniz?\n\n30 gün ərzində bərpa edə bilərsiniz.`)) return; moveToTrash(car);}
 function renderAttachedDocsList() {const el = document.getElementById('attached-docs-list'); if (!el) return; if (!tempAttachedDocs.length) {el.innerHTML = '<span class="text-[11px] text-slate-400">Boşdur</span>'; return;} el.innerHTML = tempAttachedDocs.map((d, i) => `<div class="flex items-center justify-between bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs"><div class="flex items-center space-x-2 truncate"><i class="fa-solid fa-file-contract text-blue-600"></i><span class="font-bold text-slate-800">${d.type}:</span><span class="text-slate-600 truncate max-w-[150px]">${d.fileName}</span></div><button type="button" onclick="removeDoc(${i})" class="text-rose-500"><i class="fa-solid fa-xmark"></i></button></div>`).join('');}
