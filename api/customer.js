@@ -15,23 +15,22 @@ export default async function handler(req, res) {
     const r = await fetch(`${JSONBIN_BASE}${BIN_ID}/latest`, {
       headers: { 'X-Master-Key': MASTER_KEY }
     });
-    if (!r.ok) return res.status(500).json({ error: `JSONBin xətası: ${r.status}` });
+    if (!r.ok) return res.status(500).json({ error: 'Server xətası' });
 
     const data = await r.json();
     const record = data.record || {};
+    const cars = Array.isArray(record) ? record : (record.cars || []);
+    const car = cars.find(c => c.shareToken === token);
 
-    /* Bütün formatları dəstəklə */
-    let cars = [];
-    if (Array.isArray(record)) {
-      cars = record;
-    } else if (Array.isArray(record.cars)) {
-      cars = record.cars;
-    } else if (record.cars && typeof record.cars === 'object') {
-      cars = Object.values(record.cars);
-    }
-
-    const car = cars.find(c => c && c.shareToken === token);
     if (!car) return res.status(404).json({ error: 'Tapılmadı' });
+
+    const ph = car.photos || {};
+
+    /* Köhnə sonTehvil → baki köçürülməsi */
+    const normalizeCat = (cat) => {
+      if (Array.isArray(cat)) return { images: cat, videos: [] };
+      return { images: cat?.images || [], videos: cat?.videos || [] };
+    };
 
     return res.json({
       car: {
@@ -46,16 +45,19 @@ export default async function handler(req, res) {
         location: car.location || '',
         shippingPort: car.shippingPort || '',
         container: car.container || '',
+        imageUrl: car.imageUrl || car.image || '',
+        link: car.link || '',
         etibarname: !!car.etibarname,
         shippingPaid: !!car.shippingPaid,
         photos: {
-          pikap: car.photos?.pikap || [],
-          anbar: car.photos?.anbar || [],
-          poti:  car.photos?.poti  || []
+          auction: normalizeCat(ph.auction),
+          pikap:   normalizeCat(ph.pikap),
+          anbar:   normalizeCat(ph.anbar),
+          poti:    normalizeCat(ph.poti)
         }
       }
     });
-  } catch(e) {
-    return res.status(500).json({ error: `Server xətası: ${e.message}` });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
   }
 }
