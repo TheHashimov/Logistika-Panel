@@ -3,343 +3,661 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#0a0f1e">
+<meta name="theme-color" content="#09090d">
 <title>AuctionLand — Avtomobil İzləmə</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+:root{
+  --bg:#09090d;
+  --bg-elev:#0f1015;
+  --bg-elev-2:#14151c;
+  --border:rgba(255,255,255,.055);
+  --border-strong:rgba(255,255,255,.09);
+  --text:#e8e9ee;
+  --text-2:#9a9ca6;
+  --text-3:#5a5c66;
+  --gold:#c9a86a;
+  --gold-bright:#e2c891;
+  --gold-soft:rgba(201,168,106,.14);
+  --emerald:#4fb087;
+  --emerald-soft:rgba(79,176,135,.12);
+  --rose:#d97a7a;
+  --rose-soft:rgba(217,122,122,.12);
+  --indigo:#7a7ff5;
+  --indigo-soft:rgba(122,127,245,.12);
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{overscroll-behavior-y:none}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:#f5f7fb;color:#0f172a;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+html{background:var(--bg)}
+body{
+  font-family:'Inter','Plus Jakarta Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  font-feature-settings:'cv11','ss01','cv02','cv03','cv04';
+  letter-spacing:-0.011em;
+  overscroll-behavior-y:none;
+  min-height:100vh;
+}
 
-/* ── PREMIUM SHADOWS ── */
-.shadow-soft{box-shadow:0 1px 2px rgba(15,23,42,.04),0 4px 12px rgba(15,23,42,.04)}
-.shadow-premium{box-shadow:0 1px 2px rgba(15,23,42,.04),0 6px 16px rgba(15,23,42,.05),0 16px 40px rgba(15,23,42,.06)}
-.shadow-premium-lg{box-shadow:0 2px 4px rgba(15,23,42,.04),0 12px 28px rgba(15,23,42,.08),0 32px 64px rgba(15,23,42,.10)}
-.shadow-gold{box-shadow:0 4px 20px rgba(200,162,90,.25)}
-.shadow-emerald-glow{box-shadow:0 4px 20px rgba(16,185,129,.35)}
+/* ═══ BACKGROUND TEXTURE ═══ */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,168,106,.08), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(122,127,245,.05), transparent 60%);
+  pointer-events:none;
+  z-index:0;
+}
+body > *{position:relative;z-index:1}
 
-/* ── MOBILE FIX ── */
-button,a,[onclick],.tap,.photo-grid-item,img,.photo-thumb,#lb-img{ touch-action:manipulation;-webkit-touch-callout:none }
-img,button,a,.tap{user-select:none;-webkit-user-select:none}
+/* ═══ MOBILE FIX — NO ZOOM ═══ */
+button,a,[onclick],.tap,.photo-grid-item,img,#lb-img,.no-zoom{
+  touch-action:manipulation;
+  -webkit-touch-callout:none;
+}
+img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
 
-/* ── SCROLLBAR ── */
-.cs::-webkit-scrollbar{width:5px;height:5px}
+/* ═══ SCROLLBAR ═══ */
+.cs::-webkit-scrollbar{width:4px;height:4px}
 .cs::-webkit-scrollbar-track{background:transparent}
-.cs::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+.cs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:4px}
 
-/* ── ANIMATIONS ── */
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.fade-up{animation:fadeUp .6s cubic-bezier(.16,1,.3,1) both}
-@keyframes pulse-ring{0%{transform:scale(1);opacity:.7}100%{transform:scale(2);opacity:0}}
-.pulse-ring{animation:pulse-ring 2s cubic-bezier(.4,0,.6,1) infinite}
-@keyframes shine{0%{transform:translateX(-100%) skewX(-15deg)}100%{transform:translateX(300%) skewX(-15deg)}}
-.shine::after{content:'';position:absolute;top:0;left:0;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);animation:shine 5s infinite;pointer-events:none}
+/* ═══ HAIRLINE ═══ */
+.hairline{border:1px solid var(--border)}
+.hairline-t{border-top:1px solid var(--border)}
+.hairline-b{border-bottom:1px solid var(--border)}
+
+/* ═══ CARDS ═══ */
+.card{
+  background:linear-gradient(180deg,var(--bg-elev) 0%,var(--bg-elev-2) 100%);
+  border:1px solid var(--border);
+  border-radius:24px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.02) inset,
+    0 1px 2px rgba(0,0,0,.4),
+    0 12px 32px rgba(0,0,0,.35);
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  padding:1px;
+  background:linear-gradient(135deg,rgba(255,255,255,.06),transparent 40%,transparent 60%,rgba(201,168,106,.04));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  pointer-events:none;
+}
+
+.card-soft{
+  background:rgba(255,255,255,.02);
+  border:1px solid var(--border);
+  border-radius:18px;
+}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .7s cubic-bezier(.16,1,.3,1) both}
+@keyframes pulse-ring{0%{transform:scale(1);opacity:.5}100%{transform:scale(2.2);opacity:0}}
+.pulse-ring{animation:pulse-ring 2.2s cubic-bezier(.4,0,.6,1) infinite}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.shimmer{background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.5) 50%,transparent 100%);background-size:200% 100%;animation:shimmer 2.5s infinite}
-@keyframes glow{0%,100%{opacity:.4}50%{opacity:.9}}
-.glow-pulse{animation:glow 2.5s ease-in-out infinite}
+.shimmer{background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.4) 50%,transparent 100%);background-size:200% 100%;animation:shimmer 2.8s infinite}
+@keyframes glow-gold{0%,100%{box-shadow:0 0 0 0 rgba(201,168,106,.4)}50%{box-shadow:0 0 0 6px rgba(201,168,106,0)}}
+.glow-gold{animation:glow-gold 3s ease-in-out infinite}
 
-/* ── HERO ── */
-.gradient-hero{background:linear-gradient(to top,rgba(6,10,25,.98) 0%,rgba(6,10,25,.72) 35%,rgba(6,10,25,.15) 65%,transparent 100%)}
-.gold-text{background:linear-gradient(135deg,#e0c589,#c8a25a,#a67c37);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+/* ═══ HERO ═══ */
+.hero-overlay{
+  background:linear-gradient(to top,
+    rgba(6,7,10,.98) 0%,
+    rgba(6,7,10,.85) 30%,
+    rgba(6,7,10,.35) 60%,
+    rgba(6,7,10,.1) 85%,
+    transparent 100%);
+}
+.hero-noise::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  opacity:.04;
+  pointer-events:none;
+  mix-blend-mode:overlay;
+}
 
-/* ── PHOTO GRID ── */
-.photo-grid-item{aspect-ratio:1;overflow:hidden;border-radius:20px;cursor:pointer;position:relative;transition:all .4s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 2px rgba(15,23,42,.06),0 4px 12px rgba(15,23,42,.05)}
-.photo-grid-item:hover{box-shadow:0 2px 4px rgba(15,23,42,.06),0 20px 40px rgba(15,23,42,.14);transform:translateY(-4px)}
-.photo-grid-item img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.4,0,.2,1);pointer-events:none}
-.photo-grid-item:hover img{transform:scale(1.08)}
+/* ═══ PHOTO GRID ═══ */
+.photo-grid-item{
+  aspect-ratio:1;
+  overflow:hidden;
+  border-radius:18px;
+  cursor:pointer;
+  position:relative;
+  background:var(--bg-elev-2);
+  transition:all .5s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 1px 2px rgba(0,0,0,.3);
+}
+.photo-grid-item:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 32px rgba(0,0,0,.5);
+}
+.photo-grid-item img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transition:transform .8s cubic-bezier(.16,1,.3,1);
+  pointer-events:none;
+}
+.photo-grid-item:hover img{transform:scale(1.06)}
 
-/* ── TIMELINE LINE ── */
-.timeline-line{background:linear-gradient(to bottom,currentColor 0%,currentColor 60%,transparent 100%)}
+/* ═══ HERO TYPOGRAPHY ═══ */
+.display{
+  font-family:'Plus Jakarta Sans','Inter',sans-serif;
+  letter-spacing:-0.03em;
+  font-weight:800;
+}
+.eyebrow{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--text-3);
+}
+.gold-hairline{
+  background:linear-gradient(90deg,transparent,var(--gold) 40%,var(--gold-bright) 50%,var(--gold) 60%,transparent);
+}
 
-/* ── DOC PILLS ── */
-.doc-pill{transition:all .3s ease}
-.doc-pill:hover{transform:translateY(-2px)}
+/* ═══ STATUS CHIP ═══ */
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 11px;
+  border-radius:100px;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.05em;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.03);
+  white-space:nowrap;
+}
+.chip-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.chip-ok{background:var(--emerald-soft);border-color:rgba(79,176,135,.25);color:#7dd3a8}
+.chip-ok .chip-dot{background:var(--emerald);box-shadow:0 0 8px rgba(79,176,135,.6)}
+.chip-no{background:var(--rose-soft);border-color:rgba(217,122,122,.22);color:#e39a9a}
+.chip-no .chip-dot{background:var(--rose)}
+.chip-gold{background:var(--gold-soft);border-color:rgba(201,168,106,.3);color:var(--gold-bright)}
+.chip-gold .chip-dot{background:var(--gold);box-shadow:0 0 8px rgba(201,168,106,.6)}
 
-/* ── PREMIUM CARD DECOR ── */
-.card-hairline{position:relative}
-.card-hairline::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(255,255,255,.3) 50%,rgba(255,255,255,0) 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+/* ═══ DOC LIST ═══ */
+.doc-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px 4px;
+  border-bottom:1px solid var(--border);
+  transition:background .2s;
+}
+.doc-row:last-child{border-bottom:none}
+.doc-icon{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--border);
+  color:var(--text-2);
+  flex-shrink:0;
+  transition:all .3s;
+}
+.doc-row.done .doc-icon{
+  background:var(--emerald-soft);
+  border-color:rgba(79,176,135,.2);
+  color:#7dd3a8;
+}
+.doc-row.pending .doc-icon{
+  background:var(--rose-soft);
+  border-color:rgba(217,122,122,.2);
+  color:#e39a9a;
+}
+.doc-label{
+  font-size:12px;
+  font-weight:600;
+  color:var(--text);
+  letter-spacing:-0.005em;
+  line-height:1.2;
+}
+.doc-sub{
+  font-size:10px;
+  font-weight:500;
+  color:var(--text-3);
+  margin-top:2px;
+  font-family:'Inter',monospace;
+  letter-spacing:.02em;
+}
+
+/* ═══ TIMELINE ═══ */
+.tl-circle{
+  width:42px;height:42px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;
+  border:1px solid var(--border-strong);
+  background:var(--bg-elev);
+  position:relative;
+  z-index:2;
+  flex-shrink:0;
+  transition:all .4s;
+}
+.tl-circle.done{
+  background:linear-gradient(135deg,#3d8f6e,#4fb087);
+  border-color:rgba(79,176,135,.4);
+  color:#fff;
+  box-shadow:0 4px 16px rgba(79,176,135,.25),0 0 0 1px rgba(79,176,135,.15) inset;
+}
+.tl-circle.active{
+  background:linear-gradient(135deg,#1a1c26,#23252f);
+  border-color:rgba(201,168,106,.4);
+  color:var(--gold-bright);
+  box-shadow:0 0 24px rgba(201,168,106,.15),0 0 0 1px rgba(201,168,106,.1) inset;
+}
+.tl-circle.future{color:var(--text-3)}
+
+.tl-line{
+  position:absolute;
+  left:20px;top:48px;bottom:-8px;
+  width:2px;
+  border-radius:2px;
+  background:linear-gradient(to bottom,var(--border-strong),transparent);
+}
+.tl-line.done{background:linear-gradient(to bottom,rgba(79,176,135,.5),rgba(79,176,135,.1))}
+
+/* ═══ TIMELINE PROGRESS BAR ═══ */
+.progress-track{
+  height:4px;
+  background:rgba(255,255,255,.04);
+  border-radius:100px;
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+.progress-fill{
+  height:100%;
+  border-radius:100px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-bright));
+  box-shadow:0 0 16px rgba(201,168,106,.4);
+  position:relative;
+  overflow:hidden;
+  transition:width .8s cubic-bezier(.16,1,.3,1);
+}
+.progress-fill::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+  animation:shimmer 2.8s infinite;
+}
+
+/* ═══ TAB ═══ */
+.tab-btn{
+  flex:1;
+  padding:10px 8px;
+  border-radius:14px;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.01em;
+  transition:all .3s cubic-bezier(.16,1,.3,1);
+  color:var(--text-2);
+  border:1px solid transparent;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{
+  background:rgba(255,255,255,.05);
+  border-color:var(--border);
+  color:var(--text);
+  box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 1px 3px rgba(0,0,0,.2);
+}
+.tab-count{
+  font-size:9px;
+  font-weight:700;
+  padding:1px 6px;
+  border-radius:100px;
+  background:rgba(255,255,255,.05);
+  color:var(--text-3);
+  letter-spacing:.02em;
+}
+.tab-btn.active .tab-count{
+  background:var(--gold-soft);
+  color:var(--gold-bright);
+}
+
+/* ═══ BUTTONS ═══ */
+.btn-gold{
+  background:linear-gradient(180deg,var(--gold-bright) 0%,var(--gold) 100%);
+  color:#141008;
+  border:1px solid rgba(0,0,0,.15);
+  box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 8px 24px rgba(201,168,106,.2);
+  font-weight:700;
+  letter-spacing:-0.005em;
+  transition:all .2s;
+}
+.btn-gold:hover{filter:brightness(1.05);box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 12px 28px rgba(201,168,106,.3)}
+.btn-gold:active{transform:scale(.98)}
+
+.btn-ghost{
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--border-strong);
+  color:var(--text);
+  transition:all .2s;
+}
+.btn-ghost:hover{background:rgba(255,255,255,.07)}
+.btn-ghost:active{transform:scale(.98)}
+
+/* ═══ HERO CHIP ═══ */
+.glass-chip{
+  background:rgba(255,255,255,.06);
+  backdrop-filter:blur(20px) saturate(1.2);
+  -webkit-backdrop-filter:blur(20px) saturate(1.2);
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--text);
+}
 </style>
 </head>
-<body class="min-h-screen">
+<body>
 
 <!-- ═══════════ HEADER ═══════════ -->
-<header class="bg-white/70 backdrop-blur-2xl border-b border-slate-200/60 sticky top-0 z-40" style="box-shadow:0 1px 0 rgba(15,23,42,.03),0 4px 16px rgba(15,23,42,.03)">
+<header class="sticky top-0 z-40" style="background:rgba(9,9,13,.75);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);border-bottom:1px solid var(--border)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div class="relative">
-        <div class="bg-gradient-to-br from-red-600 to-red-700 p-2.5 rounded-2xl text-white text-lg shadow-lg shadow-red-500/25">
-          <i class="fa-solid fa-car-side"></i>
-        </div>
-        <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-white"></span>
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,rgba(201,168,106,.15),rgba(201,168,106,.05));border:1px solid rgba(201,168,106,.25)">
+        <i class="fa-solid fa-car-side" style="color:var(--gold-bright);font-size:15px"></i>
       </div>
       <div>
-        <h1 class="text-xl font-black text-slate-900 tracking-tight leading-none">AUCTION<span class="text-red-600">LAND</span></h1>
-        <p class="text-[10px] text-slate-500 font-bold tracking-[0.15em] uppercase mt-0.5">Premium Logistika</p>
+        <h1 class="text-base font-extrabold tracking-tight leading-none" style="color:var(--text)">
+          Auction<span style="color:var(--gold)">Land</span>
+        </h1>
+        <p class="eyebrow mt-1" style="font-size:8px">Premium Logistika</p>
       </div>
     </div>
-    <span id="live-badge" class="hidden sm:flex items-center gap-2 text-[10px] font-black text-emerald-700 bg-emerald-50/80 backdrop-blur border border-emerald-200/60 px-3 py-1.5 rounded-full tracking-wider uppercase">
-      <span class="relative flex h-2 w-2">
-        <span class="pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400"></span>
-        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+    <span id="live-badge" class="chip chip-ok">
+      <span class="relative flex h-1.5 w-1.5">
+        <span class="pulse-ring absolute inline-flex h-full w-full rounded-full" style="background:var(--emerald)"></span>
+        <span class="relative inline-flex rounded-full h-1.5 w-1.5" style="background:var(--emerald)"></span>
       </span>
       Canlı
     </span>
   </div>
-  <div class="h-px bg-gradient-to-r from-transparent via-amber-300/40 to-transparent"></div>
 </header>
 
 <!-- ═══════════ LOADING ═══════════ -->
-<div id="loading" class="flex flex-col items-center justify-center min-h-[70vh] space-y-6">
+<div id="loading" class="flex flex-col items-center justify-center min-h-[80vh] space-y-6">
   <div class="relative">
-    <div class="w-24 h-24 border-[3px] border-slate-200/70 rounded-full"></div>
-    <div class="absolute top-0 left-0 w-24 h-24 border-[3px] border-transparent border-t-red-600 border-r-amber-400/50 rounded-full animate-spin"></div>
-    <div class="absolute inset-0 flex items-center justify-center text-red-600 text-2xl">
-      <i class="fa-solid fa-car-side opacity-40"></i>
-    </div>
+    <div class="w-16 h-16 rounded-full" style="border:1.5px solid var(--border-strong);border-top-color:var(--gold)"></div>
+    <div class="absolute top-0 left-0 w-16 h-16 rounded-full animate-spin" style="border:1.5px solid transparent;border-top-color:var(--gold-bright)"></div>
   </div>
   <div class="text-center">
-    <p class="text-sm font-black text-slate-700 tracking-wide">Məlumatlar yüklənir</p>
-    <p class="text-[11px] text-slate-400 mt-1 font-medium">Zəhmət olmasa gözləyin...</p>
+    <p class="text-sm font-semibold" style="color:var(--text-2)">Məlumatlar yüklənir</p>
+    <p class="eyebrow mt-2" style="font-size:9px">Zəhmət olmasa gözləyin</p>
   </div>
 </div>
 
 <!-- ═══════════ ERROR ═══════════ -->
-<div id="error-box" class="hidden flex-col items-center justify-center min-h-[70vh] space-y-5 px-4">
-  <div class="w-24 h-24 bg-gradient-to-br from-rose-100 to-rose-50 rounded-3xl flex items-center justify-center text-5xl shadow-premium">⚠️</div>
-  <h2 class="text-2xl font-black text-slate-800">Avtomobil Tapılmadı</h2>
-  <p id="error-msg" class="text-sm text-slate-500 text-center max-w-md font-medium"></p>
+<div id="error-box" class="hidden flex-col items-center justify-center min-h-[80vh] space-y-5 px-4">
+  <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl" style="background:var(--rose-soft);border:1px solid rgba(217,122,122,.2);color:#e39a9a">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+  </div>
+  <h2 class="text-xl font-bold" style="color:var(--text)">Avtomobil Tapılmadı</h2>
+  <p id="error-msg" class="text-sm text-center max-w-md" style="color:var(--text-2)"></p>
 </div>
 
 <!-- ═══════════ MAIN ═══════════ -->
-<main id="content" class="hidden max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+<main id="content" class="hidden max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
 
-  <!-- HERO + RIGHT CARD -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-up">
+  <!-- ═══ HERO + RIGHT CARD ═══ -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 fade-up">
 
     <!-- HERO -->
-    <div class="lg:col-span-2 relative overflow-hidden rounded-[28px] shadow-premium-lg bg-slate-900 min-h-[440px] shine">
-      <div id="hero-bg" class="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950"></div>
-      <!-- Radial glow -->
-      <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(circle at 70% 40%, rgba(200,162,90,.10), transparent 55%)"></div>
+    <div class="lg:col-span-2 relative overflow-hidden rounded-[28px] min-h-[480px] hero-noise" style="background:linear-gradient(135deg,#0e1017,#06070a);border:1px solid var(--border);box-shadow:0 24px 64px rgba(0,0,0,.6)">
+      <div id="hero-bg" class="absolute inset-0" style="background:radial-gradient(circle at 30% 20%,rgba(201,168,106,.10),transparent 50%),linear-gradient(135deg,#0e1017,#06070a)"></div>
       <img id="hero-img" src="" alt=""
-        class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+        class="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms]"
         referrerpolicy="no-referrer"
         style="opacity:0;display:none">
-      <div class="absolute inset-0 gradient-hero"></div>
+      <div class="absolute inset-0 hero-overlay"></div>
 
-      <!-- TOP BADGES -->
-      <div class="absolute top-5 left-5 right-5 flex justify-between items-start gap-2 z-10">
-        <span id="status-badge" class="text-[11px] font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-xl bg-white/95 border border-white/60 tracking-wide"></span>
-        <span class="flex items-center gap-1.5 text-[10px] font-black bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-3 py-2 rounded-full shadow-emerald-glow tracking-wider uppercase">
-          <i class="fa-solid fa-shield-halved text-[9px]"></i> Təsdiqlənmiş
+      <!-- TOP BAR -->
+      <div class="absolute top-6 left-6 right-6 flex justify-between items-start gap-3 z-10">
+        <span id="status-badge" class="chip"></span>
+        <span class="chip chip-gold">
+          <i class="fa-solid fa-shield-halved text-[9px]"></i>
+          Təsdiqlənmiş
         </span>
       </div>
 
       <!-- BOTTOM INFO -->
-      <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-9 text-white z-10">
-        <div class="inline-flex items-center gap-2 text-[10px] font-black tracking-[0.25em] uppercase text-amber-300/90 mb-3">
-          <span class="w-6 h-px bg-amber-300/50"></span>
-          <i class="fa-solid fa-user"></i> Müştəri
+      <div class="absolute bottom-0 left-0 right-0 p-7 sm:p-10">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="gold-hairline h-px w-8"></span>
+          <span class="eyebrow" style="color:var(--gold);font-size:9px">Müştəri</span>
         </div>
-        <h2 id="owner-name" class="text-3xl sm:text-5xl font-black tracking-tight leading-[1.05] mb-2">-</h2>
-        <h3 id="car-model" class="text-lg sm:text-2xl font-bold text-white/80 mb-5">-</h3>
+
+        <h2 id="owner-name" class="display text-[34px] sm:text-[52px] leading-[1.02] mb-3" style="color:#fff"></h2>
+        <h3 id="car-model" class="text-lg sm:text-2xl font-light mb-7" style="color:rgba(255,255,255,.68);font-weight:400"></h3>
+
         <div class="flex flex-wrap items-center gap-2">
-          <span id="vin-pill" class="text-[11px] font-mono font-bold bg-white/10 backdrop-blur-xl border border-white/20 px-3.5 py-2 rounded-xl tracking-wider"></span>
-          <button onclick="copyVin()" class="text-[10px] font-black bg-white/10 hover:bg-white/20 active:scale-95 backdrop-blur-xl border border-white/20 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 uppercase tracking-wider">
-            <i class="fa-solid fa-copy text-[9px]"></i> Kopyala
+          <span id="vin-pill" class="glass-chip text-[11px] font-mono font-medium px-3.5 py-2 rounded-xl tracking-wider"></span>
+          <button onclick="copyVin()" class="glass-chip text-[11px] font-semibold px-3.5 py-2 rounded-xl transition-all active:scale-95 flex items-center gap-2 no-zoom">
+            <i class="fa-regular fa-copy text-[10px] opacity-80"></i>
+            Kopyala
           </button>
           <a id="auction-btn" href="" target="_blank" rel="noopener noreferrer"
-            class="hidden text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-gold tracking-wider uppercase active:scale-95">
-            <i class="fa-solid fa-gavel text-[10px]"></i> Hərraca Bax
-            <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+            class="hidden text-[11px] font-bold px-4 py-2 rounded-xl transition-all active:scale-95 flex items-center gap-2 no-zoom btn-gold">
+            <i class="fa-solid fa-gavel text-[10px]"></i>
+            Hərraca Bax
+            <i class="fa-solid fa-arrow-up-right-from-square text-[8px] opacity-70"></i>
           </a>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT SIDE CARD -->
-    <div class="bg-white rounded-[28px] shadow-premium border border-slate-200/60 p-5 sm:p-6 space-y-5 fade-up flex flex-col">
+    <!-- RIGHT CARD -->
+    <div class="card p-6 sm:p-7 space-y-6 fade-up flex flex-col" style="animation-delay:.1s">
 
       <!-- CURRENT STAGE -->
-      <div class="flex items-center gap-3.5 pb-5 border-b border-slate-100">
-        <div class="w-13 h-13 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-500/30" style="width:52px;height:52px">
-          <i class="fa-solid fa-route"></i>
-        </div>
-        <div class="min-w-0 flex-1">
-          <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Cari Mərhələ</p>
-          <p id="current-stage" class="text-base font-black text-slate-900 truncate mt-0.5">-</p>
+      <div>
+        <p class="eyebrow mb-3">Cari Mərhələ</p>
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg flex-shrink-0"
+            style="background:linear-gradient(135deg,rgba(201,168,106,.15),rgba(201,168,106,.03));border:1px solid rgba(201,168,106,.22);color:var(--gold-bright)">
+            <i class="fa-solid fa-route"></i>
+          </div>
+          <p id="current-stage" class="text-[17px] font-bold tracking-tight leading-tight truncate" style="color:var(--text)">-</p>
         </div>
       </div>
 
+      <div class="h-px w-full" style="background:linear-gradient(90deg,transparent,var(--border-strong),transparent)"></div>
+
       <!-- DAYS COUNTER -->
-      <div id="days-counter" class="relative overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 border border-amber-200/70 rounded-2xl p-4 text-center hidden">
-        <div class="absolute top-0 right-0 w-20 h-20 bg-amber-200/30 rounded-full -mr-10 -mt-10 blur-2xl"></div>
-        <p id="days-label" class="text-[10px] font-black text-amber-700 uppercase tracking-[0.15em] mb-1.5 relative">Potiyə Qalan</p>
-        <p id="days-num" class="text-4xl font-black text-amber-600 leading-none relative">0</p>
-        <p id="days-suffix" class="text-[11px] font-bold text-amber-700/80 mt-1 relative">gün</p>
+      <div id="days-counter" class="relative overflow-hidden rounded-2xl p-5 hidden" style="background:linear-gradient(135deg,rgba(201,168,106,.10),rgba(201,168,106,.02));border:1px solid rgba(201,168,106,.2)">
+        <div class="absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 pointer-events-none" style="background:radial-gradient(circle,rgba(201,168,106,.15),transparent 70%)"></div>
+        <p id="days-label" class="eyebrow relative" style="color:var(--gold)">Potiyə Qalan</p>
+        <div class="flex items-baseline gap-2 mt-2 relative">
+          <p id="days-num" class="display text-[42px] leading-none tabular-nums" style="color:var(--gold-bright)">0</p>
+          <p id="days-suffix" class="text-xs font-semibold mb-1" style="color:rgba(201,168,106,.8)">gün</p>
+        </div>
       </div>
 
       <!-- INFO ROWS -->
-      <div class="space-y-2.5">
-        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors">
-          <div class="w-9 h-9 bg-gradient-to-br from-amber-100 to-amber-200/70 text-amber-700 rounded-xl flex items-center justify-center text-xs shrink-0 shadow-sm">
+      <div class="space-y-1">
+        <div class="flex items-center gap-3.5 py-3 hairline-b">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] flex-shrink-0" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text-2)">
             <i class="fa-solid fa-location-dot"></i>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Yerləşmə</p>
-            <p id="location" class="text-xs font-bold text-slate-900 truncate mt-0.5">-</p>
+          <div class="min-w-0 flex-1">
+            <p class="eyebrow mb-1" style="font-size:8px">Yerləşmə</p>
+            <p id="location" class="text-[12px] font-semibold truncate" style="color:var(--text)">-</p>
           </div>
         </div>
-        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors">
-          <div class="w-9 h-9 bg-gradient-to-br from-blue-100 to-blue-200/70 text-blue-700 rounded-xl flex items-center justify-center text-xs shrink-0 shadow-sm">
+        <div class="flex items-center gap-3.5 py-3 hairline-b">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] flex-shrink-0" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text-2)">
             <i class="fa-solid fa-anchor"></i>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Liman</p>
-            <p id="shipping-port" class="text-xs font-bold text-slate-900 truncate mt-0.5">-</p>
+          <div class="min-w-0 flex-1">
+            <p class="eyebrow mb-1" style="font-size:8px">Liman</p>
+            <p id="shipping-port" class="text-[12px] font-semibold truncate" style="color:var(--text)">-</p>
           </div>
         </div>
-        <div class="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors">
-          <div class="w-9 h-9 bg-gradient-to-br from-indigo-100 to-indigo-200/70 text-indigo-700 rounded-xl flex items-center justify-center text-xs shrink-0 shadow-sm">
+        <div class="flex items-center gap-3.5 py-3">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] flex-shrink-0" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text-2)">
             <i class="fa-solid fa-box"></i>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Konteyner</p>
-            <p id="container" class="text-xs font-mono font-bold text-slate-900 truncate mt-0.5">-</p>
+          <div class="min-w-0 flex-1">
+            <p class="eyebrow mb-1" style="font-size:8px">Konteyner</p>
+            <p id="container" class="text-[12px] font-mono font-semibold truncate tracking-wider" style="color:var(--text)">-</p>
           </div>
         </div>
       </div>
 
-      <!-- ═══ SƏNƏDLƏŞMƏ & ÖDƏNİŞLƏR ═══ -->
-      <div class="pt-5 border-t border-slate-100">
-        <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3.5 flex items-center gap-2">
-          <span class="w-1 h-1 rounded-full bg-amber-400"></span>
-          <i class="fa-solid fa-clipboard-check"></i>
-          Sənədləşmə & Ödənişlər
-        </p>
+      <div class="h-px w-full" style="background:linear-gradient(90deg,transparent,var(--border-strong),transparent)"></div>
 
-        <div class="grid grid-cols-3 gap-2.5">
+      <!-- ═══ SƏNƏDLƏŞMƏ & ÖDƏNİŞLƏR (YENİ TƏMİZ DİZAYN) ═══ -->
+      <div>
+        <p class="eyebrow mb-2">Sənədləşmə & Ödənişlər</p>
+
+        <div class="space-y-0">
           <!-- ETİBARNAMƏ -->
-          <div id="doc-etibarname" class="doc-pill flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-300">
-            <div id="doc-etibarname-icon" class="w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 mb-2 transition-all duration-300">
+          <div id="doc-etibarname" class="doc-row">
+            <div id="doc-etibarname-icon" class="doc-icon">
               <i class="fa-solid fa-file-signature"></i>
             </div>
-            <p class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1 leading-none">Etibarnamə</p>
-            <p id="doc-etibarname-badge" class="text-[10px] font-black leading-none">-</p>
-            <p id="doc-etibarname-sub" class="text-[8px] truncate mt-1 opacity-80 font-medium leading-none w-full">-</p>
+            <div class="min-w-0 flex-1">
+              <p class="doc-label">Etibarnamə</p>
+              <p id="doc-etibarname-sub" class="doc-sub">-</p>
+            </div>
+            <span id="doc-etibarname-badge" class="chip">-</span>
           </div>
 
           <!-- YOL XƏRCİ -->
-          <div id="doc-shipping" class="doc-pill flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-300">
-            <div id="doc-shipping-icon" class="w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 mb-2 transition-all duration-300">
+          <div id="doc-shipping" class="doc-row">
+            <div id="doc-shipping-icon" class="doc-icon">
               <i class="fa-solid fa-money-bill-wave"></i>
             </div>
-            <p class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1 leading-none">Yol Xərci</p>
-            <p id="doc-shipping-badge" class="text-[10px] font-black leading-none">-</p>
-            <p id="doc-shipping-sub" class="text-[8px] truncate mt-1 opacity-80 font-medium leading-none w-full">-</p>
+            <div class="min-w-0 flex-1">
+              <p class="doc-label">Yol Xərci</p>
+              <p id="doc-shipping-sub" class="doc-sub">-</p>
+            </div>
+            <span id="doc-shipping-badge" class="chip">-</span>
           </div>
 
           <!-- KONTEYNER AÇILIŞI -->
-          <div id="doc-container-open" class="doc-pill flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-300">
-            <div id="doc-container-open-icon" class="w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 mb-2 transition-all duration-300">
+          <div id="doc-container-open" class="doc-row">
+            <div id="doc-container-open-icon" class="doc-icon">
               <i class="fa-solid fa-box-open"></i>
             </div>
-            <p class="text-[8px] font-black uppercase tracking-wider text-slate-500 mb-1 leading-none">Konteyner</p>
-            <p id="doc-container-open-badge" class="text-[10px] font-black leading-none">-</p>
-            <p id="doc-container-open-sub" class="text-[8px] truncate mt-1 opacity-80 font-medium leading-none w-full">-</p>
+            <div class="min-w-0 flex-1">
+              <p class="doc-label">Konteyner Açılışı</p>
+              <p id="doc-container-open-sub" class="doc-sub">-</p>
+            </div>
+            <span id="doc-container-open-badge" class="chip">-</span>
           </div>
         </div>
       </div>
 
       <!-- TRACK BUTTON -->
       <button id="track-container-btn" onclick="trackContainer()"
-        class="hidden w-full mt-auto py-3 bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 hover:from-indigo-700 hover:to-indigo-900 text-white rounded-2xl text-[11px] font-black items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/25 active:scale-[0.98] uppercase tracking-wider">
-        <i class="fa-solid fa-anchor"></i>
+        class="hidden w-full mt-auto py-3.5 rounded-2xl text-[12px] font-bold items-center justify-center gap-2.5 transition-all active:scale-[.98] no-zoom btn-ghost">
+        <i class="fa-solid fa-anchor text-[11px]"></i>
         <span id="track-btn-label">Konteyneri İzlə</span>
-        <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-70"></i>
+        <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-50"></i>
       </button>
     </div>
   </div>
 
-  <!-- ═══════════ TIMELINE ═══════════ -->
-  <div class="bg-white rounded-[28px] shadow-premium border border-slate-200/60 p-6 sm:p-8 fade-up">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-gradient-to-br from-slate-800 to-slate-950 text-white rounded-2xl flex items-center justify-center text-base shadow-lg shadow-slate-900/20">
-          <i class="fa-solid fa-route"></i>
-        </div>
-        <div>
-          <h3 class="text-lg font-black text-slate-900 tracking-tight">Logistika Yol Xəritəsi</h3>
-          <p class="text-[11px] text-slate-500 font-medium mt-0.5">Avtomobilinizin səyahət tarixçəsi</p>
-        </div>
+  <!-- ═══ TIMELINE ═══ -->
+  <div class="card p-6 sm:p-8 fade-up" style="animation-delay:.15s">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-7">
+      <div>
+        <p class="eyebrow mb-2">Logistika Yol Xəritəsi</p>
+        <h3 class="text-xl font-bold tracking-tight" style="color:var(--text)">Səyahət Tarixçəsi</h3>
       </div>
       <div class="flex items-center gap-3">
-        <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Ümumi İrəliləyiş</span>
-        <span id="progress-pct" class="text-sm font-black bg-gradient-to-br from-slate-800 to-slate-950 text-white px-4 py-2 rounded-full shadow-md tracking-wider">0%</span>
+        <span class="eyebrow" style="font-size:9px">İrəliləyiş</span>
+        <span id="progress-pct" class="text-sm font-bold tabular-nums px-3.5 py-1.5 rounded-xl" style="background:var(--gold-soft);color:var(--gold-bright);border:1px solid rgba(201,168,106,.25)">0%</span>
       </div>
     </div>
     <div id="timeline" class="space-y-1"></div>
   </div>
 
-  <!-- ═══════════ MEDIA ═══════════ -->
-  <div class="bg-white rounded-[28px] shadow-premium border border-slate-200/60 p-6 sm:p-8 fade-up">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-gradient-to-br from-slate-800 to-slate-950 text-white rounded-2xl flex items-center justify-center text-base shadow-lg shadow-slate-900/20">
-          <i class="fa-solid fa-images"></i>
-        </div>
-        <div>
-          <h3 class="text-lg font-black text-slate-900 tracking-tight">Avtomobil Media</h3>
-          <p class="text-[11px] text-slate-500 font-medium mt-0.5">Şəkillər və videolar kateqoriyalara görə</p>
-        </div>
+  <!-- ═══ MEDIA ═══ -->
+  <div class="card p-6 sm:p-8 fade-up" style="animation-delay:.2s">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+      <div>
+        <p class="eyebrow mb-2">Avtomobil Media</p>
+        <h3 class="text-xl font-bold tracking-tight" style="color:var(--text)">Şəkillər və Videolar</h3>
       </div>
       <div id="dl-bar" class="hidden flex gap-2">
-        <button onclick="downloadTabZip()" class="px-4 py-2.5 bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-[10px] font-black flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/25 active:scale-95 uppercase tracking-wider">
-          <i class="fa-solid fa-file-zipper"></i> Kateqoriya
+        <button onclick="downloadTabZip()" class="btn-ghost text-[11px] font-semibold px-3.5 py-2.5 rounded-xl flex items-center gap-2 no-zoom transition">
+          <i class="fa-solid fa-file-zipper text-[10px]"></i> Kateqoriya
         </button>
-        <button onclick="downloadAllZip()" class="px-4 py-2.5 bg-gradient-to-br from-slate-800 to-slate-950 hover:from-slate-900 hover:to-black text-white rounded-xl text-[10px] font-black flex items-center gap-2 transition-all shadow-lg shadow-slate-900/20 active:scale-95 uppercase tracking-wider">
-          <i class="fa-solid fa-box-archive"></i> Hamısı
+        <button onclick="downloadAllZip()" class="btn-gold text-[11px] font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-2 no-zoom">
+          <i class="fa-solid fa-box-archive text-[10px]"></i> Hamısı
         </button>
       </div>
     </div>
-    <div class="bg-slate-100/70 border border-slate-200/70 rounded-2xl p-1.5 flex gap-1.5 mb-6" id="tabs"></div>
+    <div class="rounded-2xl p-1 flex gap-1 mb-6" style="background:rgba(255,255,255,.02);border:1px solid var(--border)" id="tabs"></div>
     <div id="photo-area"></div>
   </div>
 
-  <p class="text-center text-[10px] text-slate-400 font-bold pt-8 pb-4 tracking-[0.2em] uppercase">© AuctionLand Logistika • Premium Müştəri Paneli</p>
+  <p class="eyebrow text-center pt-8 pb-4" style="font-size:9px">© AuctionLand Logistika</p>
 </main>
 
 <!-- ═══════════ LIGHTBOX ═══════════ -->
-<div id="lightbox" class="hidden fixed inset-0 z-[100] bg-black/98 backdrop-blur-md flex flex-col select-none">
-  <div class="flex items-center justify-between px-5 py-4 bg-gradient-to-b from-black/80 to-transparent shrink-0">
-    <span id="lb-counter" class="text-white text-sm font-black bg-white/10 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-full tracking-wider">1 / 1</span>
-    <button onclick="lbDownload()" class="flex items-center gap-2 px-4 py-2.5 bg-white/12 hover:bg-white/20 active:scale-95 text-white rounded-xl text-xs font-black transition-all backdrop-blur-xl border border-white/15 tracking-wider uppercase">
+<div id="lightbox" class="hidden fixed inset-0 z-[100] flex flex-col select-none" style="background:rgba(5,6,9,.98);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)">
+  <div class="flex items-center justify-between px-5 py-4 shrink-0" style="border-bottom:1px solid var(--border);background:rgba(5,6,9,.6)">
+    <span id="lb-counter" class="text-[12px] font-bold px-3.5 py-2 rounded-xl tabular-nums" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text-2)">1 / 1</span>
+    <button onclick="lbDownload()" class="text-[11px] font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-2 no-zoom" style="background:rgba(255,255,255,.05);border:1px solid var(--border-strong);color:var(--text)">
       <i class="fa-solid fa-arrow-down-to-line text-[10px]"></i> Yüklə
     </button>
-    <button onclick="closeLightbox()" class="w-11 h-11 flex items-center justify-center text-white/80 hover:text-white text-xl bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-full transition-all">
+    <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text-2)">
       <i class="fa-solid fa-xmark"></i>
     </button>
   </div>
   <div class="flex-1 flex items-center justify-center relative overflow-hidden" id="lb-area" style="touch-action:manipulation">
-    <button onclick="lbPrev()" class="absolute left-3 z-10 w-12 h-12 flex items-center justify-center bg-black/40 hover:bg-black/70 active:scale-90 text-white rounded-full text-base transition-all backdrop-blur-md border border-white/10">
-      <i class="fa-solid fa-chevron-left"></i></button>
-    <img id="lb-img" src="" class="max-h-full max-w-full object-contain px-16" draggable="false"
-      style="touch-action:manipulation;-webkit-user-drag:none;user-select:none;-webkit-user-select:none">
-    <button onclick="lbNext()" class="absolute right-3 z-10 w-12 h-12 flex items-center justify-center bg-black/40 hover:bg-black/70 active:scale-90 text-white rounded-full text-base transition-all backdrop-blur-md border border-white/10">
-      <i class="fa-solid fa-chevron-right"></i></button>
+    <button onclick="lbPrev()" class="absolute left-4 z-10 w-11 h-11 flex items-center justify-center rounded-full transition-all active:scale-90 no-zoom" style="background:rgba(255,255,255,.06);border:1px solid var(--border-strong);color:var(--text-2);backdrop-filter:blur(12px)">
+      <i class="fa-solid fa-chevron-left text-sm"></i>
+    </button>
+    <img id="lb-img" src="" class="max-h-full max-w-full object-contain px-16 no-zoom" draggable="false"
+      style="touch-action:manipulation;-webkit-user-drag:none;user-select:none">
+    <button onclick="lbNext()" class="absolute right-4 z-10 w-11 h-11 flex items-center justify-center rounded-full transition-all active:scale-90 no-zoom" style="background:rgba(255,255,255,.06);border:1px solid var(--border-strong);color:var(--text-2);backdrop-filter:blur(12px)">
+      <i class="fa-solid fa-chevron-right text-sm"></i>
+    </button>
   </div>
   <div id="lb-dots" class="flex justify-center gap-2 py-5 shrink-0"></div>
 </div>
 
 <!-- ═══════════ TOAST ═══════════ -->
-<div id="toast" class="fixed bottom-6 right-6 left-6 sm:left-auto z-[200] transform translate-y-24 opacity-0 transition-all duration-400 bg-slate-900/95 backdrop-blur-xl text-white px-5 py-4 rounded-2xl shadow-premium-lg flex items-center gap-3 border border-slate-700/50 max-w-md sm:max-w-xs">
-  <div id="toast-icon-wrap" class="bg-emerald-500 p-1.5 rounded-full shrink-0"><i id="toast-icon" class="fa-solid fa-check text-xs text-white"></i></div>
-  <span id="toast-msg" class="text-sm font-semibold"></span>
+<div id="toast" class="fixed bottom-6 right-6 left-6 sm:left-auto z-[200] transform translate-y-24 opacity-0 transition-all duration-300 px-4 py-3.5 rounded-2xl flex items-center gap-3 max-w-md sm:max-w-xs"
+  style="background:linear-gradient(180deg,#14151c,#0f1015);border:1px solid var(--border-strong);box-shadow:0 24px 64px rgba(0,0,0,.6)">
+  <div id="toast-icon-wrap" class="p-1.5 rounded-full shrink-0" style="background:var(--emerald)"><i id="toast-icon" class="fa-solid fa-check text-[10px] text-white"></i></div>
+  <span id="toast-msg" class="text-[12px] font-semibold" style="color:var(--text)"></span>
 </div>
 
 <script>
@@ -353,21 +671,16 @@ const DEFAULT_TRACKING_COMPANIES = {
 };
 
 function resolveTrackingCompany(d) {
-  if (d.trackingCompanyName && d.trackingUrl) {
-    return { name: d.trackingCompanyName, url: d.trackingUrl, base64Params: !!d.trackingBase64, paramsTemplate: d.trackingParamsTemplate || null };
-  }
-  if (d.trackingCompanyId && DEFAULT_TRACKING_COMPANIES[d.trackingCompanyId]) {
-    return DEFAULT_TRACKING_COMPANIES[d.trackingCompanyId];
-  }
+  if (d.trackingCompanyName && d.trackingUrl) return { name: d.trackingCompanyName, url: d.trackingUrl, base64Params: !!d.trackingBase64, paramsTemplate: d.trackingParamsTemplate || null };
+  if (d.trackingCompanyId && DEFAULT_TRACKING_COMPANIES[d.trackingCompanyId]) return DEFAULT_TRACKING_COMPANIES[d.trackingCompanyId];
   return null;
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   const token = params.get('t');
-  if (!token || token.length < 16) { showError('Link etibarsızdır. Zəhmət olmasa doğru linkdən istifadə edin.'); return; }
+  if (!token || token.length < 16) { showError('Link etibarsızdır.'); return; }
   await loadCar(token);
-
   document.addEventListener('keydown', e => {
     const lb = document.getElementById('lightbox');
     if (!lb.classList.contains('hidden')) {
@@ -376,7 +689,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       else if (e.key === 'Escape') closeLightbox();
     }
   });
-
   const lbArea = document.getElementById('lb-area');
   lbArea?.addEventListener('touchstart', e => { lbTouchStart = e.touches[0].clientX; }, { passive: true });
   lbArea?.addEventListener('touchend', e => {
@@ -392,14 +704,12 @@ async function loadCar(token) {
     if (!r.ok) throw new Error(`Server xətası: ${r.status}`);
     const data = await r.json();
     const car = data.car;
-
     const ph = car.photos || {};
     const normalizeCat = cat => Array.isArray(cat) ? { images: cat, videos: [] } : { images: cat?.images || [], videos: cat?.videos || [] };
     const catAuc = normalizeCat(ph.auction);
     const catA = normalizeCat(ph.anbar);
     const catT = normalizeCat(ph.poti);
     const mapVid = v => typeof v === 'string' ? { url: v, thumb: getVideoThumb(v) } : { url: v.url, thumb: v.thumb || getVideoThumb(v.url) };
-
     custData = {
       n: car.owner, m: car.model, v: car.vin, s: car.status,
       udus: car.udus, anbar: car.anbar, poti: car.poti, baki: car.baki,
@@ -415,11 +725,10 @@ async function loadCar(token) {
       trackingBase64: !!car.trackingBase64,
       ph: {
         auction: { images: catAuc.images.map(p => typeof p === 'string' ? p : p.url), videos: catAuc.videos.map(mapVid) },
-        anbar:   { images: catA.images.map(p => typeof p === 'string' ? p : p.url),   videos: catA.videos.map(mapVid) },
-        poti:    { images: catT.images.map(p => typeof p === 'string' ? p : p.url),   videos: catT.videos.map(mapVid) }
+        anbar: { images: catA.images.map(p => typeof p === 'string' ? p : p.url), videos: catA.videos.map(mapVid) },
+        poti: { images: catT.images.map(p => typeof p === 'string' ? p : p.url), videos: catT.videos.map(mapVid) }
       }
     };
-
     renderAll();
     document.getElementById('loading').classList.add('hidden');
     document.getElementById('content').classList.remove('hidden');
@@ -441,10 +750,8 @@ function renderHero() {
   const d = custData;
   const img = document.getElementById('hero-img');
   const bg = document.getElementById('hero-bg');
-
   let heroSrc = d.imageUrl;
   if (!heroSrc && d.ph?.auction?.images?.length) heroSrc = d.ph.auction.images[0];
-
   if (heroSrc) {
     img.style.opacity = '0';
     img.style.display = 'block';
@@ -458,30 +765,38 @@ function renderHero() {
     bg.style.display = 'block';
   }
 
-  const colors = {
-    'Auksionda': 'bg-amber-100 text-amber-900',
-    'Anbara gedir': 'bg-yellow-100 text-yellow-900',
-    'Anbarda': 'bg-blue-100 text-blue-900',
-    'Gəmidə': 'bg-indigo-100 text-indigo-900',
-    'Potidədir': 'bg-purple-100 text-purple-900',
-    'Bakıdadır': 'bg-emerald-100 text-emerald-900'
-  };
+  const statusStyle = {
+    'Auksionda': { bg: 'rgba(201,168,106,.14)', bd: 'rgba(201,168,106,.3)', c: '#e2c891' },
+    'Anbara gedir': { bg: 'rgba(201,168,106,.14)', bd: 'rgba(201,168,106,.3)', c: '#e2c891' },
+    'Anbarda': { bg: 'rgba(122,127,245,.14)', bd: 'rgba(122,127,245,.3)', c: '#a5a8ff' },
+    'Gəmidə': { bg: 'rgba(122,127,245,.14)', bd: 'rgba(122,127,245,.3)', c: '#a5a8ff' },
+    'Potidədir': { bg: 'rgba(201,168,106,.14)', bd: 'rgba(201,168,106,.3)', c: '#e2c891' },
+    'Bakıdadır': { bg: 'rgba(79,176,135,.14)', bd: 'rgba(79,176,135,.3)', c: '#7dd3a8' }
+  }[d.s] || { bg: 'rgba(255,255,255,.06)', bd: 'rgba(255,255,255,.12)', c: 'var(--text)' };
+
   const badge = document.getElementById('status-badge');
   badge.textContent = d.s || 'Gözlənilir';
-  badge.className = `text-[11px] font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-xl bg-white/95 border border-white/60 tracking-wide ${colors[d.s] || 'text-slate-900'}`;
+  badge.style.background = statusStyle.bg;
+  badge.style.borderColor = statusStyle.bd;
+  badge.style.color = statusStyle.c;
+  badge.className = 'chip';
+  badge.innerHTML = `<span class="chip-dot" style="background:${statusStyle.c};box-shadow:0 0 8px ${statusStyle.c}"></span>${d.s || 'Gözlənilir'}`;
 
   document.getElementById('owner-name').textContent = d.n || 'Müştəri';
   document.getElementById('car-model').textContent = d.m || 'Avtomobil';
-  document.getElementById('vin-pill').textContent = `VIN: ${d.v || '-'}`;
+  document.getElementById('vin-pill').textContent = `VIN · ${d.v || '-'}`;
 
   const auctionBtn = document.getElementById('auction-btn');
   if (d.auctionLink && d.auctionLink.trim()) { auctionBtn.href = d.auctionLink; auctionBtn.classList.remove('hidden'); }
   else auctionBtn.classList.add('hidden');
 
   const stageMap = {
-    'Auksionda': '🏷️ Auksion Uduşu', 'Anbara gedir': '🚛 Anbara Yolda',
-    'Anbarda': '🏭 Anbarda / Portda', 'Gəmidə': '🚢 Gəmidə (Okean)',
-    'Potidədir': '🇬🇪 Potidə Gözləyir', 'Bakıdadır': '🇦🇿 Bakıya Çatdı'
+    'Auksionda': 'Auksion Uduşu',
+    'Anbara gedir': 'Anbara Yolda',
+    'Anbarda': 'Anbarda / Portda',
+    'Gəmidə': 'Gəmidə (Okean)',
+    'Potidədir': 'Potidə Gözləyir',
+    'Bakıdadır': 'Bakıya Çatdı'
   };
   document.getElementById('current-stage').textContent = stageMap[d.s] || d.s || '-';
   document.getElementById('location').textContent = d.location || '-';
@@ -496,10 +811,7 @@ function renderHero() {
     trackBtn.classList.remove('hidden');
     trackBtn.classList.add('flex');
     if (trackLabel) trackLabel.textContent = `${company.name} ilə İzlə`;
-  } else {
-    trackBtn.classList.add('hidden');
-    trackBtn.classList.remove('flex');
-  }
+  } else { trackBtn.classList.add('hidden'); trackBtn.classList.remove('flex'); }
 
   const daysEl = document.getElementById('days-counter');
   if (d.poti && d.status !== 'Bakıdadır') {
@@ -540,7 +852,6 @@ function formatDate(val) {
 
 function updateDocRow(rowId, done, rawValue, doneText, notDoneText, doneSub) {
   const row = document.getElementById(rowId);
-  const icon = document.getElementById(rowId + '-icon');
   const sub = document.getElementById(rowId + '-sub');
   const badge = document.getElementById(rowId + '-badge');
   if (!row) return;
@@ -548,26 +859,23 @@ function updateDocRow(rowId, done, rawValue, doneText, notDoneText, doneSub) {
   const dateStr = formatDate(rawValue);
 
   if (done) {
-    row.className = 'doc-pill flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-300 bg-gradient-to-br from-emerald-50 to-emerald-100/40 border-emerald-200/70 shadow-soft';
-    icon.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 mb-2 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/30 transition-all duration-300';
-    sub.textContent = doneSub || (dateStr ? `📅 ${dateStr}` : 'Təsdiqlənib');
-    sub.className = 'text-[8px] font-bold text-emerald-700/70 truncate mt-1 leading-none w-full';
-    badge.textContent = '✓ ' + doneText;
-    badge.className = 'text-[10px] font-black text-emerald-800 leading-none';
+    row.className = 'doc-row done';
+    sub.textContent = doneSub || (dateStr ? dateStr : 'Təsdiqlənib');
+    sub.style.color = 'rgba(79,176,135,.75)';
+    badge.className = 'chip chip-ok';
+    badge.innerHTML = `<span class="chip-dot"></span>${doneText}`;
   } else {
-    row.className = 'doc-pill flex flex-col items-center text-center p-3 rounded-2xl border transition-all duration-300 bg-gradient-to-br from-rose-50 to-rose-100/40 border-rose-200/70 shadow-soft';
-    icon.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 mb-2 bg-gradient-to-br from-rose-400 to-rose-600 text-white shadow-lg shadow-rose-500/30 transition-all duration-300';
-    sub.textContent = 'Gözlənilir';
-    sub.className = 'text-[8px] font-bold text-rose-700/70 truncate mt-1 leading-none w-full';
-    badge.textContent = '✕ ' + notDoneText;
-    badge.className = 'text-[10px] font-black text-rose-800 leading-none';
+    row.className = 'doc-row pending';
+    sub.textContent = doneSub || 'Gözlənilir';
+    sub.style.color = 'rgba(217,122,122,.75)';
+    badge.className = 'chip chip-no';
+    badge.innerHTML = `<span class="chip-dot"></span>${notDoneText}`;
   }
 }
 
 function renderDocStatus() {
   const d = custData || {};
-
-  updateDocRow('doc-etibarname', isDone(d.etibarname), d.etibarname, 'Verilib', 'Verilməyib', isDone(d.etibarname) ? null : 'Gözlənilir');
+  updateDocRow('doc-etibarname', isDone(d.etibarname), d.etibarname, 'Verilib', 'Yoxdur', isDone(d.etibarname) ? null : 'Gözlənilir');
 
   const spRaw = d.shippingPaid;
   const spDone = isDone(spRaw);
@@ -580,7 +888,7 @@ function renderDocStatus() {
 
   const coRaw = d.containerOpenDate;
   const coDone = isDone(coRaw);
-  const coSub = coDone ? (formatDate(coRaw) ? `📅 ${formatDate(coRaw)}` : 'Açılıb') : null;
+  const coSub = coDone ? (formatDate(coRaw) ? formatDate(coRaw) : 'Açılıb') : null;
   updateDocRow('doc-container-open', coDone, coRaw, 'Açılıb', 'Açılmayıb', coSub);
 }
 
@@ -592,12 +900,10 @@ function renderTimeline() {
     { key: 'poti', label: 'Poti Çatdırılma', icon: '🇬🇪', date: d.poti, done: !!d.poti },
     { key: 'baki', label: 'Bakı Çatdırılma', icon: '🇦🇿', date: d.baki, done: !!d.baki }
   ];
-
   let activeStep = 0;
   steps.forEach((s, i) => { if (s.done) activeStep = i + 1; });
   const pct = Math.round((activeStep / steps.length) * 100);
   document.getElementById('progress-pct').textContent = `${pct}%`;
-
   const today = todayStr();
 
   const html = steps.map((s, i) => {
@@ -606,18 +912,16 @@ function renderTimeline() {
     const future = i >= activeStep;
     const isLast = i === steps.length - 1;
 
-    let circleCls = '';
-    if (past) circleCls = 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-500/35';
-    else if (active) circleCls = 'bg-gradient-to-br from-indigo-500 to-indigo-700 text-white border-indigo-600 shadow-lg shadow-indigo-500/40 ring-4 ring-indigo-100';
-    else circleCls = 'bg-white text-slate-300 border-slate-200 shadow-sm';
-
-    const lineCls = past ? 'bg-gradient-to-b from-emerald-400 to-emerald-300' : 'bg-slate-200';
+    let circleCls = 'tl-circle';
+    if (past) circleCls += ' done';
+    else if (active) circleCls += ' active glow-gold';
+    else circleCls += ' future';
 
     let dayDiffText = '';
     if (past && !isLast && s.date && steps[i + 1]?.date) {
       const diff = diffDays(s.date, steps[i + 1].date);
       if (diff !== null && !isNaN(diff) && diff >= 0) {
-        dayDiffText = `<p class="text-[10px] text-slate-500 mt-1.5 font-bold flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>${diff} gün çəkdi</p>`;
+        dayDiffText = `<p class="text-[10px] mt-2 font-medium flex items-center gap-2" style="color:var(--text-3)"><span class="w-3 h-px" style="background:var(--emerald)"></span>${diff} gün</p>`;
       }
     }
 
@@ -632,25 +936,21 @@ function renderTimeline() {
         if (total !== null && total > 0) {
           const clampedElapsed = Math.max(0, Math.min(total, elapsed ?? 0));
           const progressPct = Math.round((clampedElapsed / total) * 100);
-          const remainTxt = remaining === null ? '' : (remaining >= 0 ? `⏳ <b>${remaining}</b> gün qaldı` : `⚠️ <b>${Math.abs(remaining)}</b> gün gecikib`);
-          const remainColor = remaining >= 0 ? 'text-amber-700' : 'text-rose-700';
+          const remainTxt = remaining === null ? '' : (remaining >= 0 ? `${remaining} gün qaldı` : `${Math.abs(remaining)} gün gecikib`);
+          const remainColor = remaining >= 0 ? 'rgba(201,168,106,.9)' : 'rgba(217,122,122,.9)';
 
           progressHtml = `
-            <div class="mt-3 bg-gradient-to-br from-indigo-50 via-blue-50 to-indigo-50 border border-indigo-200/70 rounded-2xl p-4 shadow-soft">
-              <div class="flex items-center justify-between mb-2.5">
-                <span class="text-[9px] font-black text-indigo-700 uppercase tracking-[0.15em] flex items-center gap-1.5">
-                  <i class="fa-solid fa-chart-line"></i> İrəliləyiş
-                </span>
-                <span class="text-base font-black text-indigo-900 tabular-nums">${progressPct}%</span>
+            <div class="mt-3 rounded-2xl p-4" style="background:rgba(255,255,255,.02);border:1px solid var(--border)">
+              <div class="flex items-center justify-between mb-3">
+                <span class="eyebrow" style="font-size:9px">İrəliləyiş</span>
+                <span class="text-[15px] font-bold tabular-nums" style="color:var(--gold-bright)">${progressPct}%</span>
               </div>
-              <div class="w-full h-2.5 bg-white rounded-full overflow-hidden border border-indigo-100 relative">
-                <div class="h-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-blue-600 rounded-full transition-all duration-700 relative overflow-hidden" style="width:${progressPct}%">
-                  <div class="absolute inset-0 shimmer"></div>
-                </div>
+              <div class="progress-track">
+                <div class="progress-fill" style="width:${progressPct}%"></div>
               </div>
-              <div class="flex justify-between mt-3 text-[10px] font-black">
-                <span class="text-indigo-700 flex items-center gap-1"><i class="fa-solid fa-calendar-check text-[9px]"></i> Keçdi: ${clampedElapsed} gün</span>
-                <span class="${remainColor}">${remainTxt}</span>
+              <div class="flex justify-between mt-3">
+                <span class="text-[10px] font-semibold" style="color:var(--text-3)">${clampedElapsed} / ${total} gün</span>
+                <span class="text-[10px] font-bold" style="color:${remainColor}">${remainTxt}</span>
               </div>
             </div>`;
         }
@@ -659,27 +959,26 @@ function renderTimeline() {
 
     return `
       <div class="relative flex items-start gap-4 ${isLast ? '' : 'pb-7'}">
-        ${!isLast ? `<div class="absolute left-[22px] top-12 bottom-0 w-[3px] ${lineCls} rounded-full"></div>` : ''}
-        <div class="relative shrink-0 w-11 h-11 rounded-full border-2 flex items-center justify-center text-base font-black ${circleCls} z-10">
-          ${past ? '<i class="fa-solid fa-check text-sm"></i>' : active ? '📍' : s.icon}
-          ${active ? '<span class="pulse-ring absolute inset-0 rounded-full bg-indigo-400 opacity-50"></span>' : ''}
+        ${!isLast ? `<div class="tl-line ${past ? 'done' : ''}"></div>` : ''}
+        <div class="${circleCls}">
+          ${past ? '<i class="fa-solid fa-check text-[13px]"></i>' : active ? '<i class="fa-solid fa-location-dot text-[13px]"></i>' : `<span class="text-[15px]">${s.icon}</span>`}
+          ${active ? '<span class="pulse-ring absolute inset-0 rounded-full" style="background:rgba(201,168,106,.35)"></span>' : ''}
         </div>
-        <div class="flex-1 min-w-0 pt-1.5">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <h4 class="text-[13px] font-black ${past ? 'text-emerald-800' : active ? 'text-indigo-900' : 'text-slate-400'} tracking-tight">
+        <div class="flex-1 min-w-0 pt-2">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
+            <h4 class="text-[13px] font-bold tracking-tight" style="color:${past ? 'var(--text)' : active ? 'var(--text)' : 'var(--text-3)'}">
               ${s.label}
-              ${active ? '<span class="ml-2 text-[9px] font-black bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-2.5 py-1 rounded-full tracking-wider shadow-sm">CARİ</span>' : ''}
+              ${active ? '<span class="ml-2 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider" style="background:var(--gold-soft);color:var(--gold-bright);border:1px solid rgba(201,168,106,.25)">AKTİV</span>' : ''}
             </h4>
             ${s.date
-              ? `<span class="text-[11px] font-mono font-bold ${past ? 'text-emerald-700 bg-emerald-50/80 border-emerald-200/70' : 'text-indigo-700 bg-indigo-50/80 border-indigo-200/70'} px-3 py-1.5 rounded-lg border tracking-wider">${s.date}</span>`
-              : `<span class="text-[11px] font-bold text-slate-400 italic">${future ? 'Gözlənilir' : 'Təyin edilməyib'}</span>`}
+              ? `<span class="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-lg tracking-wider" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:${past ? 'var(--text-2)' : 'var(--gold-bright)'}">${s.date}</span>`
+              : `<span class="text-[10px] font-medium italic" style="color:var(--text-3)">${future ? 'Gözlənilir' : 'Təyin edilməyib'}</span>`}
           </div>
           ${dayDiffText}
           ${progressHtml}
         </div>
       </div>`;
   }).join('');
-
   document.getElementById('timeline').innerHTML = html;
 }
 
@@ -692,20 +991,17 @@ function renderTabs() {
   const ph = custData.ph || {};
   const totalVideos = (ph.auction?.videos?.length || 0) + (ph.anbar?.videos?.length || 0) + (ph.poti?.videos?.length || 0);
   const totalImages = (ph.auction?.images?.length || 0) + (ph.anbar?.images?.length || 0) + (ph.poti?.images?.length || 0);
-
   const tabs = [
-    { key: 'auction', label: '🏷️ Auksion', count: (ph.auction?.images?.length || 0) + (ph.auction?.videos?.length || 0) },
-    { key: 'anbar', label: '🏭 Anbar', count: (ph.anbar?.images?.length || 0) + (ph.anbar?.videos?.length || 0) },
-    { key: 'poti', label: '🇬🇪 Poti', count: (ph.poti?.images?.length || 0) + (ph.poti?.videos?.length || 0) },
-    { key: 'videolar', label: '🎬 Video', count: totalVideos }
+    { key: 'auction', label: 'Auksion', count: (ph.auction?.images?.length || 0) + (ph.auction?.videos?.length || 0) },
+    { key: 'anbar', label: 'Anbar', count: (ph.anbar?.images?.length || 0) + (ph.anbar?.videos?.length || 0) },
+    { key: 'poti', label: 'Poti', count: (ph.poti?.images?.length || 0) + (ph.poti?.videos?.length || 0) },
+    { key: 'videolar', label: 'Video', count: totalVideos }
   ];
-
   document.getElementById('tabs').innerHTML = tabs.map(t => `
-    <button onclick="setTab('${t.key}')" class="flex-1 py-2.5 px-2 rounded-xl text-[11px] font-black transition-all duration-300 flex items-center justify-center gap-1.5 active:scale-95 tracking-wider ${custTab === t.key ? 'bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-md' : 'text-slate-600 hover:bg-white/70'}">
+    <button onclick="setTab('${t.key}')" class="tab-btn ${custTab === t.key ? 'active' : ''} no-zoom">
       ${t.label}
-      <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black ${custTab === t.key ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'}">${t.count}</span>
+      <span class="tab-count">${t.count}</span>
     </button>`).join('');
-
   if (totalImages > 0) document.getElementById('dl-bar').classList.remove('hidden');
 }
 
@@ -715,21 +1011,19 @@ function renderPhotos() {
   const ph = custData.ph || {};
   const area = document.getElementById('photo-area');
   if (custTab === 'videolar') return renderAllVideos();
-
   const cat = ph[custTab] || { images: [], videos: [] };
   const images = cat.images || [], videos = cat.videos || [];
 
   if (!images.length && !videos.length) {
     const emptyMsg = {
-      auction: { icon: '🏷️', title: 'Hələ auksion şəkli yoxdur', hint: 'Admin tərəfindən yüklənəcək' },
-      anbar: { icon: '🏭', title: 'Anbar şəkilləri yoxdur', hint: 'Admin tərəfindən yüklənəcək' },
-      poti: { icon: '🇬🇪', title: 'Poti şəkilləri yoxdur', hint: 'Admin tərəfindən yüklənəcək' }
-    }[custTab] || { icon: '📷', title: 'Media yoxdur', hint: '' };
-
+      auction: { icon: '🏷️', title: 'Auksion şəkli yoxdur' },
+      anbar: { icon: '🏭', title: 'Anbar şəkli yoxdur' },
+      poti: { icon: '🇬🇪', title: 'Poti şəkli yoxdur' }
+    }[custTab] || { icon: '📷', title: 'Media yoxdur' };
     area.innerHTML = `<div class="text-center py-20">
-      <div class="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-4 text-5xl shadow-soft">${emptyMsg.icon}</div>
-      <h3 class="text-base font-black text-slate-700">${emptyMsg.title}</h3>
-      <p class="text-[11px] text-slate-400 mt-1.5 font-medium">${emptyMsg.hint}</p>
+      <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text-3)">${emptyMsg.icon}</div>
+      <h3 class="text-sm font-semibold" style="color:var(--text-2)">${emptyMsg.title}</h3>
+      <p class="eyebrow mt-2" style="font-size:9px">Admin tərəfindən yüklənəcək</p>
     </div>`;
     return;
   }
@@ -737,19 +1031,19 @@ function renderPhotos() {
   area.innerHTML = `
     ${images.length > 0 ? `
     <div class="mb-7">
-      <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2.5">
-        <span class="w-1 h-1 rounded-full bg-indigo-500"></span>
-        📷 Şəkillər
-        <span class="bg-slate-200/80 text-slate-700 text-[10px] px-2.5 py-0.5 rounded-full font-black">${images.length}</span>
-      </h4>
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="eyebrow">Şəkillər</span>
+        <span class="h-px flex-1" style="background:var(--border)"></span>
+        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full tabular-nums" style="background:var(--gold-soft);color:var(--gold-bright);border:1px solid rgba(201,168,106,.2)">${images.length}</span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         ${images.map((url, i) => `
-          <div class="photo-grid-item group" onclick="openLightbox(${i})">
+          <div class="photo-grid-item group no-zoom" onclick="openLightbox(${i})">
             <img src="${url}" loading="lazy" alt="" referrerpolicy="no-referrer">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <span class="text-[10px] font-black text-white bg-black/60 backdrop-blur px-2.5 py-1 rounded-full tracking-wider">${i + 1} / ${images.length}</span>
-              <span class="w-8 h-8 bg-white/95 rounded-full flex items-center justify-center text-slate-900 text-xs shadow-lg">
+            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style="background:linear-gradient(to top,rgba(0,0,0,.75),transparent 60%)"></div>
+            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <span class="text-[10px] font-bold text-white px-2.5 py-1 rounded-lg tabular-nums" style="background:rgba(0,0,0,.5);backdrop-filter:blur(12px)">${i + 1} / ${images.length}</span>
+              <span class="w-7 h-7 rounded-lg flex items-center justify-center text-[11px]" style="background:rgba(255,255,255,.95);color:#0a0a0d">
                 <i class="fa-solid fa-expand"></i>
               </span>
             </div>
@@ -758,22 +1052,22 @@ function renderPhotos() {
     </div>` : ''}
     ${videos.length > 0 ? `
     <div>
-      <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2.5">
-        <span class="w-1 h-1 rounded-full bg-purple-500"></span>
-        🎬 Videolar
-        <span class="bg-slate-200/80 text-slate-700 text-[10px] px-2.5 py-0.5 rounded-full font-black">${videos.length}</span>
-      </h4>
-      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="eyebrow">Videolar</span>
+        <span class="h-px flex-1" style="background:var(--border)"></span>
+        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full tabular-nums" style="background:var(--indigo-soft);color:#a5a8ff;border:1px solid rgba(122,127,245,.2)">${videos.length}</span>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
         ${videos.map((v, i) => `
-          <div class="group relative rounded-2xl overflow-hidden shadow-soft hover:shadow-premium border border-slate-200/70 cursor-pointer transition-all duration-300 tap" style="aspect-ratio:16/9" onclick="window.open('${v.url}','_blank')">
-            <img src="${v.thumb}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" alt="">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/75 transition-all"></div>
+          <div class="group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 no-zoom" style="aspect-ratio:16/9;background:var(--bg-elev-2);border:1px solid var(--border)" onclick="window.open('${v.url}','_blank')">
+            <img src="${v.thumb}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" alt="">
+            <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,.7),transparent 60%)"></div>
             <div class="absolute inset-0 flex items-center justify-center">
-              <span class="w-14 h-14 bg-white/95 group-hover:bg-white rounded-full flex items-center justify-center text-slate-900 text-lg shadow-lg group-hover:scale-110 transition-transform">
-                <i class="fa-solid fa-play ml-0.5"></i>
+              <span class="w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110" style="background:rgba(255,255,255,.95);color:#0a0a0d">
+                <i class="fa-solid fa-play ml-0.5 text-[13px]"></i>
               </span>
             </div>
-            <span class="absolute bottom-2.5 right-2.5 text-[10px] font-black text-white bg-black/60 backdrop-blur px-2.5 py-1 rounded-full tracking-wider">${i + 1} / ${videos.length}</span>
+            <span class="absolute bottom-2.5 right-2.5 text-[10px] font-bold text-white px-2 py-1 rounded-lg tabular-nums" style="background:rgba(0,0,0,.5);backdrop-filter:blur(12px)">${i + 1} / ${videos.length}</span>
           </div>`).join('')}
       </div>
     </div>` : ''}`;
@@ -783,31 +1077,29 @@ function renderAllVideos() {
   const ph = custData.ph || {};
   const area = document.getElementById('photo-area');
   const sections = [
-    { key: 'auction', label: '🏷️ Auksion', videos: ph.auction?.videos || [] },
-    { key: 'anbar', label: '🏭 Anbar', videos: ph.anbar?.videos || [] },
-    { key: 'poti', label: '🇬🇪 Poti', videos: ph.poti?.videos || [] }
+    { key: 'auction', label: 'Auksion', videos: ph.auction?.videos || [] },
+    { key: 'anbar', label: 'Anbar', videos: ph.anbar?.videos || [] },
+    { key: 'poti', label: 'Poti', videos: ph.poti?.videos || [] }
   ];
   const total = sections.reduce((s, x) => s + x.videos.length, 0);
   if (total === 0) {
-    area.innerHTML = `<div class="text-center py-20"><div class="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-4 text-5xl shadow-soft">🎬</div><h3 class="text-base font-black text-slate-700">Hələ video yoxdur</h3></div>`;
+    area.innerHTML = `<div class="text-center py-20"><div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text-3)">🎬</div><h3 class="text-sm font-semibold" style="color:var(--text-2)">Video yoxdur</h3></div>`;
     return;
   }
   area.innerHTML = sections.filter(s => s.videos.length > 0).map(sec => `
     <div class="mb-7">
-      <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2.5">
-        <span class="w-1 h-1 rounded-full bg-purple-500"></span>
-        ${sec.label}
-        <span class="bg-slate-200/80 text-slate-700 text-[10px] px-2.5 py-0.5 rounded-full font-black">${sec.videos.length}</span>
-      </h4>
-      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="eyebrow">${sec.label}</span>
+        <span class="h-px flex-1" style="background:var(--border)"></span>
+        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full tabular-nums" style="background:var(--indigo-soft);color:#a5a8ff;border:1px solid rgba(122,127,245,.2)">${sec.videos.length}</span>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
         ${sec.videos.map(v => `
-          <div class="group relative rounded-2xl overflow-hidden shadow-soft hover:shadow-premium border border-slate-200/70 cursor-pointer transition-all duration-300 tap" style="aspect-ratio:16/9" onclick="window.open('${v.url}','_blank')">
-            <img src="${v.thumb}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" alt="">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/75 transition-all"></div>
+          <div class="group relative rounded-2xl overflow-hidden cursor-pointer transition-all no-zoom" style="aspect-ratio:16/9;background:var(--bg-elev-2);border:1px solid var(--border)" onclick="window.open('${v.url}','_blank')">
+            <img src="${v.thumb}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" alt="">
+            <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,.7),transparent 60%)"></div>
             <div class="absolute inset-0 flex items-center justify-center">
-              <span class="w-14 h-14 bg-white/95 rounded-full flex items-center justify-center text-slate-900 text-lg shadow-lg group-hover:scale-110 transition-transform">
-                <i class="fa-solid fa-play ml-0.5"></i>
-              </span>
+              <span class="w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110" style="background:rgba(255,255,255,.95);color:#0a0a0d"><i class="fa-solid fa-play ml-0.5 text-[13px]"></i></span>
             </div>
           </div>`).join('')}
       </div>
@@ -834,7 +1126,7 @@ function renderLightbox() {
   document.getElementById('lb-img').src = lbPhotos[lbIndex];
   document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${lbPhotos.length}`;
   document.getElementById('lb-dots').innerHTML = lbPhotos.map((_, i) =>
-    `<span onclick="lbGoTo(${i})" class="w-2 h-2 rounded-full cursor-pointer transition-all ${i === lbIndex ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'}"></span>`
+    `<span onclick="lbGoTo(${i})" class="w-1.5 h-1.5 rounded-full cursor-pointer transition-all ${i === lbIndex ? 'scale-150' : ''}" style="${i === lbIndex ? 'background:var(--gold)' : 'background:rgba(255,255,255,.25)'}"></span>`
   ).join('');
 }
 
@@ -850,12 +1142,12 @@ async function lbDownload() {
     a.href = URL.createObjectURL(b);
     a.download = `auctionland_${Date.now()}.jpg`;
     a.click();
-    showToast('Şəkil yükləndi!', 'success');
+    showToast('Şəkil yükləndi', 'success');
   } catch { window.open(url, '_blank'); }
 }
 
 async function downloadTabZip() {
-  if (custTab === 'videolar') { showToast('Videolar ZIP kimi yüklənə bilməz', 'info'); return; }
+  if (custTab === 'videolar') { showToast('Videolar ZIP olaraq yüklənə bilməz', 'info'); return; }
   const photos = custData.ph[custTab]?.images || [];
   if (!photos.length) { showToast('Şəkil yoxdur', 'error'); return; }
   await downloadZip({ [custTab]: photos }, `${custData.m}_${custTab}`);
@@ -883,28 +1175,27 @@ async function downloadZip(byCategory, baseName) {
   if (!total) { showToast('Şəkillər yüklənə bilmədi', 'error'); return; }
   const content = await zip.generateAsync({ type: 'blob' });
   saveAs(content, `${baseName}-Şəkillər.zip`);
-  showToast(`${total} şəkil yükləndi!`, 'success');
+  showToast(`${total} şəkil yükləndi`, 'success');
 }
 
 function trackContainer() {
   const d = custData;
   if (!d) return;
-  if (!d.container || !d.container.trim() || d.container === '-') { showToast('⚠️ Konteyner kodu yoxdur', 'error'); return; }
+  if (!d.container || !d.container.trim() || d.container === '-') { showToast('Konteyner kodu yoxdur', 'error'); return; }
   const company = resolveTrackingCompany(d);
-  if (!company || !company.url) { showToast('⚠️ İzləmə linki təyin edilməyib', 'error'); return; }
+  if (!company || !company.url) { showToast('İzləmə linki təyin edilməyib', 'error'); return; }
   const companyName = company.name || 'Şirkət';
-
   if (company.base64Params && company.paramsTemplate) {
     const resolved = company.paramsTemplate.split('{konteyner}').join(d.container);
     const b64 = btoa(unescape(encodeURIComponent(resolved)));
     const sep = company.url.includes('?') ? '&' : '?';
     copyToClipboard(d.container).catch(() => {});
-    showToast(`🔎 ${companyName} açılır...`, 'info');
+    showToast(`${companyName} açılır...`, 'info');
     window.open(`${company.url}${sep}params=${encodeURIComponent(b64)}`, '_blank');
     return;
   }
   if (company.url.includes('{konteyner}')) { window.open(company.url.split('{konteyner}').join(encodeURIComponent(d.container)), '_blank'); return; }
-  copyToClipboard(d.container).then(() => showToast('📋 Konteyner kopyalandı', 'success')).catch(() => {});
+  copyToClipboard(d.container).then(() => showToast('Konteyner kopyalandı', 'success')).catch(() => {});
   window.open(company.url, '_blank');
 }
 
@@ -943,15 +1234,15 @@ function getDaysToPoti(p) {
   return Math.ceil((dt - t) / 86400000);
 }
 
-function copyVin() { if (!custData?.v) return; navigator.clipboard.writeText(custData.v).then(() => showToast('VIN kopyalandı!', 'success')); }
+function copyVin() { if (!custData?.v) return; navigator.clipboard.writeText(custData.v).then(() => showToast('VIN kopyalandı', 'success')); }
 
 function showToast(msg, type = 'info') {
   const toast = document.getElementById('toast');
   const wrap = document.getElementById('toast-icon-wrap');
   const icon = document.getElementById('toast-icon');
   document.getElementById('toast-msg').textContent = msg;
-  wrap.className = 'p-1.5 rounded-full shrink-0 ' + (type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-rose-500' : 'bg-slate-500');
-  icon.className = 'fa-solid text-xs text-white ' + (type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info');
+  wrap.style.background = type === 'success' ? 'var(--emerald)' : type === 'error' ? 'var(--rose)' : 'var(--text-3)';
+  icon.className = 'fa-solid text-[10px] text-white ' + (type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info');
   toast.classList.remove('translate-y-24', 'opacity-0');
   toast.classList.add('translate-y-0', 'opacity-100');
   clearTimeout(window._toastTimer);
