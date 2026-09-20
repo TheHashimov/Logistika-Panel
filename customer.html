@@ -81,7 +81,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 fade-up">
     <!-- HERO -->
     <div class="lg:col-span-2 relative overflow-hidden rounded-3xl shadow-2xl bg-slate-900 min-h-[400px]">
-      <img id="hero-img" src="" alt="" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'">
+      <!-- Gradient fallback arxa fon -->
+      <div id="hero-bg" class="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-950"></div>
+      <!-- Hero şəkil -->
+      <img id="hero-img" src="" alt=""
+        class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700"
+        referrerpolicy="no-referrer"
+        crossorigin="anonymous"
+        onload="this.classList.remove('opacity-0')"
+        onerror="this.style.display='none'">
       <div class="absolute inset-0 gradient-hero"></div>
       <div class="absolute top-4 left-4 right-4 flex justify-between items-start gap-2">
         <span id="status-badge" class="text-xs font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-md bg-white/95 border border-white/50"></span>
@@ -100,6 +108,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
           <button onclick="copyVin()" class="text-[10px] font-bold bg-white/15 hover:bg-white/25 backdrop-blur border border-white/25 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
             <i class="fa-solid fa-copy"></i> Kopyala
           </button>
+          <a id="auction-btn" href="" target="_blank" rel="noopener noreferrer"
+            class="hidden text-[11px] font-bold bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-amber-500/30">
+            <i class="fa-solid fa-gavel"></i> Hərraca Bax
+            <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+          </a>
         </div>
       </div>
     </div>
@@ -216,9 +229,6 @@ let custData = null;
 let custTab = 'pikap';
 let lbPhotos = [], lbIndex = 0, lbTouchStart = 0;
 
-/* ============================
-   TOKEN YOXLAMA
-   ============================ */
 window.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   const token = params.get('t');
@@ -227,7 +237,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     return;
   }
   await loadCar(token);
-  
+
   document.addEventListener('keydown', e => {
     const lb = document.getElementById('lightbox');
     if (!lb.classList.contains('hidden')) {
@@ -236,7 +246,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       else if (e.key === 'Escape') closeLightbox();
     }
   });
-  
+
   const lbArea = document.getElementById('lb-area');
   lbArea?.addEventListener('touchstart', e => { lbTouchStart = e.touches[0].clientX; }, { passive: true });
   lbArea?.addEventListener('touchend', e => {
@@ -245,9 +255,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-/* ============================
-   YÜKLƏMƏ
-   ============================ */
 async function loadCar(token) {
   try {
     const r = await fetch(`/api/customer?t=${encodeURIComponent(token)}`);
@@ -255,7 +262,7 @@ async function loadCar(token) {
     if (!r.ok) throw new Error(`Server xətası: ${r.status}`);
     const data = await r.json();
     const car = data.car;
-    
+
     const ph = car.photos || {};
     const normalizeCat = cat => Array.isArray(cat) ? { images: cat, videos: [] } : { images: cat?.images || [], videos: cat?.videos || [] };
     const catP = normalizeCat(ph.pikap), catA = normalizeCat(ph.anbar), catT = normalizeCat(ph.poti);
@@ -266,14 +273,15 @@ async function loadCar(token) {
       udus: car.udus, anbar: car.anbar, poti: car.poti, baki: car.baki,
       etibarname: car.etibarname, shippingPaid: car.shippingPaid,
       location: car.location, shippingPort: car.shippingPort, container: car.container,
-      imageUrl: car.imageUrl || '',
+      imageUrl: car.imageUrl || car.image || '',
+      auctionLink: car.link || '',
       ph: {
         pikap: { images: catP.images.map(p => typeof p === 'string' ? p : p.url), videos: catP.videos.map(mapVid) },
         anbar: { images: catA.images.map(p => typeof p === 'string' ? p : p.url), videos: catA.videos.map(mapVid) },
         poti: { images: catT.images.map(p => typeof p === 'string' ? p : p.url), videos: catT.videos.map(mapVid) }
       }
     };
-    
+
     renderAll();
     document.getElementById('loading').classList.add('hidden');
     document.getElementById('content').classList.remove('hidden');
@@ -298,17 +306,22 @@ function renderAll() {
   renderPhotos();
 }
 
-/* ============================
-   HERO
-   ============================ */
+/* HERO */
 function renderHero() {
   const d = custData;
-  
-  /* Şəkil */
+
+  /* Şəkil + gradient fallback */
   const img = document.getElementById('hero-img');
-  if (d.imageUrl) { img.src = d.imageUrl; img.style.display = 'block'; }
-  else { img.style.display = 'none'; }
-  
+  const bg = document.getElementById('hero-bg');
+  if (d.imageUrl) {
+    img.src = d.imageUrl;
+    img.style.display = 'block';
+    bg.style.display = 'none';   /* gradient gizlət */
+  } else {
+    img.style.display = 'none';
+    bg.style.display = 'block';  /* gradient göstər */
+  }
+
   /* Status badge */
   const colors = {
     'Auksionda': 'bg-amber-100 text-amber-900',
@@ -321,12 +334,21 @@ function renderHero() {
   const badge = document.getElementById('status-badge');
   badge.textContent = d.s || 'Gözlənilir';
   badge.className = `text-xs font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-md border border-white/50 ${colors[d.s] || 'bg-white text-slate-900'}`;
-  
-  /* Ad + Model */
+
+  /* Ad + Model + VIN */
   document.getElementById('owner-name').textContent = d.n || 'Müştəri';
   document.getElementById('car-model').textContent = d.m || 'Avtomobil';
   document.getElementById('vin-pill').textContent = `VIN: ${d.v || '-'}`;
-  
+
+  /* Hərrac linki */
+  const auctionBtn = document.getElementById('auction-btn');
+  if (d.auctionLink && d.auctionLink.trim()) {
+    auctionBtn.href = d.auctionLink;
+    auctionBtn.classList.remove('hidden');
+  } else {
+    auctionBtn.classList.add('hidden');
+  }
+
   /* Cari mərhələ */
   const stageMap = {
     'Auksionda': '🏷️ Auksion Uduşu',
@@ -337,12 +359,12 @@ function renderHero() {
     'Bakıdadır': '🇦🇿 Bakıya Çatdı'
   };
   document.getElementById('current-stage').textContent = stageMap[d.s] || d.s || '-';
-  
+
   /* Detallar */
   document.getElementById('location').textContent = d.location || '-';
   document.getElementById('shipping-port').textContent = d.shippingPort || '-';
   document.getElementById('container').textContent = d.container || '-';
-  
+
   /* Gün sayğacı */
   const daysEl = document.getElementById('days-counter');
   if (d.poti && d.status !== 'Bakıdadır') {
@@ -362,9 +384,7 @@ function renderHero() {
   }
 }
 
-/* ============================
-   TIMELINE
-   ============================ */
+/* TIMELINE */
 function renderTimeline() {
   const d = custData;
   const steps = [
@@ -373,26 +393,26 @@ function renderTimeline() {
     { key: 'poti', label: 'Poti Çatdırılma', icon: '🇬🇪', date: d.poti, done: !!d.poti },
     { key: 'baki', label: 'Bakı Çatdırılma', icon: '🇦🇿', date: d.baki, done: !!d.baki }
   ];
-  
+
   let activeStep = 0;
   steps.forEach((s, i) => { if (s.done) activeStep = i + 1; });
-  
+
   const pct = Math.round((activeStep / steps.length) * 100);
   document.getElementById('progress-pct').textContent = `${pct}%`;
-  
+
   const html = steps.map((s, i) => {
     const past = i < activeStep;
     const active = i === activeStep - 1 && activeStep > 0;
     const future = i >= activeStep;
     const isLast = i === steps.length - 1;
-    
+
     let circleCls = '';
     if (past) circleCls = 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-500/30';
     else if (active) circleCls = 'bg-gradient-to-br from-indigo-500 to-indigo-700 text-white border-indigo-700 shadow-lg shadow-indigo-500/40 ring-4 ring-indigo-100';
     else circleCls = 'bg-slate-100 text-slate-400 border-slate-300';
-    
+
     const lineCls = past ? 'bg-emerald-400' : 'bg-slate-200';
-    
+
     return `
       <div class="relative flex items-start gap-4 ${isLast ? '' : 'pb-6'}">
         ${!isLast ? `<div class="absolute left-5 top-12 bottom-0 w-0.5 ${lineCls}"></div>` : ''}
@@ -416,31 +436,29 @@ function renderTimeline() {
         </div>
       </div>`;
   }).join('');
-  
+
   document.getElementById('timeline').innerHTML = html;
 }
 
-/* ============================
-   TABS + PHOTOS
-   ============================ */
+/* TABS + PHOTOS */
 function renderTabs() {
   const ph = custData.ph || {};
   const totalVideos = (ph.pikap?.videos?.length || 0) + (ph.anbar?.videos?.length || 0) + (ph.poti?.videos?.length || 0);
   const totalImages = (ph.pikap?.images?.length || 0) + (ph.anbar?.images?.length || 0) + (ph.poti?.images?.length || 0);
-  
+
   const tabs = [
     { key: 'pikap', label: '📦 Pikap', count: (ph.pikap?.images?.length || 0) + (ph.pikap?.videos?.length || 0) },
     { key: 'anbar', label: '🏭 Anbar', count: (ph.anbar?.images?.length || 0) + (ph.anbar?.videos?.length || 0) },
     { key: 'poti', label: '🇬🇪 Poti', count: (ph.poti?.images?.length || 0) + (ph.poti?.videos?.length || 0) },
     { key: 'videolar', label: '🎬 Video', count: totalVideos }
   ];
-  
+
   document.getElementById('tabs').innerHTML = tabs.map(t => `
     <button onclick="setTab('${t.key}')" class="flex-1 py-2.5 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${custTab === t.key ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-white'}">
       ${t.label}
       <span class="px-1.5 py-0.5 rounded-full text-[10px] ${custTab === t.key ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}">${t.count}</span>
     </button>`).join('');
-  
+
   if (totalImages > 0) document.getElementById('dl-bar').classList.remove('hidden');
 }
 
@@ -453,12 +471,12 @@ function setTab(tab) {
 function renderPhotos() {
   const ph = custData.ph || {};
   const area = document.getElementById('photo-area');
-  
+
   if (custTab === 'videolar') return renderAllVideos();
-  
+
   const cat = ph[custTab] || { images: [], videos: [] };
   const images = cat.images || [], videos = cat.videos || [];
-  
+
   if (!images.length && !videos.length) {
     area.innerHTML = `
       <div class="text-center py-20">
@@ -468,7 +486,7 @@ function renderPhotos() {
       </div>`;
     return;
   }
-  
+
   area.innerHTML = `
     ${images.length > 0 ? `
     <div class="mb-6">
@@ -478,7 +496,7 @@ function renderPhotos() {
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         ${images.map((url, i) => `
           <div class="photo-grid-item group" onclick="openLightbox(${i})">
-            <img src="${url}" loading="lazy" alt="">
+            <img src="${url}" loading="lazy" alt="" referrerpolicy="no-referrer" crossorigin="anonymous">
             <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition"></div>
             <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition">
               <span class="text-[10px] font-bold text-white bg-black/50 backdrop-blur px-2 py-0.5 rounded-full">${i + 1} / ${images.length}</span>
@@ -519,7 +537,7 @@ function renderAllVideos() {
     { key: 'poti', label: '🇬🇪 Poti', videos: ph.poti?.videos || [] }
   ];
   const total = sections.reduce((s, x) => s + x.videos.length, 0);
-  
+
   if (total === 0) {
     area.innerHTML = `
       <div class="text-center py-20">
@@ -528,7 +546,7 @@ function renderAllVideos() {
       </div>`;
     return;
   }
-  
+
   area.innerHTML = sections.filter(s => s.videos.length > 0).map(sec => `
     <div class="mb-6">
       <h4 class="text-xs font-black uppercase tracking-widest text-slate-600 mb-3 flex items-center gap-2">
@@ -549,9 +567,7 @@ function renderAllVideos() {
     </div>`).join('');
 }
 
-/* ============================
-   LIGHTBOX
-   ============================ */
+/* LIGHTBOX */
 function openLightbox(i) {
   lbPhotos = custData.ph[custTab]?.images || [];
   lbIndex = i;
@@ -606,9 +622,7 @@ async function lbDownload() {
   }
 }
 
-/* ============================
-   ZIP YÜKLƏMƏ
-   ============================ */
+/* ZIP */
 async function downloadTabZip() {
   if (custTab === 'videolar') { showToast('Videolar ZIP kimi yüklənə bilməz', 'info'); return; }
   const photos = custData.ph[custTab]?.images || [];
@@ -646,9 +660,7 @@ async function downloadZip(byCategory, baseName) {
   showToast(`${total} şəkil yükləndi!`, 'success');
 }
 
-/* ============================
-   UTILS
-   ============================ */
+/* UTILS */
 function getVideoThumb(videoUrl) {
   if (!videoUrl) return '';
   if (videoUrl.includes('/video/upload/')) {
