@@ -571,6 +571,25 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
 <script>
 const CLOUD_NAME = 'u29az1iv', UPLOAD_PRESET = 'AuctionLand', MAX_IMAGE_MB = 10, MAX_VIDEO_MB = 100, TRASH_DAYS = 30;
 const ALL_PHOTO_CATS = ['auction', 'anbar', 'poti'];
+
+/* ═══════════════════════════════════════════════════════════
+   HARDCODED DEFAULT ŞİRKƏTLƏR — localStorage boş olsa belə işləyir
+   ═══════════════════════════════════════════════════════════ */
+const DEFAULT_TRACKING_COMPANIES = {
+  1: {
+    id: 1,
+    name: 'MSC',
+    url: 'https://www.msc.com/en/track-a-shipment',
+    base64Params: true,
+    paramsTemplate: 'trackingNumber={konteyner}&trackingMode=0'
+  },
+  2: {
+    id: 2,
+    name: 'Maersk',
+    url: 'https://www.maersk.com/tracking/'
+  }
+};
+
 let cars = [], trash = [], isAdminLoggedIn = false, isFinanceUnlocked = false, pendingFinanceAction = null, isCloudSyncing = false, tempAttachedDocs = [], currentViewMode = 'card', analyticsSearchMode = 'port', trackingCompanies = [], currentPhotoCarId = null, currentPhotoTab = 'auction', lbPhotos = [], lbIndex = 0, adminLbPhotos = [], adminLbIdx = 0, sessionToken = sessionStorage.getItem('cz_token') || '', searchDebounceTimer = null;
 
 function generateShareToken() {const a = new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2, '0')).join('');}
@@ -578,6 +597,14 @@ function debouncedRender() {clearTimeout(searchDebounceTimer); searchDebounceTim
 function cleanOldTrash() {const now = Date.now(), limit = TRASH_DAYS * 24 * 60 * 60 * 1000; trash = trash.filter(t => (now - (t.deletedAt || 0)) < limit);}
 function emptyPhotos() {const o = {}; ALL_PHOTO_CATS.forEach(k => {o[k] = {images: [], videos: []};}); return o;}
 function ensurePhotosStruct(car) {if (!car.photos || typeof car.photos !== 'object') car.photos = {}; ALL_PHOTO_CATS.forEach(k => {if (!car.photos[k] || typeof car.photos[k] !== 'object') car.photos[k] = {images: [], videos: []}; if (!Array.isArray(car.photos[k].images)) car.photos[k].images = []; if (!Array.isArray(car.photos[k].videos)) car.photos[k].videos = [];});}
+
+/* Şirkət axtar — əvvəl massivdə, sonra hardcoded fallback */
+function findTrackingCompany(id) {
+  if (!id) return null;
+  const fromArray = trackingCompanies.find(x => x.id === id);
+  if (fromArray) return fromArray;
+  return DEFAULT_TRACKING_COMPANIES[id] || null;
+}
 
 function getCarFolder(car) {
   if (car.vin && car.vin.trim()) {
@@ -593,34 +620,20 @@ function getCarFolderWithCategory(car, category) {
   return getCarFolder(car) + '/' + category;
 }
 
-/* ✅ YENİLƏNDİ: DOMContentLoaded — əvvəlcə trackingCompanies yüklənir, SONRA loadDataFromCloud */
 window.addEventListener('DOMContentLoaded', async () => {
-  // ✅ ƏVVƏLCƏ trackingCompanies yüklə — normalizeCars onlardan istifadə edir
-  await loadTrackingCompanies();
-  renderTrackingCompanySelect();
-
-  if (sessionToken) {
-    isAdminLoggedIn = true;
-    document.getElementById('lockScreen').classList.add('hidden');
-    document.getElementById('admin-panel').classList.remove('hidden');
-    updateAdminUI();
-    await loadDataFromCloud();
-  } else {
-    document.getElementById('lockScreen').classList.remove('hidden');
-    setTimeout(() => document.getElementById('lock-pin-input').focus(), 150);
-  }
-
+  if (sessionToken) {isAdminLoggedIn = true; document.getElementById('lockScreen').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); updateAdminUI(); await loadDataFromCloud();}
+  else {document.getElementById('lockScreen').classList.remove('hidden'); setTimeout(() => document.getElementById('lock-pin-input').focus(), 150);}
   const lockInput = document.getElementById('lock-pin-input');
   lockInput.addEventListener('input', e => {const v = e.target.value.replace(/\D/g, '').slice(0, 4); e.target.value = v; document.getElementById('lock-error-msg').classList.add('hidden'); if (v.length === 4) setTimeout(() => verifyLockPin(), 200);});
   const financePinInput = document.getElementById('finance-pin-input');
   if (financePinInput) {financePinInput.addEventListener('input', e => {const v = e.target.value.replace(/\D/g, '').slice(0, 4); e.target.value = v; document.getElementById('finance-pin-error').classList.add('hidden'); if (v.length === 4) setTimeout(() => verifyFinancePin(), 200);});}
+  await loadTrackingCompanies(); renderTrackingCompanySelect();
   const docInput = document.getElementById('doc-file-input');
   if (docInput) {docInput.addEventListener('change', e => {if (!e.target.files || !e.target.files[0]) return; const file = e.target.files[0]; const docType = document.getElementById('doc-type-select').value; const reader = new FileReader(); reader.onload = evt => {tempAttachedDocs.push({type: docType, fileName: file.name, data: evt.target.result}); renderAttachedDocsList(); showToast('Sənəd əlavə olundu!');}; reader.readAsDataURL(file);});}
   document.addEventListener('keydown', e => {const lb = document.getElementById('lightbox'); if (!lb.classList.contains('hidden')) {if (e.key === 'ArrowRight') lbNext(); else if (e.key === 'ArrowLeft') lbPrev(); else if (e.key === 'Escape') closeLightbox();} });
 });
 
-/* ✅ YENİLƏNDİ: verifyLockPin — trackingCompanies yüklənmiş olduğundan əmin ol */
-async function verifyLockPin() {const input = document.getElementById('lock-pin-input'), pin = input.value; if (!pin || pin.length !== 4) return; try {const r = await fetch('/api/auth', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pin})}); const data = await r.json(); if (data.ok) {sessionToken = data.token; sessionStorage.setItem('cz_token', sessionToken); isAdminLoggedIn = true; document.getElementById('lockScreen').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); document.body.style.overflow = ''; if (!trackingCompanies.length) await loadTrackingCompanies(); await loadDataFromCloud(); updateAdminUI(); showToast('🔓 Xoş gəldiniz!', 'success');} else throw new Error('wrong');} catch {document.getElementById('lock-error-msg').classList.remove('hidden'); input.classList.add('border-rose-500'); input.value = ''; setTimeout(() => input.classList.remove('border-rose-500'), 1200); setTimeout(() => input.focus(), 100);} }
+async function verifyLockPin() {const input = document.getElementById('lock-pin-input'), pin = input.value; if (!pin || pin.length !== 4) return; try {const r = await fetch('/api/auth', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pin})}); const data = await r.json(); if (data.ok) {sessionToken = data.token; sessionStorage.setItem('cz_token', sessionToken); isAdminLoggedIn = true; document.getElementById('lockScreen').classList.add('hidden'); document.getElementById('admin-panel').classList.remove('hidden'); document.body.style.overflow = ''; await loadDataFromCloud(); updateAdminUI(); showToast('🔓 Xoş gəldiniz!', 'success');} else throw new Error('wrong');} catch {document.getElementById('lock-error-msg').classList.remove('hidden'); input.classList.add('border-rose-500'); input.value = ''; setTimeout(() => input.classList.remove('border-rose-500'), 1200); setTimeout(() => input.focus(), 100);} }
 
 function openFinancePinModal(callback) {pendingFinanceAction = callback || null; document.getElementById('finance-pin-input').value = ''; document.getElementById('finance-pin-error').classList.add('hidden'); document.getElementById('financePinModal').classList.remove('hidden'); setTimeout(() => document.getElementById('finance-pin-input').focus(), 100);}
 function closeFinancePinModal() {document.getElementById('financePinModal').classList.add('hidden'); pendingFinanceAction = null;}
@@ -650,7 +663,7 @@ async function deleteAdminMedia(mediaType, index) {if (!currentPhotoCarId) retur
 /* ============================
    LINK
    ============================ */
-function openLinkModal(carId) {const car = cars.find(c => c.id === carId); if (!car) return; if (!car.shareToken) car.shareToken = generateShareToken(); car.shareUrl = `${window.location.origin}/customer.html?t=${car.shareToken}`; document.getElementById('link-output').value = car.shareUrl; document.getElementById('linkModal').classList.remove('hidden'); closePhotoModal(); saveDataToCloud(cars);}
+function openLinkModal(carId) {const car = cars.find(c => c.id === carId); if (!car) return; if (!car.shareToken) car.shareToken = generateShareToken(); const link = `${window.location.origin}/customer.html?t=${car.shareToken}`; document.getElementById('link-output').value = link; document.getElementById('linkModal').classList.remove('hidden'); closePhotoModal(); saveDataToCloud(cars);}
 function closeLinkModal() {document.getElementById('linkModal').classList.add('hidden');}
 function copyLink() {const val = document.getElementById('link-output').value; navigator.clipboard.writeText(val).then(() => {document.getElementById('copy-icon').className = 'fa-solid fa-check'; showToast('Link kopyalandı!', 'success'); setTimeout(() => document.getElementById('copy-icon').className = 'fa-solid fa-copy', 2000);}).catch(() => {document.getElementById('link-output').select(); document.execCommand('copy');});}
 function shareViaWhatsApp() {const val = document.getElementById('link-output').value; if (!val) return; window.open(`https://wa.me/?text=${encodeURIComponent('Salam! Avtomobilinizin şəkillərinə baxmaq üçün bu linkə klikləyin:\n' + val)}`, '_blank');}
@@ -771,11 +784,9 @@ async function loadTrackingCompanies() {
     try { trackingCompanies = JSON.parse(saved); if (!Array.isArray(trackingCompanies)) trackingCompanies = []; }
     catch (e) { trackingCompanies = []; }
   }
+  /* Əgər hər iki yerdən boşdursa, default şirkətləri yüklə */
   if (!trackingCompanies.length) {
-    trackingCompanies = [
-      { id: 1, name: 'MSC', url: 'https://www.msc.com/en/track-a-shipment', base64Params: true, paramsTemplate: 'trackingNumber={konteyner}&trackingMode=0' },
-      { id: 2, name: 'Maersk', url: 'https://www.maersk.com/tracking/' }
-    ];
+    trackingCompanies = Object.values(DEFAULT_TRACKING_COMPANIES);
     saveTrackingCompanies();
   }
 }
@@ -791,54 +802,15 @@ function saveTrackingCompanies() {
   }
 }
 
-function renderTrackingCompanySelect() {const sel = document.getElementById('form-tracking-company'); if (!sel) return; const cur = sel.value; sel.innerHTML = '<option value="">Seçilməyib</option>' + trackingCompanies.map(co => `<option value="${co.id}">${co.name}</option>`).join(''); sel.value = cur;}
+function renderTrackingCompanySelect() {const sel = document.getElementById('form-tracking-company'); if (!sel) return; const cur = sel.value; const all = [...trackingCompanies]; /* hardcoded fallback da əlavə et */ Object.values(DEFAULT_TRACKING_COMPANIES).forEach(c => { if (!all.find(x => x.id === c.id)) all.push(c); }); sel.innerHTML = '<option value="">Seçilməyib</option>' + all.map(co => `<option value="${co.id}">${co.name}</option>`).join(''); sel.value = cur;}
 function openTrackingCompaniesModal() {renderTrackingCompaniesList(); document.getElementById('trackingCompaniesModal').classList.remove('hidden');}
 function closeTrackingCompaniesModal() {document.getElementById('trackingCompaniesModal').classList.add('hidden');}
-function renderTrackingCompaniesList() {const el = document.getElementById('tracking-companies-list'); if (!el) return; if (!trackingCompanies.length) {el.innerHTML = '<span class="text-[11px] text-slate-400">Boşdur</span>'; return;} el.innerHTML = trackingCompanies.map(co => `<div class="flex items-center justify-between bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs"><div class="truncate"><span class="font-bold text-slate-800">${co.name}</span><span class="block text-[10px] text-slate-500 truncate">${co.url}</span></div><button type="button" onclick="deleteTrackingCompany(${co.id})" class="text-rose-500"><i class="fa-solid fa-trash"></i></button></div>`).join('');}
+function renderTrackingCompaniesList() {const el = document.getElementById('tracking-companies-list'); if (!el) return; const all = [...trackingCompanies]; Object.values(DEFAULT_TRACKING_COMPANIES).forEach(c => { if (!all.find(x => x.id === c.id)) all.push(c); }); if (!all.length) {el.innerHTML = '<span class="text-[11px] text-slate-400">Boşdur</span>'; return;} el.innerHTML = all.map(co => `<div class="flex items-center justify-between bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs"><div class="truncate"><span class="font-bold text-slate-800">${co.name}</span><span class="block text-[10px] text-slate-500 truncate">${co.url}</span></div><button type="button" onclick="deleteTrackingCompany(${co.id})" class="text-rose-500"><i class="fa-solid fa-trash"></i></button></div>`).join('');}
 function addTrackingCompany() {const name = document.getElementById('new-company-name').value.trim(); let url = document.getElementById('new-company-url').value.trim(); const useBase64 = document.getElementById('new-company-base64').checked; const params = document.getElementById('new-company-params-template').value.trim(); if (!name || !url) {showToast('Ad və link lazımdır'); return;} if (!/^https?:\/\//i.test(url)) url = 'https://' + url; const co = {id: Date.now(), name, url}; if (useBase64 && params) {co.base64Params = true; co.paramsTemplate = params;} trackingCompanies.push(co); saveTrackingCompanies(); document.getElementById('new-company-name').value = ''; document.getElementById('new-company-url').value = ''; document.getElementById('new-company-base64').checked = false; document.getElementById('new-company-params-template').value = ''; document.getElementById('new-company-base64-fields').classList.add('hidden'); renderTrackingCompaniesList(); renderTrackingCompanySelect(); showToast(`"${name}" əlavə olundu!`);}
 function deleteTrackingCompany(id) {trackingCompanies = trackingCompanies.filter(co => co.id !== id); saveTrackingCompanies(); renderTrackingCompaniesList(); renderTrackingCompanySelect();}
 
 function copyTextToClipboard(text) {if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text); return new Promise((res, rej) => {try {const t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.focus(); t.select(); document.execCommand('copy'); document.body.removeChild(t); res();} catch (err) {rej(err);} });}
-
-async function copyContainerAndTrack(carId, event) {
-  if (event && event.preventDefault) event.preventDefault();
-  const car = cars.find(c => c.id === carId);
-  if (!car) return;
-  if (!car.container) {showToast('⚠️ Konteyner yoxdur'); return;}
-
-  let url = car.trackingUrl;
-  let paramsTemplate = car.trackingParamsTemplate;
-  let isBase64 = car.trackingBase64;
-  let companyName = car.trackingCompanyName || 'Şirkət';
-
-  if (!url && car.trackingCompanyId) {
-    const company = trackingCompanies.find(co => co.id === car.trackingCompanyId);
-    if (company) {
-      url = company.url;
-      paramsTemplate = company.paramsTemplate;
-      isBase64 = !!company.base64Params;
-      companyName = company.name;
-    }
-  }
-
-  if (!url) {showToast('⚠️ İzləmə linki yoxdur'); return;}
-
-  if (isBase64 && paramsTemplate) {
-    const resolved = paramsTemplate.split('{konteyner}').join(car.container);
-    const b64 = btoa(unescape(encodeURIComponent(resolved)));
-    const sep = url.includes('?') ? '&' : '?';
-    copyTextToClipboard(car.container).catch(() => {});
-    showToast(`🔎 ${companyName} açılır...`);
-    window.open(`${url}${sep}params=${encodeURIComponent(b64)}`, '_blank');
-    return;
-  }
-  if (url.includes('{konteyner}')) {
-    window.open(url.split('{konteyner}').join(encodeURIComponent(car.container)), '_blank');
-    return;
-  }
-  try {await copyTextToClipboard(car.container); showToast(`📋 Kopyalandı!`);} catch {}
-  window.open(url, '_blank');
-}
+async function copyContainerAndTrack(carId, event) {if (event && event.preventDefault) event.preventDefault(); const car = cars.find(c => c.id === carId); if (!car) return; if (!car.container) {showToast('⚠️ Konteyner yoxdur'); return;} const company = findTrackingCompany(car.trackingCompanyId); if (!company) {showToast('⚠️ Şirkət seçilməyib'); return;} if (company.base64Params && company.paramsTemplate) {const resolved = company.paramsTemplate.split('{konteyner}').join(car.container); const b64 = btoa(unescape(encodeURIComponent(resolved))); const sep = company.url.includes('?') ? '&' : '?'; copyTextToClipboard(car.container).catch(() => { }); showToast(`🔎 ${company.name} açılır...`); window.open(`${company.url}${sep}params=${encodeURIComponent(b64)}`, '_blank'); return;} if (company.url.includes('{konteyner}')) {window.open(company.url.split('{konteyner}').join(encodeURIComponent(car.container)), '_blank'); return;} try {await copyTextToClipboard(car.container); showToast(`📋 Kopyalandı!`);} catch { } window.open(company.url, '_blank');}
 
 /* ============================
    DATE UTILS
@@ -850,52 +822,7 @@ function adjustDateField(id, delta) {const el = document.getElementById(id); if 
 function diffDays(d1, d2) {const a = parseAppDate(d1), b = parseAppDate(d2); if (!a || !b) return null; return Math.ceil((b - a) / 86400000);}
 function getDaysToPoti(p) {const dt = parseAppDate(p); if (!dt) return null; const t = new Date(); t.setHours(0, 0, 0, 0); dt.setHours(0, 0, 0, 0); return Math.ceil((dt - t) / 86400000);}
 
-/* ✅ normalizeCars — köhnə avtomobillər üçün tracking məlumatlarını trackingCompanies-dən tapır */
-function normalizeCars(list) {
-  if (!Array.isArray(list)) return [];
-  return list.map(c => {
-    const raw = c.photos || {};
-    const migrate = old => Array.isArray(old) ? {images: old, videos: []} : {images: old?.images || [], videos: old?.videos || []};
-    const token = c.shareToken || generateShareToken();
-    const container = c.container || '';
-    const hasTracking = !!(container && c.trackingCompanyId);
-
-    let companyName = c.trackingCompanyName || null;
-    let companyUrl = c.trackingUrl || null;
-    let paramsTemplate = c.trackingParamsTemplate || null;
-    let base64Flag = !!c.trackingBase64;
-
-    if (hasTracking && (!companyName || !companyUrl) && Array.isArray(trackingCompanies)) {
-      const found = trackingCompanies.find(co => co.id === c.trackingCompanyId);
-      if (found) {
-        companyName = companyName || found.name;
-        companyUrl = companyUrl || found.url;
-        paramsTemplate = paramsTemplate || found.paramsTemplate || null;
-        base64Flag = c.trackingBase64 !== undefined ? !!c.trackingBase64 : !!found.base64Params;
-      }
-    }
-
-    return {
-      ...c,
-      imageUrl: c.imageUrl || c.image || '',
-      udus: formatDateDMY(c.udus) || c.udus || '',
-      anbar: formatDateDMY(c.anbar) || c.anbar || '',
-      poti: formatDateDMY(c.poti) || c.poti || '',
-      baki: formatDateDMY(c.baki) || c.baki || '',
-      shareToken: token,
-      shareUrl: c.shareUrl || `${window.location.origin}/customer.html?t=${token}`,
-
-      container: container,
-      trackingCompanyId: hasTracking ? c.trackingCompanyId : null,
-      trackingCompanyName: hasTracking ? companyName : null,
-      trackingUrl: hasTracking ? companyUrl : null,
-      trackingParamsTemplate: hasTracking ? paramsTemplate : null,
-      trackingBase64: hasTracking ? base64Flag : false,
-
-      photos: {auction: migrate(raw.auction), anbar: migrate(raw.anbar), poti: migrate(raw.poti)}
-    };
-  });
-}
+function normalizeCars(list) {if (!Array.isArray(list)) return []; return list.map(c => {const raw = c.photos || {}; const migrate = old => Array.isArray(old) ? {images: old, videos: []} : {images: old?.images || [], videos: old?.videos || []}; return {...c, imageUrl: c.imageUrl || c.image || '', udus: formatDateDMY(c.udus) || c.udus || '', anbar: formatDateDMY(c.anbar) || c.anbar || '', poti: formatDateDMY(c.poti) || c.poti || '', baki: formatDateDMY(c.baki) || c.baki || '', shareToken: c.shareToken || generateShareToken(), photos: {auction: migrate(raw.auction), anbar: migrate(raw.anbar), poti: migrate(raw.poti)}};});}
 
 function updateAdminUI() {const btn = document.getElementById('btn-final-finance'); if (btn) btn.classList.remove('hidden'); renderApp(); updateTrashBadge();}
 
@@ -936,15 +863,23 @@ function openModal(id = null) {document.getElementById('carForm').reset(); tempA
 function closeModal() {document.getElementById('carModal').classList.add('hidden');}
 async function handleFormSubmit(e) {e.preventDefault(); await processSaveCar(document.getElementById('form-id').value, document.getElementById('form-image-url').value);}
 
+/* ═══════════════════════════════════════════════════════════
+   ƏSAS DƏYİŞİKLİK: processSaveCar — hardcoded fallback ilə
+   ═══════════════════════════════════════════════════════════ */
 async function processSaveCar(id, imageUrl) {
   const existing = id ? cars.find(c => c.id === parseInt(id)) : null;
-  const container = document.getElementById('form-container').value.trim();
-  const trackingCoId = document.getElementById('form-tracking-company').value ? parseInt(document.getElementById('form-tracking-company').value) : null;
-  const trackingCo = trackingCoId ? trackingCompanies.find(x => x.id === trackingCoId) : null;
 
-  const hasTracking = !!(container && trackingCo);
+  const trackingCoId = document.getElementById('form-tracking-company').value
+    ? parseInt(document.getElementById('form-tracking-company').value)
+    : null;
 
-  const finalShareToken = (existing && existing.shareToken) || generateShareToken();
+  /* HARDCODED fallback — localStorage boş olsa belə işləyir */
+  const trackingCo = trackingCoId ? findTrackingCompany(trackingCoId) : null;
+
+  console.log('[SAVE] trackingCoId:', trackingCoId);
+  console.log('[SAVE] trackingCo:', trackingCo);
+  console.log('[SAVE] trackingCompanies massivi:', trackingCompanies);
+
   const carData = {
     ...(existing || {}),
     id: id ? parseInt(id) : Date.now(),
@@ -953,14 +888,13 @@ async function processSaveCar(id, imageUrl) {
     vin: document.getElementById('form-vin').value.trim(),
     location: document.getElementById('form-location').value.trim(),
     shippingPort: document.getElementById('form-shipping-port').value.trim(),
-    container: container,
-
-    trackingCompanyId: hasTracking ? trackingCo.id : null,
-    trackingCompanyName: hasTracking ? trackingCo.name : null,
-    trackingUrl: hasTracking ? trackingCo.url : null,
-    trackingParamsTemplate: hasTracking && trackingCo.paramsTemplate ? trackingCo.paramsTemplate : null,
-    trackingBase64: hasTracking ? !!trackingCo.base64Params : false,
-
+    container: document.getElementById('form-container').value.trim(),
+    trackingCompanyId: trackingCoId,
+    /* Avtomobilin içinə tracking məlumatlarını yaz — hardcoded fallback ilə */
+    trackingCompanyName: trackingCo ? trackingCo.name : null,
+    trackingUrl: trackingCo ? trackingCo.url : null,
+    trackingParamsTemplate: trackingCo && trackingCo.paramsTemplate ? trackingCo.paramsTemplate : null,
+    trackingBase64: trackingCo ? !!trackingCo.base64Params : false,
     udus: formatDateDMY(document.getElementById('form-udus').value.trim()),
     anbar: formatDateDMY(document.getElementById('form-anbar').value.trim()),
     poti: formatDateDMY(document.getElementById('form-poti').value.trim()),
@@ -980,15 +914,23 @@ async function processSaveCar(id, imageUrl) {
     documents: tempAttachedDocs,
     etibarname: document.getElementById('form-etibarname').checked,
     shippingPaid: document.getElementById('form-shipping-paid').checked,
-    shareToken: finalShareToken,
-    shareUrl: `${window.location.origin}/customer.html?t=${finalShareToken}`,
+    shareToken: (existing && existing.shareToken) || generateShareToken(),
     photos: (existing && existing.photos) || emptyPhotos(),
     _updatedAt: Date.now()
   };
+
+  console.log('[SAVE] Yekun carData tracking:', {
+    trackingCompanyName: carData.trackingCompanyName,
+    trackingUrl: carData.trackingUrl,
+    trackingParamsTemplate: carData.trackingParamsTemplate,
+    trackingBase64: carData.trackingBase64
+  });
+
   if (id) {const i = cars.findIndex(c => c.id === parseInt(id)); cars[i] = carData;} else cars.push(carData);
   closeModal();
   await saveData('✅ Yadda saxlanıldı!');
 }
+
 function editCar(id) {openModal(id);}
 function promptDeleteCar(id) {const car = cars.find(c => c.id === id); if (!car) return; if (!confirm(`"${car.model}" avtomobilini SƏBƏTƏ atmaq istəyirsiniz?\n\n30 gün ərzində bərpa edə bilərsiniz.`)) return; moveToTrash(car);}
 function renderAttachedDocsList() {const el = document.getElementById('attached-docs-list'); if (!el) return; if (!tempAttachedDocs.length) {el.innerHTML = '<span class="text-[11px] text-slate-400">Boşdur</span>'; return;} el.innerHTML = tempAttachedDocs.map((d, i) => `<div class="flex items-center justify-between bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs"><div class="flex items-center space-x-2 truncate"><i class="fa-solid fa-file-contract text-blue-600"></i><span class="font-bold text-slate-800">${d.type}:</span><span class="text-slate-600 truncate max-w-[150px]">${d.fileName}</span></div><button type="button" onclick="removeDoc(${i})" class="text-rose-500"><i class="fa-solid fa-xmark"></i></button></div>`).join('');}
