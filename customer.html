@@ -154,6 +154,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
           </div>
         </div>
       </div>
+
+      <!-- İZLƏMƏ DÜYMƏSİ -->
+      <button id="track-container-btn" onclick="trackContainer()"
+        class="hidden w-full mt-3 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-xs font-bold items-center justify-center gap-2 transition shadow-md shadow-indigo-500/20">
+        <i class="fa-solid fa-anchor"></i>
+        <span id="track-btn-label">Konteyneri İzlə</span>
+        <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-80"></i>
+      </button>
     </div>
   </div>
 
@@ -222,7 +230,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
 
 <script>
 let custData = null;
-let custTab = 'auction';   /* ← Default tab: AUKSION */
+let custTab = 'auction';
 let lbPhotos = [], lbIndex = 0, lbTouchStart = 0;
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -273,6 +281,8 @@ async function loadCar(token) {
       location: car.location, shippingPort: car.shippingPort, container: car.container,
       imageUrl: car.imageUrl || car.image || '',
       auctionLink: car.link || '',
+      trackingCompanyId: car.trackingCompanyId || null,
+      trackingCompanies: data.trackingCompanies || car.trackingCompanies || [],
       ph: {
         auction: { images: catAuc.images.map(p => typeof p === 'string' ? p : p.url), videos: catAuc.videos.map(mapVid) },
         anbar:   { images: catA.images.map(p => typeof p === 'string' ? p : p.url),   videos: catA.videos.map(mapVid) },
@@ -280,7 +290,6 @@ async function loadCar(token) {
       }
     };
 
-    // Konsolda datanı yoxlamaq üçün:
     console.log('=== CUSTDATA ===', JSON.stringify(custData, null, 2));
 
     renderAll();
@@ -314,7 +323,6 @@ function renderHero() {
   const img = document.getElementById('hero-img');
   const bg = document.getElementById('hero-bg');
 
-  // Hero üçün şəkil seçimi: əvvəl imageUrl, yoxdursa auksion ilk şəkil
   let heroSrc = d.imageUrl;
   if (!heroSrc && d.ph?.auction?.images?.length) {
     heroSrc = d.ph.auction.images[0];
@@ -325,11 +333,9 @@ function renderHero() {
   console.log('[HERO] seçilən şəkil:', heroSrc);
 
   if (heroSrc) {
-    // Əvvəlcə gizlət, sonra yüklə
     img.style.opacity = '0';
     img.style.display = 'block';
 
-    // Yeni Image obyekti ilə yüklə (CORS problemi olmadan)
     const testImg = new Image();
     testImg.referrerPolicy = 'no-referrer';
     testImg.onload = () => {
@@ -387,6 +393,20 @@ function renderHero() {
   document.getElementById('location').textContent = d.location || '-';
   document.getElementById('shipping-port').textContent = d.shippingPort || '-';
   document.getElementById('container').textContent = d.container || '-';
+
+  /* İzləmə düyməsinin görünürlüyü */
+  const trackBtn = document.getElementById('track-container-btn');
+  const trackLabel = document.getElementById('track-btn-label');
+  const hasContainer = d.container && d.container.trim() && d.container !== '-';
+  const company = (d.trackingCompanies || []).find(c => c.id === d.trackingCompanyId);
+  if (hasContainer && company) {
+    trackBtn.classList.remove('hidden');
+    trackBtn.classList.add('flex');
+    if (trackLabel) trackLabel.textContent = `${company.name} ilə İzlə`;
+  } else {
+    trackBtn.classList.add('hidden');
+    trackBtn.classList.remove('flex');
+  }
 
   const daysEl = document.getElementById('days-counter');
   if (d.poti && d.status !== 'Bakıdadır') {
@@ -690,6 +710,70 @@ async function downloadZip(byCategory, baseName) {
   const content = await zip.generateAsync({ type: 'blob' });
   saveAs(content, `${baseName}-Şəkillər.zip`);
   showToast(`${total} şəkil yükləndi!`, 'success');
+}
+
+/* ============================
+   KONTEYNER İZLƏMƏ
+   ============================ */
+function trackContainer() {
+  const d = custData;
+  if (!d) return;
+
+  if (!d.container || !d.container.trim() || d.container === '-') {
+    showToast('⚠️ Konteyner kodu yoxdur', 'error');
+    return;
+  }
+
+  const company = (d.trackingCompanies || []).find(c => c.id === d.trackingCompanyId);
+  if (!company) {
+    showToast('⚠️ İzləmə şirkəti təyin edilməyib', 'error');
+    return;
+  }
+
+  // 1) Base64 parametrli şirkət (məs. MSC)
+  if (company.base64Params && company.paramsTemplate) {
+    const resolved = company.paramsTemplate.split('{konteyner}').join(d.container);
+    const b64 = btoa(unescape(encodeURIComponent(resolved)));
+    const sep = company.url.includes('?') ? '&' : '?';
+    copyToClipboard(d.container).catch(() => {});
+    showToast(`🔎 ${company.name} açılır...`, 'info');
+    window.open(`${company.url}${sep}params=${encodeURIComponent(b64)}`, '_blank');
+    return;
+  }
+
+  // 2) URL-də {konteyner} placeholder var
+  if (company.url.includes('{konteyner}')) {
+    const url = company.url.split('{konteyner}').join(encodeURIComponent(d.container));
+    window.open(url, '_blank');
+    return;
+  }
+
+  // 3) Sadəcə URL — konteyneri kopyala + aç
+  copyToClipboard(d.container)
+    .then(() => showToast('📋 Konteyner kopyalandı — yapışdırın', 'success'))
+    .catch(() => {});
+  window.open(company.url, '_blank');
+}
+
+/* Köməkçi: clipboard kopyalama (fallback ilə) */
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
+  }
+  return new Promise((resolve, reject) => {
+    try {
+      const t = document.createElement('textarea');
+      t.value = text;
+      t.style.position = 'fixed';
+      t.style.opacity = '0';
+      document.body.appendChild(t);
+      t.focus();
+      t.select();
+      document.execCommand('copy');
+      document.body.removeChild(t);
+      resolve();
+    } catch (err) { reject(err); }
+  });
 }
 
 /* UTILS */
