@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>Carzone — Admin Panel</title>
+<title>AuctionLand — Admin Panel</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script>
@@ -39,8 +39,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
 <div id="lockScreen" class="hidden fixed inset-0 z-[300] bg-slate-950 flex items-center justify-center p-4">
   <div class="bg-slate-900 border border-slate-800 text-white w-full max-w-sm rounded-3xl p-8 text-center space-y-5">
     <div class="flex items-center justify-center gap-3">
-      <div class="bg-red-600 p-2.5 rounded-xl text-lg"><i class="fa-solid fa-car-side"></i></div>
-      <h1 class="text-2xl font-black">CAR<span class="text-red-600">ZON</span></h1>
+      <div class="bg-red-600 p-2.5 rounded-xl text-lg"><i class="fa-solid fa-gavel"></i></div>
+      <h1 class="text-2xl font-black">Auction<span class="text-red-600">Land</span></h1>
     </div>
     <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center text-3xl mx-auto">
       <i class="fa-solid fa-shield-halved"></i></div>
@@ -143,8 +143,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
   <div class="max-w-[1750px] mx-auto px-3 sm:px-8 py-3">
     <div class="flex items-center justify-between gap-2 mb-2">
       <div class="flex items-center gap-2">
-        <div class="bg-red-600 p-2 sm:p-3 rounded-xl text-white text-lg sm:text-xl"><i class="fa-solid fa-car-side"></i></div>
-        <h1 class="text-lg sm:text-2xl font-black">CAR<span class="text-red-600">ZON</span></h1>
+        <div class="bg-red-600 p-2 sm:p-3 rounded-xl text-white text-lg sm:text-xl"><i class="fa-solid fa-gavel"></i></div>
+        <h1 class="text-lg sm:text-2xl font-black">Auction<span class="text-red-600">Land</span></h1>
       </div>
       <button onclick="openModal()" class="sm:hidden px-3 py-2 bg-red-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5"><i class="fa-solid fa-plus"></i>Yeni</button>
     </div>
@@ -360,7 +360,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
     <div id="print-area" class="p-5 overflow-y-auto cs flex-1 space-y-5">
       <div class="border-b pb-4 flex justify-between items-center">
         <div>
-          <h1 class="text-2xl font-black">CARZONE LOGISTICS</h1>
+          <h1 class="text-2xl font-black">AUCTIONLAND LOGISTICS</h1>
           <p class="text-xs text-slate-500 font-bold">YEKUN HESABAT</p>
         </div>
         <div class="text-right text-xs text-slate-500 font-mono">
@@ -583,7 +583,7 @@ const DEFAULT_TRACKING_COMPANIES = {
 };
 
 let cars = [], trash = [], isAdminLoggedIn = false, isFinanceUnlocked = false, pendingFinanceAction = null, isCloudSyncing = false, tempAttachedDocs = [], currentViewMode = 'card', analyticsSearchMode = 'port', trackingCompanies = [], currentPhotoCarId = null, currentPhotoTab = 'auction', lbPhotos = [], lbIndex = 0, adminLbPhotos = [], adminLbIdx = 0, sessionToken = sessionStorage.getItem('cz_token') || '', searchDebounceTimer = null, expandedCars = {};
-let selectedMedia = new Set(); /* Toplu silmə üçün seçilmiş media */
+let selectedMedia = new Set();
 
 function generateShareToken() {const a = new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2, '0')).join('');}
 function debouncedRender() {clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(() => renderApp(), 300);}
@@ -659,7 +659,6 @@ async function deleteSelectedMedia() {
   if (!confirm(`${selectedMedia.size} elementi silmək istəyirsiniz?`)) return;
   const cat = car.photos[currentPhotoTab] || {images: [], videos: []};
   
-  // PublicId-ləri yığ
   const publicIds = [];
   const imgIdxs = [], vidIdxs = [];
   selectedMedia.forEach(key => {
@@ -676,7 +675,6 @@ async function deleteSelectedMedia() {
     }
   });
   
-  // Cloudinary-dən sil (paralel)
   await Promise.all(publicIds.map(p => 
     fetch('/api/delete-media', {
       method: 'POST', 
@@ -685,7 +683,6 @@ async function deleteSelectedMedia() {
     }).catch(() => {})
   ));
   
-  // Array-dən sil (böyükdən kiçiyə)
   imgIdxs.sort((a, b) => b - a).forEach(i => cat.images.splice(i, 1));
   vidIdxs.sort((a, b) => b - a).forEach(i => cat.videos.splice(i, 1));
   
@@ -709,7 +706,6 @@ function renderPhotoTabContent() {
   const total = images.length + videos.length;
   const isAllSelected = selectedMedia.size === total && total > 0;
   
-  // Toplu silmə paneli
   const bulkPanel = total > 0 ? `
     <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2">
       <div class="flex items-center gap-2">
@@ -791,16 +787,16 @@ function copyLink() {const val = document.getElementById('link-output').value; n
 function shareViaWhatsApp() {const val = document.getElementById('link-output').value; if (!val) return; window.open(`https://wa.me/?text=${encodeURIComponent('Salam! Avtomobilinizin şəkillərinə baxmaq üçün bu linkə klikləyin:\n' + val)}`, '_blank');}
 
 /* SERVERLESS API */
-async function loadDataFromCloud() {if (!sessionToken) return false; isCloudSyncing = true; try {const r = await fetch('/api/cars', {headers: {'X-Auth-Token': sessionToken}}); if (!r.ok) {if (r.status === 401) {lockAdminPanel(); return false;} showToast(`⚠️ Xəta: ${r.status}`, 'error'); return false;} const data = await r.json(); const remoteCars = Array.isArray(data) ? data : (data.cars || []); const remoteTrash = data.trash || []; if (!Array.isArray(remoteCars)) return false; const needsMig = remoteCars.some(c => !c.shareToken); cars = normalizeCars(remoteCars); trash = Array.isArray(remoteTrash) ? remoteTrash : []; cleanOldTrash(); localStorage.setItem('carzone_db', JSON.stringify(cars)); if (needsMig || trash.length !== remoteTrash.length) await saveDataToCloud(cars); if (isAdminLoggedIn) renderApp(); updateTrashBadge(); return true;} catch (e) {showToast(`⚠️ ${e.message}`, 'error'); return false;} finally {isCloudSyncing = false;} }
+async function loadDataFromCloud() {if (!sessionToken) return false; isCloudSyncing = true; try {const r = await fetch('/api/cars', {headers: {'X-Auth-Token': sessionToken}}); if (!r.ok) {if (r.status === 401) {lockAdminPanel(); return false;} showToast(`⚠️ Xəta: ${r.status}`, 'error'); return false;} const data = await r.json(); const remoteCars = Array.isArray(data) ? data : (data.cars || []); const remoteTrash = data.trash || []; if (!Array.isArray(remoteCars)) return false; const needsMig = remoteCars.some(c => !c.shareToken); cars = normalizeCars(remoteCars); trash = Array.isArray(remoteTrash) ? remoteTrash : []; cleanOldTrash(); localStorage.setItem('auctionland_db', JSON.stringify(cars)); if (needsMig || trash.length !== remoteTrash.length) await saveDataToCloud(cars); if (isAdminLoggedIn) renderApp(); updateTrashBadge(); return true;} catch (e) {showToast(`⚠️ ${e.message}`, 'error'); return false;} finally {isCloudSyncing = false;} }
 
 async function saveData(msg = '✅ Yazıldı!') {
-  if (!sessionToken) {localStorage.setItem('carzone_db', JSON.stringify(cars)); renderApp(); return false;}
+  if (!sessionToken) {localStorage.setItem('auctionland_db', JSON.stringify(cars)); renderApp(); return false;}
   isCloudSyncing = true;
   try {
     const r = await fetch('/api/cars', { headers: {'X-Auth-Token': sessionToken} });
     if (!r.ok) {
       if (r.status === 401) { lockAdminPanel(); return false; }
-      localStorage.setItem('carzone_db', JSON.stringify(cars));
+      localStorage.setItem('auctionland_db', JSON.stringify(cars));
       renderApp();
       return false;
     }
@@ -815,19 +811,19 @@ async function saveData(msg = '✅ Yazıldı!') {
       body: JSON.stringify({cars: mergedCars, trash: mergedTrash})
     });
     if (!saveResp.ok) {
-      localStorage.setItem('carzone_db', JSON.stringify(cars));
+      localStorage.setItem('auctionland_db', JSON.stringify(cars));
       renderApp();
       return false;
     }
     cars = normalizeCars(mergedCars);
     trash = mergedTrash;
-    localStorage.setItem('carzone_db', JSON.stringify(cars));
+    localStorage.setItem('auctionland_db', JSON.stringify(cars));
     renderApp();
     updateTrashBadge();
     if (msg) showToast(msg, 'success');
     return true;
   } catch (e) {
-    localStorage.setItem('carzone_db', JSON.stringify(cars));
+    localStorage.setItem('auctionland_db', JSON.stringify(cars));
     renderApp();
     showToast('⚠️ ' + e.message, 'error');
     return false;
@@ -872,8 +868,8 @@ function mergeCars(remoteCars, localCars) {
   });
   remoteCars.forEach(rc => {
     const key = rc.vin && rc.vin.trim() ? 'v:' + rc.vin.toUpperCase() : 'i:' + rc.id;
-    if (rc.id && trashIds.has(rc.id)) { console.log('[MERGE] Skip trashed (id):', rc.id); return; }
-    if (rc.vin && trashVins.has(String(rc.vin).toUpperCase())) { console.log('[MERGE] Skip trashed (vin):', rc.vin); return; }
+    if (rc.id && trashIds.has(rc.id)) return;
+    if (rc.vin && trashVins.has(String(rc.vin).toUpperCase())) return;
     if (!seen.has(key)) { seen.add(key); merged.push(rc); }
   });
   return merged;
@@ -890,7 +886,7 @@ function mergeTrash(remoteTrash, localTrash) {
 }
 
 async function manualRefreshData() {const icon = document.getElementById('btn-cloud-refresh-icon'); if (isCloudSyncing) return; icon.classList.add('fa-spin'); const ok = await loadDataFromCloud(); icon.classList.remove('fa-spin'); if (ok) showToast('✅ Yeniləndi!', 'success');}
-function exportDataJSON() {const str = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({cars, trash}, null, 2)); const a = document.createElement('a'); a.href = str; a.download = `carzone_backup_${new Date().toISOString().split('T')[0]}.json`; document.body.appendChild(a); a.click(); a.remove(); showToast('Backup yükləndi!');}
+function exportDataJSON() {const str = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({cars, trash}, null, 2)); const a = document.createElement('a'); a.href = str; a.download = `auctionland_backup_${new Date().toISOString().split('T')[0]}.json`; document.body.appendChild(a); a.click(); a.remove(); showToast('Backup yükləndi!');}
 
 function showToast(msg, type = 'info') {const toast = document.getElementById('toast'), iconWrap = document.getElementById('toast-icon-wrap'), icon = document.getElementById('toast-icon'); document.getElementById('toast-msg').textContent = msg; iconWrap.className = 'p-1.5 rounded-full shrink-0 ' + (type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-rose-500' : 'bg-slate-500'); icon.className = 'fa-solid text-xs text-white ' + (type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info'); toast.classList.remove('translate-y-24', 'opacity-0'); toast.classList.add('translate-y-0', 'opacity-100'); clearTimeout(window._toastTimer); window._toastTimer = setTimeout(() => {toast.classList.add('translate-y-24', 'opacity-0'); toast.classList.remove('translate-y-0', 'opacity-100');}, type === 'error' ? 5000 : 3000);}
 
@@ -902,18 +898,18 @@ async function loadTrackingCompanies() {
       const data = await r.json();
       if (Array.isArray(data.companies) && data.companies.length) {
         trackingCompanies = data.companies;
-        localStorage.setItem('carzone_tracking_companies', JSON.stringify(trackingCompanies));
+        localStorage.setItem('auctionland_tracking_companies', JSON.stringify(trackingCompanies));
         return;
       }
     }
   } catch (e) {}
-  const saved = localStorage.getItem('carzone_tracking_companies');
+  const saved = localStorage.getItem('auctionland_tracking_companies');
   if (saved) {try { trackingCompanies = JSON.parse(saved); if (!Array.isArray(trackingCompanies)) trackingCompanies = []; } catch (e) { trackingCompanies = []; }}
   if (!trackingCompanies.length) {trackingCompanies = Object.values(DEFAULT_TRACKING_COMPANIES); saveTrackingCompanies();}
 }
 
 function saveTrackingCompanies() {
-  localStorage.setItem('carzone_tracking_companies', JSON.stringify(trackingCompanies));
+  localStorage.setItem('auctionland_tracking_companies', JSON.stringify(trackingCompanies));
   if (sessionToken) {fetch('/api/tracking-companies', {method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Auth-Token': sessionToken }, body: JSON.stringify({ companies: trackingCompanies })}).catch(() => {});}
 }
 
