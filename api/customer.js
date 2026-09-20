@@ -49,11 +49,16 @@ export default async function handler(req, res) {
         location: car.location || '',
         shippingPort: car.shippingPort || '',
         container: car.container || '',
+        containerOpenDate: car.containerOpenDate || '',        // ⬅️ YENİ
         imageUrl: car.imageUrl || car.image || '',
         link: car.link || '',
         etibarname: !!car.etibarname,
         shippingPaid: !!car.shippingPaid,
         trackingCompanyId: car.trackingCompanyId || null,
+        trackingCompanyName: car.trackingCompanyName || null,   // ⬅️ YENİ
+        trackingUrl: car.trackingUrl || null,                   // ⬅️ YENİ
+        trackingParamsTemplate: car.trackingParamsTemplate || null, // ⬅️ YENİ
+        trackingBase64: !!car.trackingBase64,                   // ⬅️ YENİ
         photos: {
           auction: normalizeCat(ph.auction),
           anbar:   normalizeCat(ph.anbar),
