@@ -264,7 +264,6 @@ async function loadCar(token) {
     const ph = car.photos || {};
     const normalizeCat = cat => Array.isArray(cat) ? { images: cat, videos: [] } : { images: cat?.images || [], videos: cat?.videos || [] };
     const catAuc = normalizeCat(ph.auction);
-    const catP = normalizeCat(ph.pikap);
     const catA = normalizeCat(ph.anbar);
     const catT = normalizeCat(ph.poti);
     const mapVid = v => typeof v === 'string' ? { url: v, thumb: getVideoThumb(v) } : { url: v.url, thumb: v.thumb || getVideoThumb(v.url) };
@@ -278,7 +277,6 @@ async function loadCar(token) {
       auctionLink: car.link || '',
       ph: {
         auction: { images: catAuc.images.map(p => typeof p === 'string' ? p : p.url), videos: catAuc.videos.map(mapVid) },
-        pikap:   { images: catP.images.map(p => typeof p === 'string' ? p : p.url),   videos: catP.videos.map(mapVid) },
         anbar:   { images: catA.images.map(p => typeof p === 'string' ? p : p.url),   videos: catA.videos.map(mapVid) },
         poti:    { images: catT.images.map(p => typeof p === 'string' ? p : p.url),   videos: catT.videos.map(mapVid) }
       }
@@ -314,8 +312,15 @@ function renderHero() {
 
   const img = document.getElementById('hero-img');
   const bg = document.getElementById('hero-bg');
-  if (d.imageUrl) {
-    img.src = d.imageUrl;
+
+  // Əsas şəkil yoxdursa, auksion şəkillərinin ilkini istifadə et
+  let heroSrc = d.imageUrl;
+  if (!heroSrc && d.ph?.auction?.images?.length) {
+    heroSrc = d.ph.auction.images[0];
+  }
+
+  if (heroSrc) {
+    img.src = heroSrc;
     img.style.display = 'block';
     bg.style.display = 'none';
   } else {
@@ -438,12 +443,11 @@ function renderTimeline() {
 /* TABS + PHOTOS */
 function renderTabs() {
   const ph = custData.ph || {};
-  const totalVideos = (ph.auction?.videos?.length || 0) + (ph.pikap?.videos?.length || 0) + (ph.anbar?.videos?.length || 0) + (ph.poti?.videos?.length || 0);
-  const totalImages = (ph.auction?.images?.length || 0) + (ph.pikap?.images?.length || 0) + (ph.anbar?.images?.length || 0) + (ph.poti?.images?.length || 0);
+  const totalVideos = (ph.auction?.videos?.length || 0) + (ph.anbar?.videos?.length || 0) + (ph.poti?.videos?.length || 0);
+  const totalImages = (ph.auction?.images?.length || 0) + (ph.anbar?.images?.length || 0) + (ph.poti?.images?.length || 0);
 
   const tabs = [
     { key: 'auction', label: '🏷️ Auksion', count: (ph.auction?.images?.length || 0) + (ph.auction?.videos?.length || 0) },
-    { key: 'pikap',   label: '📦 Pikap',   count: (ph.pikap?.images?.length || 0) + (ph.pikap?.videos?.length || 0) },
     { key: 'anbar',   label: '🏭 Anbar',   count: (ph.anbar?.images?.length || 0) + (ph.anbar?.videos?.length || 0) },
     { key: 'poti',    label: '🇬🇪 Poti',    count: (ph.poti?.images?.length || 0) + (ph.poti?.videos?.length || 0) },
     { key: 'videolar',label: '🎬 Video',   count: totalVideos }
@@ -476,7 +480,6 @@ function renderPhotos() {
   if (!images.length && !videos.length) {
     const emptyMsg = {
       auction: { icon: '🏷️', title: 'Hələ auksion şəkli yoxdur', hint: 'Admin extension vasitəsilə yükləyəcək' },
-      pikap:   { icon: '📦', title: 'Pikap şəkilləri yoxdur',      hint: 'Admin tərəfindən yüklənəcək' },
       anbar:   { icon: '🏭', title: 'Anbar şəkilləri yoxdur',      hint: 'Admin tərəfindən yüklənəcək' },
       poti:    { icon: '🇬🇪', title: 'Poti şəkilləri yoxdur',       hint: 'Admin tərəfindən yüklənəcək' }
     }[custTab] || { icon: '📷', title: 'Media yoxdur', hint: '' };
@@ -536,7 +539,6 @@ function renderAllVideos() {
   const area = document.getElementById('photo-area');
   const sections = [
     { key: 'auction', label: '🏷️ Auksion', videos: ph.auction?.videos || [] },
-    { key: 'pikap',   label: '📦 Pikap',   videos: ph.pikap?.videos || [] },
     { key: 'anbar',   label: '🏭 Anbar',   videos: ph.anbar?.videos || [] },
     { key: 'poti',    label: '🇬🇪 Poti',    videos: ph.poti?.videos || [] }
   ];
@@ -638,7 +640,6 @@ async function downloadAllZip() {
   const ph = custData.ph || {};
   const all = {
     auction: ph.auction?.images || [],
-    pikap:   ph.pikap?.images || [],
     anbar:   ph.anbar?.images || [],
     poti:    ph.poti?.images || []
   };
@@ -649,7 +650,7 @@ async function downloadAllZip() {
 async function downloadZip(byCategory, baseName) {
   showToast('ZIP hazırlanır...', 'info');
   const zip = new JSZip();
-  const names = { auction: 'Auksion', pikap: 'Pikap', anbar: 'Anbar', poti: 'Poti' };
+  const names = { auction: 'Auksion', anbar: 'Anbar', poti: 'Poti' };
   let total = 0;
   for (const [cat, urls] of Object.entries(byCategory)) {
     if (!urls.length) continue;
