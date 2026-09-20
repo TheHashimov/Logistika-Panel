@@ -601,7 +601,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   lockInput.addEventListener('input', e => {const v = e.target.value.replace(/\D/g, '').slice(0, 4); e.target.value = v; document.getElementById('lock-error-msg').classList.add('hidden'); if (v.length === 4) setTimeout(() => verifyLockPin(), 200);});
   const financePinInput = document.getElementById('finance-pin-input');
   if (financePinInput) {financePinInput.addEventListener('input', e => {const v = e.target.value.replace(/\D/g, '').slice(0, 4); e.target.value = v; document.getElementById('finance-pin-error').classList.add('hidden'); if (v.length === 4) setTimeout(() => verifyFinancePin(), 200);});}
-  loadTrackingCompanies(); renderTrackingCompanySelect();
+  await loadTrackingCompanies(); renderTrackingCompanySelect();
   const docInput = document.getElementById('doc-file-input');
   if (docInput) {docInput.addEventListener('change', e => {if (!e.target.files || !e.target.files[0]) return; const file = e.target.files[0]; const docType = document.getElementById('doc-type-select').value; const reader = new FileReader(); reader.onload = evt => {tempAttachedDocs.push({type: docType, fileName: file.name, data: evt.target.result}); renderAttachedDocsList(); showToast('Sənəd əlavə olundu!');}; reader.readAsDataURL(file);});}
   document.addEventListener('keydown', e => {const lb = document.getElementById('lightbox'); if (!lb.classList.contains('hidden')) {if (e.key === 'ArrowRight') lbNext(); else if (e.key === 'ArrowLeft') lbPrev(); else if (e.key === 'Escape') closeLightbox();} });
@@ -739,10 +739,45 @@ function exportDataJSON() {const str = 'data:text/json;charset=utf-8,' + encodeU
 function showToast(msg, type = 'info') {const toast = document.getElementById('toast'), iconWrap = document.getElementById('toast-icon-wrap'), icon = document.getElementById('toast-icon'); document.getElementById('toast-msg').textContent = msg; iconWrap.className = 'p-1.5 rounded-full shrink-0 ' + (type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-rose-500' : 'bg-slate-500'); icon.className = 'fa-solid text-xs text-white ' + (type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info'); toast.classList.remove('translate-y-24', 'opacity-0'); toast.classList.add('translate-y-0', 'opacity-100'); clearTimeout(window._toastTimer); window._toastTimer = setTimeout(() => {toast.classList.add('translate-y-24', 'opacity-0'); toast.classList.remove('translate-y-0', 'opacity-100');}, type === 'error' ? 5000 : 3000);}
 
 /* ============================
-   TRACKING COMPANIES
+   TRACKING COMPANIES — SERVER SYNC
    ============================ */
-function loadTrackingCompanies() {const saved = localStorage.getItem('carzone_tracking_companies'); if (saved) {try {trackingCompanies = JSON.parse(saved); if (!Array.isArray(trackingCompanies)) trackingCompanies = [];} catch (e) {trackingCompanies = [];} } if (!trackingCompanies.length) {trackingCompanies = [{id: 1, name: 'MSC', url: 'https://www.msc.com/en/track-a-shipment', base64Params: true, paramsTemplate: 'trackingNumber={konteyner}&trackingMode=0'}, {id: 2, name: 'Maersk', url: 'https://www.maersk.com/tracking/'}]; saveTrackingCompanies();} }
-function saveTrackingCompanies() {localStorage.setItem('carzone_tracking_companies', JSON.stringify(trackingCompanies));}
+async function loadTrackingCompanies() {
+  try {
+    const r = await fetch('/api/tracking-companies');
+    if (r.ok) {
+      const data = await r.json();
+      if (Array.isArray(data.companies) && data.companies.length) {
+        trackingCompanies = data.companies;
+        localStorage.setItem('carzone_tracking_companies', JSON.stringify(trackingCompanies));
+        return;
+      }
+    }
+  } catch (e) {}
+  const saved = localStorage.getItem('carzone_tracking_companies');
+  if (saved) {
+    try { trackingCompanies = JSON.parse(saved); if (!Array.isArray(trackingCompanies)) trackingCompanies = []; }
+    catch (e) { trackingCompanies = []; }
+  }
+  if (!trackingCompanies.length) {
+    trackingCompanies = [
+      { id: 1, name: 'MSC', url: 'https://www.msc.com/en/track-a-shipment', base64Params: true, paramsTemplate: 'trackingNumber={konteyner}&trackingMode=0' },
+      { id: 2, name: 'Maersk', url: 'https://www.maersk.com/tracking/' }
+    ];
+    saveTrackingCompanies();
+  }
+}
+
+function saveTrackingCompanies() {
+  localStorage.setItem('carzone_tracking_companies', JSON.stringify(trackingCompanies));
+  if (sessionToken) {
+    fetch('/api/tracking-companies', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Auth-Token': sessionToken },
+      body: JSON.stringify({ companies: trackingCompanies })
+    }).catch(() => {});
+  }
+}
+
 function renderTrackingCompanySelect() {const sel = document.getElementById('form-tracking-company'); if (!sel) return; const cur = sel.value; sel.innerHTML = '<option value="">Seçilməyib</option>' + trackingCompanies.map(co => `<option value="${co.id}">${co.name}</option>`).join(''); sel.value = cur;}
 function openTrackingCompaniesModal() {renderTrackingCompaniesList(); document.getElementById('trackingCompaniesModal').classList.remove('hidden');}
 function closeTrackingCompaniesModal() {document.getElementById('trackingCompaniesModal').classList.add('hidden');}
