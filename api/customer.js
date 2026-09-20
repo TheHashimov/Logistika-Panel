@@ -26,11 +26,15 @@ export default async function handler(req, res) {
 
     const ph = car.photos || {};
 
-    /* Köhnə sonTehvil → baki köçürülməsi */
     const normalizeCat = (cat) => {
       if (Array.isArray(cat)) return { images: cat, videos: [] };
       return { images: cat?.images || [], videos: cat?.videos || [] };
     };
+
+    /* İzləmə şirkətlərini bazadan götür */
+    const trackingCompanies = Array.isArray(record.trackingCompanies)
+      ? record.trackingCompanies
+      : [];
 
     return res.json({
       car: {
@@ -49,13 +53,14 @@ export default async function handler(req, res) {
         link: car.link || '',
         etibarname: !!car.etibarname,
         shippingPaid: !!car.shippingPaid,
+        trackingCompanyId: car.trackingCompanyId || null,
         photos: {
           auction: normalizeCat(ph.auction),
-          pikap:   normalizeCat(ph.pikap),
           anbar:   normalizeCat(ph.anbar),
           poti:    normalizeCat(ph.poti)
         }
-      }
+      },
+      trackingCompanies
     });
   } catch (e) {
     return res.status(500).json({ error: e.message });
