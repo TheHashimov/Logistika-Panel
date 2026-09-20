@@ -11,35 +11,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
         * { box-sizing: border-box }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #f1f5f9;
-            color: #0f172a
-        }
-
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; color: #0f172a }
         .cs::-webkit-scrollbar { width: 5px; height: 5px }
         .cs::-webkit-scrollbar-track { background: #e2e8f0 }
         .cs::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px }
-
         @media print {
             body * { visibility: hidden }
             #print-area, #print-area * { visibility: visible }
             #print-area { position: absolute; left: 0; top: 0; width: 100%; color: #000 !important; background: #fff !important }
             .no-print { display: none !important }
         }
-
-        .photo-thumb {
-            aspect-ratio: 1;
-            object-fit: cover;
-            cursor: pointer;
-            transition: transform .2s;
-            border-radius: 12px
-        }
+        .photo-thumb { aspect-ratio: 1; object-fit: cover; cursor: pointer; transition: transform .2s; border-radius: 12px }
         .photo-thumb:hover { transform: scale(1.04) }
-
         .drop-zone { border: 2px dashed #cbd5e1; transition: border-color .2s, background .2s }
         .drop-zone.drag-over { border-color: #6366f1; background: #eef2ff }
     </style>
@@ -85,30 +69,38 @@
         <span id="toast-msg" class="text-sm font-medium"></span>
     </div>
 
-    <!-- MÜŞTƏRİ PANELİ — PC-DƏ GENİŞ -->
+    <!-- MÜŞTƏRİ PANELİ — 2 SÜTUNLU (PC) -->
     <div id="customer-panel" class="hidden min-h-screen bg-slate-50">
         <div class="bg-white border-b border-slate-200 sticky top-0 z-40">
-            <div class="max-w-2xl md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-4">
-                <div class="flex items-center gap-3 mb-3">
+            <div class="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto px-4 py-4">
+                <div class="flex items-center gap-3">
                     <div class="bg-red-600 p-2.5 rounded-xl text-white text-lg"><i class="fa-solid fa-car-side"></i></div>
                     <div>
                         <h1 class="text-xl font-black text-slate-900">CAR<span class="text-red-600">ZON</span></h1>
                         <p class="text-[11px] text-slate-500 font-semibold">Avtomobil Hesabatı</p>
                     </div>
                 </div>
-                <div id="cust-car-header" class="bg-slate-50 border border-slate-200 p-3 rounded-2xl space-y-2"></div>
             </div>
         </div>
-        <div class="max-w-2xl md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-5 space-y-4">
-            <div class="bg-white border border-slate-200 rounded-2xl p-1.5 flex gap-1.5 shadow-sm" id="cust-tabs"></div>
-            <div id="cust-photo-area"></div>
-            <div id="cust-dl-bar" class="hidden flex flex-col sm:flex-row gap-3">
-                <button onclick="custDownloadTabZip()" class="flex-1 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-file-zipper"></i> Kateqoriyanı ZIP</button>
-                <button onclick="custDownloadAllZip()" class="flex-1 py-3 bg-slate-800 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-box-archive"></i> Hamısını ZIP</button>
+
+        <div class="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto px-4 py-5">
+            <!-- PC: 2 sütunlu layout (400px sol + qalan sağ) -->
+            <div class="lg:grid lg:grid-cols-[400px_1fr] lg:gap-6 lg:items-start">
+                <!-- SOL: Logistika məlumatı -->
+                <div id="cust-car-header" class="bg-white border border-slate-200 p-4 rounded-2xl space-y-2 mb-4 lg:mb-0 lg:sticky lg:top-24"></div>
+                <!-- SAĞ: Tablar + Şəkillər -->
+                <div class="space-y-4">
+                    <div class="bg-white border border-slate-200 rounded-2xl p-1.5 flex gap-1.5 shadow-sm" id="cust-tabs"></div>
+                    <div id="cust-photo-area"></div>
+                    <div id="cust-dl-bar" class="hidden flex flex-col sm:flex-row gap-3">
+                        <button onclick="custDownloadTabZip()" class="flex-1 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-file-zipper"></i> Kateqoriyanı ZIP</button>
+                        <button onclick="custDownloadAllZip()" class="flex-1 py-3 bg-slate-800 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-box-archive"></i> Hamısını ZIP</button>
+                    </div>
+                </div>
             </div>
-            <p class="text-center text-xs text-slate-400 font-medium pb-4">Carzone Logistika</p>
+            <p class="text-center text-xs text-slate-400 font-medium pt-6">Carzone Logistika</p>
         </div>
     </div>
 
@@ -646,9 +638,9 @@
 
         function setCustTab(tab) {custTab = tab; renderCustomerTabs(); renderCustomerPhotos();}
 
-        function renderCustomerPhotos() {const ph = custData.ph || {}; const area = document.getElementById('cust-photo-area'); const dlBar = document.getElementById('cust-dl-bar'); const hasAny = ['pikap', 'anbar', 'poti'].some(k => (ph[k]?.images?.length || 0) + (ph[k]?.videos?.length || 0) > 0); if (hasAny) dlBar.classList.remove('hidden'); if (custTab === 'videolar') return renderCustomerAllVideos(); const cat = ph[custTab] || {images: [], videos: []}; const images = cat.images || [], videos = cat.videos || []; if (!images.length && !videos.length) {area.innerHTML = '<div class="bg-white border border-slate-200 rounded-2xl p-10 text-center"><div class="text-4xl mb-3">📷</div><h3 class="text-sm font-bold text-slate-700">Hələ media yoxdur</h3></div>'; return;} area.innerHTML = `${images.length > 0 ? `<div class="mb-5"><h3 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-2.5">📷 Şəkillər (${images.length})</h3><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">${images.map((url, i) => `<div class="relative group rounded-2xl overflow-hidden shadow-sm border border-slate-200" onclick="openLightbox(${i})"><img src="${url}" class="photo-thumb w-full" loading="lazy"><span class="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${i + 1}/${images.length}</span></div>`).join('')}</div></div>` : ''}${videos.length > 0 ? `<div><h3 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-2.5">🎬 Videolar (${videos.length})</h3><div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">${videos.map((v, i) => `<div class="relative group rounded-2xl overflow-hidden shadow-sm border border-slate-200 cursor-pointer" onclick="window.open('${v.url}','_blank')"><img src="${v.thumb}" class="photo-thumb w-full" loading="lazy"><div class="absolute inset-0 bg-black/30 flex items-center justify-center"><i class="fa-solid fa-play text-white text-3xl"></i></div><span class="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${i + 1}/${videos.length}</span></div>`).join('')}</div></div>` : ''}`;}
+        function renderCustomerPhotos() {const ph = custData.ph || {}; const area = document.getElementById('cust-photo-area'); const dlBar = document.getElementById('cust-dl-bar'); const hasAny = ['pikap', 'anbar', 'poti'].some(k => (ph[k]?.images?.length || 0) + (ph[k]?.videos?.length || 0) > 0); if (hasAny) dlBar.classList.remove('hidden'); if (custTab === 'videolar') return renderCustomerAllVideos(); const cat = ph[custTab] || {images: [], videos: []}; const images = cat.images || [], videos = cat.videos || []; if (!images.length && !videos.length) {area.innerHTML = '<div class="bg-white border border-slate-200 rounded-2xl p-10 text-center"><div class="text-4xl mb-3">📷</div><h3 class="text-sm font-bold text-slate-700">Hələ media yoxdur</h3></div>'; return;} area.innerHTML = `${images.length > 0 ? `<div class="mb-5"><h3 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-2.5">📷 Şəkillər (${images.length})</h3><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">${images.map((url, i) => `<div class="relative group rounded-2xl overflow-hidden shadow-sm border border-slate-200" onclick="openLightbox(${i})"><img src="${url}" class="photo-thumb w-full" loading="lazy"><span class="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${i + 1}/${images.length}</span></div>`).join('')}</div></div>` : ''}${videos.length > 0 ? `<div><h3 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-2.5">🎬 Videolar (${videos.length})</h3><div class="grid grid-cols-2 lg:grid-cols-3 gap-2.5">${videos.map((v, i) => `<div class="relative group rounded-2xl overflow-hidden shadow-sm border border-slate-200 cursor-pointer" onclick="window.open('${v.url}','_blank')"><img src="${v.thumb}" class="photo-thumb w-full" loading="lazy"><div class="absolute inset-0 bg-black/30 flex items-center justify-center"><i class="fa-solid fa-play text-white text-3xl"></i></div><span class="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${i + 1}/${videos.length}</span></div>`).join('')}</div></div>` : ''}`;}
 
-        function renderCustomerAllVideos() {const ph = custData.ph || {}; const area = document.getElementById('cust-photo-area'); const sections = [{key: 'pikap', label: '📦 Pikap', videos: ph.pikap?.videos || []}, {key: 'anbar', label: '🏭 Anbar', videos: ph.anbar?.videos || []}, {key: 'poti', label: '🇬🇪 Poti', videos: ph.poti?.videos || []}]; const total = sections.reduce((s, x) => s + x.videos.length, 0); if (total === 0) {area.innerHTML = '<div class="bg-white border border-slate-200 rounded-2xl p-10 text-center"><div class="text-4xl mb-3">🎬</div><h3 class="text-sm font-bold">Hələ video yoxdur</h3></div>'; return;} area.innerHTML = sections.filter(s => s.videos.length > 0).map(sec => `<div class="mb-6"><h3 class="text-xs font-black uppercase tracking-widest text-slate-600 mb-3 flex items-center gap-2">${sec.label}<span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded-full">${sec.videos.length}</span></h3><div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">${sec.videos.map(v => `<div class="relative group rounded-2xl overflow-hidden shadow-sm border border-slate-200 cursor-pointer" onclick="window.open('${v.url}','_blank')"><img src="${v.thumb}" class="photo-thumb w-full" loading="lazy"><div class="absolute inset-0 bg-black/30 flex items-center justify-center"><i class="fa-solid fa-play text-white text-3xl"></i></div></div>`).join('')}</div></div>`).join('');}
+        function renderCustomerAllVideos() {const ph = custData.ph || {}; const area = document.getElementById('cust-photo-area'); const sections = [{key: 'pikap', label: '📦 Pikap', videos: ph.pikap?.videos || []}, {key: 'anbar', label: '🏭 Anbar', videos: ph.anbar?.videos || []}, {key: 'poti', label: '🇬🇪 Poti', videos: ph.poti?.videos || []}]; const total = sections.reduce((s, x) => s + x.videos.length, 0); if (total === 0) {area.innerHTML = '<div class="bg-white border border-slate-200 rounded-2xl p-10 text-center"><div class="text-4xl mb-3">🎬</div><h3 class="text-sm font-bold">Hələ video yoxdur</h3></div>'; return;} area.innerHTML = sections.filter(s => s.videos.length > 0).map(sec => `<div class="mb-6"><h3 class="text-xs font-black uppercase tracking-widest text-slate-600 mb-3 flex items-center gap-2">${sec.label}<span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded-full">${sec.videos.length}</span></h3><div class="grid grid-cols-2 lg:grid-cols-3 gap-2.5">${sec.videos.map(v => `<div class="relative group rounded-2xl overflow-hidden shadow-sm border border-slate-200 cursor-pointer" onclick="window.open('${v.url}','_blank')"><img src="${v.thumb}" class="photo-thumb w-full" loading="lazy"><div class="absolute inset-0 bg-black/30 flex items-center justify-center"><i class="fa-solid fa-play text-white text-3xl"></i></div></div>`).join('')}</div></div>`).join('');}
 
         function openLightbox(index) {lbPhotos = custData.ph[custTab]?.images || []; lbIndex = index; adminLbPhotos = []; document.getElementById('lightbox').classList.remove('hidden'); document.body.style.overflow = 'hidden'; renderLightbox();}
         function closeLightbox() {adminLbPhotos = []; document.getElementById('lightbox').classList.add('hidden'); document.body.style.overflow = '';}
