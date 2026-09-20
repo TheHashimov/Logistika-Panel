@@ -636,7 +636,7 @@ async function deleteAdminMedia(mediaType, index) {if (!currentPhotoCarId) retur
 /* ============================
    LINK
    ============================ */
-function openLinkModal(carId) {const car = cars.find(c => c.id === carId); if (!car) return; if (!car.shareToken) car.shareToken = generateShareToken(); const link = `${window.location.origin}/customer.html?t=${car.shareToken}`; document.getElementById('link-output').value = link; document.getElementById('linkModal').classList.remove('hidden'); closePhotoModal(); saveDataToCloud(cars);}
+function openLinkModal(carId) {const car = cars.find(c => c.id === carId); if (!car) return; if (!car.shareToken) car.shareToken = generateShareToken(); car.shareUrl = `${window.location.origin}/customer.html?t=${car.shareToken}`; document.getElementById('link-output').value = car.shareUrl; document.getElementById('linkModal').classList.remove('hidden'); closePhotoModal(); saveDataToCloud(cars);}
 function closeLinkModal() {document.getElementById('linkModal').classList.add('hidden');}
 function copyLink() {const val = document.getElementById('link-output').value; navigator.clipboard.writeText(val).then(() => {document.getElementById('copy-icon').className = 'fa-solid fa-check'; showToast('Link kopyalandı!', 'success'); setTimeout(() => document.getElementById('copy-icon').className = 'fa-solid fa-copy', 2000);}).catch(() => {document.getElementById('link-output').select(); document.execCommand('copy');});}
 function shareViaWhatsApp() {const val = document.getElementById('link-output').value; if (!val) return; window.open(`https://wa.me/?text=${encodeURIComponent('Salam! Avtomobilinizin şəkillərinə baxmaq üçün bu linkə klikləyin:\n' + val)}`, '_blank');}
@@ -785,7 +785,49 @@ function addTrackingCompany() {const name = document.getElementById('new-company
 function deleteTrackingCompany(id) {trackingCompanies = trackingCompanies.filter(co => co.id !== id); saveTrackingCompanies(); renderTrackingCompaniesList(); renderTrackingCompanySelect();}
 
 function copyTextToClipboard(text) {if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text); return new Promise((res, rej) => {try {const t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.focus(); t.select(); document.execCommand('copy'); document.body.removeChild(t); res();} catch (err) {rej(err);} });}
-async function copyContainerAndTrack(carId, event) {if (event && event.preventDefault) event.preventDefault(); const car = cars.find(c => c.id === carId); if (!car) return; if (!car.container) {showToast('⚠️ Konteyner yoxdur'); return;} const company = trackingCompanies.find(co => co.id === car.trackingCompanyId); if (!company) {showToast('⚠️ Şirkət seçilməyib'); return;} if (company.base64Params && company.paramsTemplate) {const resolved = company.paramsTemplate.split('{konteyner}').join(car.container); const b64 = btoa(unescape(encodeURIComponent(resolved))); const sep = company.url.includes('?') ? '&' : '?'; copyTextToClipboard(car.container).catch(() => { }); showToast(`🔎 ${company.name} açılır...`); window.open(`${company.url}${sep}params=${encodeURIComponent(b64)}`, '_blank'); return;} if (company.url.includes('{konteyner}')) {window.open(company.url.split('{konteyner}').join(encodeURIComponent(car.container)), '_blank'); return;} try {await copyTextToClipboard(car.container); showToast(`📋 Kopyalandı!`);} catch { } window.open(company.url, '_blank');}
+
+/* ✅ YENİLƏNDİ: copyContainerAndTrack — əvvəlcə JSON-dakı tracking məlumatlarından istifadə edir */
+async function copyContainerAndTrack(carId, event) {
+  if (event && event.preventDefault) event.preventDefault();
+  const car = cars.find(c => c.id === carId);
+  if (!car) return;
+  if (!car.container) {showToast('⚠️ Konteyner yoxdur'); return;}
+
+  // ✅ Əvvəlcə JSON-dakı tracking məlumatlarından istifadə et
+  let url = car.trackingUrl;
+  let paramsTemplate = car.trackingParamsTemplate;
+  let isBase64 = car.trackingBase64;
+  let companyName = car.trackingCompanyName || 'Şirkət';
+
+  // Əgər JSON-da yoxdursa, cari trackingCompanies-dən tap
+  if (!url && car.trackingCompanyId) {
+    const company = trackingCompanies.find(co => co.id === car.trackingCompanyId);
+    if (company) {
+      url = company.url;
+      paramsTemplate = company.paramsTemplate;
+      isBase64 = !!company.base64Params;
+      companyName = company.name;
+    }
+  }
+
+  if (!url) {showToast('⚠️ İzləmə linki yoxdur'); return;}
+
+  if (isBase64 && paramsTemplate) {
+    const resolved = paramsTemplate.split('{konteyner}').join(car.container);
+    const b64 = btoa(unescape(encodeURIComponent(resolved)));
+    const sep = url.includes('?') ? '&' : '?';
+    copyTextToClipboard(car.container).catch(() => {});
+    showToast(`🔎 ${companyName} açılır...`);
+    window.open(`${url}${sep}params=${encodeURIComponent(b64)}`, '_blank');
+    return;
+  }
+  if (url.includes('{konteyner}')) {
+    window.open(url.split('{konteyner}').join(encodeURIComponent(car.container)), '_blank');
+    return;
+  }
+  try {await copyTextToClipboard(car.container); showToast(`📋 Kopyalandı!`);} catch {}
+  window.open(url, '_blank');
+}
 
 /* ============================
    DATE UTILS
@@ -797,7 +839,38 @@ function adjustDateField(id, delta) {const el = document.getElementById(id); if 
 function diffDays(d1, d2) {const a = parseAppDate(d1), b = parseAppDate(d2); if (!a || !b) return null; return Math.ceil((b - a) / 86400000);}
 function getDaysToPoti(p) {const dt = parseAppDate(p); if (!dt) return null; const t = new Date(); t.setHours(0, 0, 0, 0); dt.setHours(0, 0, 0, 0); return Math.ceil((dt - t) / 86400000);}
 
-function normalizeCars(list) {if (!Array.isArray(list)) return []; return list.map(c => {const raw = c.photos || {}; const migrate = old => Array.isArray(old) ? {images: old, videos: []} : {images: old?.images || [], videos: old?.videos || []}; return {...c, imageUrl: c.imageUrl || c.image || '', udus: formatDateDMY(c.udus) || c.udus || '', anbar: formatDateDMY(c.anbar) || c.anbar || '', poti: formatDateDMY(c.poti) || c.poti || '', baki: formatDateDMY(c.baki) || c.baki || '', shareToken: c.shareToken || generateShareToken(), photos: {auction: migrate(raw.auction), anbar: migrate(raw.anbar), poti: migrate(raw.poti)}};});}
+/* ✅ YENİLƏNDİ: normalizeCars — tracking sahələri qorunur */
+function normalizeCars(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map(c => {
+    const raw = c.photos || {};
+    const migrate = old => Array.isArray(old) ? {images: old, videos: []} : {images: old?.images || [], videos: old?.videos || []};
+    const token = c.shareToken || generateShareToken();
+    const container = c.container || '';
+    const hasTracking = !!(container && c.trackingCompanyId);
+
+    return {
+      ...c,
+      imageUrl: c.imageUrl || c.image || '',
+      udus: formatDateDMY(c.udus) || c.udus || '',
+      anbar: formatDateDMY(c.anbar) || c.anbar || '',
+      poti: formatDateDMY(c.poti) || c.poti || '',
+      baki: formatDateDMY(c.baki) || c.baki || '',
+      shareToken: token,
+      shareUrl: c.shareUrl || `${window.location.origin}/customer.html?t=${token}`,
+
+      // ✅ Tracking sahələri — konteyner + şirkət varsa qorunur, yoxsa null
+      container: container,
+      trackingCompanyId: hasTracking ? c.trackingCompanyId : null,
+      trackingCompanyName: hasTracking ? (c.trackingCompanyName || null) : null,
+      trackingUrl: hasTracking ? (c.trackingUrl || null) : null,
+      trackingParamsTemplate: hasTracking ? (c.trackingParamsTemplate || null) : null,
+      trackingBase64: hasTracking ? !!c.trackingBase64 : false,
+
+      photos: {auction: migrate(raw.auction), anbar: migrate(raw.anbar), poti: migrate(raw.poti)}
+    };
+  });
+}
 
 function updateAdminUI() {const btn = document.getElementById('btn-final-finance'); if (btn) btn.classList.remove('hidden'); renderApp(); updateTrashBadge();}
 
@@ -837,10 +910,18 @@ async function toggleShippingPaidStatus(id) {const i = cars.findIndex(c => c.id 
 function openModal(id = null) {document.getElementById('carForm').reset(); tempAttachedDocs = []; document.getElementById('form-id').value = id || ''; renderTrackingCompanySelect(); if (id) {const car = cars.find(c => c.id === parseInt(id)); if (car) {document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-red-600"></i> Düzəliş'; const F = (fid, val) => {const el = document.getElementById(fid); if (el) el.value = val || '';}; F('form-owner', car.owner); F('form-model', car.model); F('form-vin', car.vin); F('form-location', car.location); F('form-shipping-port', car.shippingPort); F('form-container', car.container); F('form-tracking-company', car.trackingCompanyId || ''); F('form-udus', formatDateDMY(car.udus)); F('form-anbar', formatDateDMY(car.anbar)); F('form-poti', formatDateDMY(car.poti)); F('form-baki', formatDateDMY(car.baki)); F('form-status', car.status || 'Auksionda'); F('form-image-url', car.imageUrl || ''); F('form-car-cost', car.carCost || ''); F('form-real-shipping', car.realShipping || ''); F('form-client-shipping', car.clientShipping || ''); F('form-real-insurance', car.realInsurance || ''); F('form-client-insurance', car.clientInsurance || ''); F('form-real-poti-baku', car.realPotiBaku || ''); F('form-client-poti-baku', car.clientPotiBaku || ''); F('form-service-fee', car.serviceFee || ''); F('form-extra-cost', car.extraCost || ''); F('form-link', car.link || ''); document.getElementById('form-etibarname').checked = !!car.etibarname; document.getElementById('form-shipping-paid').checked = !!car.shippingPaid; tempAttachedDocs = car.documents ? [...car.documents] : [];} } else {document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-car text-red-600"></i> Yeni Avtomobil'; document.getElementById('form-etibarname').checked = false; document.getElementById('form-shipping-paid').checked = false;} renderAttachedDocsList(); document.getElementById('carModal').classList.remove('hidden');}
 function closeModal() {document.getElementById('carModal').classList.add('hidden');}
 async function handleFormSubmit(e) {e.preventDefault(); await processSaveCar(document.getElementById('form-id').value, document.getElementById('form-image-url').value);}
+
+/* ✅ YENİLƏNDİ: processSaveCar — tracking məlumatları yalnız konteyner + şirkət varsa yazılır */
 async function processSaveCar(id, imageUrl) {
   const existing = id ? cars.find(c => c.id === parseInt(id)) : null;
+  const container = document.getElementById('form-container').value.trim();
   const trackingCoId = document.getElementById('form-tracking-company').value ? parseInt(document.getElementById('form-tracking-company').value) : null;
   const trackingCo = trackingCoId ? trackingCompanies.find(x => x.id === trackingCoId) : null;
+
+  // ✅ Yalnız konteyner VƏ şirkət varsa tracking məlumatlarını yaz
+  const hasTracking = !!(container && trackingCo);
+
+  const finalShareToken = (existing && existing.shareToken) || generateShareToken();
   const carData = {
     ...(existing || {}),
     id: id ? parseInt(id) : Date.now(),
@@ -849,12 +930,15 @@ async function processSaveCar(id, imageUrl) {
     vin: document.getElementById('form-vin').value.trim(),
     location: document.getElementById('form-location').value.trim(),
     shippingPort: document.getElementById('form-shipping-port').value.trim(),
-    container: document.getElementById('form-container').value.trim(),
-    trackingCompanyId: trackingCoId,
-    trackingCompanyName: trackingCo ? trackingCo.name : null,
-    trackingUrl: trackingCo ? trackingCo.url : null,
-    trackingParamsTemplate: trackingCo && trackingCo.paramsTemplate ? trackingCo.paramsTemplate : null,
-    trackingBase64: trackingCo ? !!trackingCo.base64Params : false,
+    container: container,
+
+    // ✅ Tracking məlumatları — yalnız konteyner + şirkət varsa
+    trackingCompanyId: hasTracking ? trackingCo.id : null,
+    trackingCompanyName: hasTracking ? trackingCo.name : null,
+    trackingUrl: hasTracking ? trackingCo.url : null,
+    trackingParamsTemplate: hasTracking && trackingCo.paramsTemplate ? trackingCo.paramsTemplate : null,
+    trackingBase64: hasTracking ? !!trackingCo.base64Params : false,
+
     udus: formatDateDMY(document.getElementById('form-udus').value.trim()),
     anbar: formatDateDMY(document.getElementById('form-anbar').value.trim()),
     poti: formatDateDMY(document.getElementById('form-poti').value.trim()),
@@ -874,7 +958,8 @@ async function processSaveCar(id, imageUrl) {
     documents: tempAttachedDocs,
     etibarname: document.getElementById('form-etibarname').checked,
     shippingPaid: document.getElementById('form-shipping-paid').checked,
-    shareToken: (existing && existing.shareToken) || generateShareToken(),
+    shareToken: finalShareToken,
+    shareUrl: `${window.location.origin}/customer.html?t=${finalShareToken}`,
     photos: (existing && existing.photos) || emptyPhotos(),
     _updatedAt: Date.now()
   };
