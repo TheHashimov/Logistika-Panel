@@ -3,170 +3,103 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#09090d">
+<meta name="theme-color" content="#0a0e1f">
 <title>AuctionLand — Avtomobil İzləmə</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
 :root{
-  --bg:#09090d;
-  --bg-elev:#0f1015;
-  --bg-elev-2:#14151c;
-  --border:rgba(255,255,255,.055);
-  --border-strong:rgba(255,255,255,.09);
-  --text:#e8e9ee;
-  --text-2:#9a9ca6;
-  --text-3:#5a5c66;
-  --gold:#c9a86a;
-  --gold-bright:#e2c891;
-  --gold-soft:rgba(201,168,106,.14);
-  --emerald:#4fb087;
-  --emerald-soft:rgba(79,176,135,.12);
-  --rose:#d97a7a;
-  --rose-soft:rgba(217,122,122,.12);
-  --indigo:#7a7ff5;
-  --indigo-soft:rgba(122,127,245,.12);
+  --bg:#0a0e1f;
+  --bg-2:#0d1326;
+  --surface:rgba(255,255,255,.035);
+  --surface-hover:rgba(255,255,255,.055);
+  --border:rgba(255,255,255,.07);
+  --border-strong:rgba(255,255,255,.12);
+  --text:#eef1f8;
+  --text-2:#9ba3b8;
+  --text-3:#5e677f;
+  --indigo:#6366f1;
+  --violet:#8b5cf6;
+  --pink:#ec4899;
+  --cyan:#06b6d4;
+  --emerald:#10b981;
+  --amber:#f59e0b;
+  --rose:#f43f5e;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{background:var(--bg)}
+html{background:var(--bg);scroll-behavior:smooth}
 body{
   font-family:'Inter','Plus Jakarta Sans',sans-serif;
   background:var(--bg);
   color:var(--text);
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
-  text-rendering:optimizeLegibility;
-  font-feature-settings:'cv11','ss01','cv02','cv03','cv04';
   letter-spacing:-0.011em;
   overscroll-behavior-y:none;
   min-height:100vh;
+  position:relative;
+  overflow-x:hidden;
 }
 
-/* ═══ BACKGROUND TEXTURE ═══ */
-body::before{
-  content:'';
+/* ═══════════════ ANIMATED MESH BACKGROUND ═══════════════ */
+.bg-mesh{
   position:fixed;
   inset:0;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,168,106,.08), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(122,127,245,.05), transparent 60%);
   pointer-events:none;
   z-index:0;
+  overflow:hidden;
 }
-body > *{position:relative;z-index:1}
+.orb{
+  position:absolute;
+  border-radius:50%;
+  filter:blur(80px);
+  opacity:.35;
+  will-change:transform;
+  animation:float 18s ease-in-out infinite;
+}
+.orb-1{width:500px;height:500px;background:radial-gradient(circle,#6366f1,transparent 70%);top:-150px;left:-100px;animation-delay:0s}
+.orb-2{width:420px;height:420px;background:radial-gradient(circle,#8b5cf6,transparent 70%);top:20%;right:-120px;animation-delay:-4s}
+.orb-3{width:380px;height:380px;background:radial-gradient(circle,#ec4899,transparent 70%);bottom:-100px;left:30%;animation-delay:-8s;opacity:.22}
+.orb-4{width:320px;height:320px;background:radial-gradient(circle,#06b6d4,transparent 70%);bottom:10%;right:20%;animation-delay:-12s;opacity:.2}
 
-/* ═══ MOBILE FIX — NO ZOOM ═══ */
+@keyframes float{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(40px,-60px) scale(1.08)}
+  66%{transform:translate(-30px,40px) scale(.95)}
+}
+
+/* ═══════════════ NOISE OVERLAY ═══════════════ */
+.bg-noise{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+  opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay;
+}
+
+body > *:not(.bg-mesh):not(.bg-noise){position:relative;z-index:2}
+
+/* ═══════════════ MOBILE FIX — NO ZOOM ═══════════════ */
 button,a,[onclick],.tap,.photo-grid-item,img,#lb-img,.no-zoom{
   touch-action:manipulation;
   -webkit-touch-callout:none;
 }
 img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
 
-/* ═══ SCROLLBAR ═══ */
+/* ═══════════════ SCROLLBAR ═══════════════ */
 .cs::-webkit-scrollbar{width:4px;height:4px}
 .cs::-webkit-scrollbar-track{background:transparent}
-.cs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:4px}
+.cs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 
-/* ═══ HAIRLINE ═══ */
-.hairline{border:1px solid var(--border)}
-.hairline-t{border-top:1px solid var(--border)}
-.hairline-b{border-bottom:1px solid var(--border)}
-
-/* ═══ CARDS ═══ */
-.card{
-  background:linear-gradient(180deg,var(--bg-elev) 0%,var(--bg-elev-2) 100%);
-  border:1px solid var(--border);
-  border-radius:24px;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,.02) inset,
-    0 1px 2px rgba(0,0,0,.4),
-    0 12px 32px rgba(0,0,0,.35);
-  position:relative;
-  overflow:hidden;
-}
-.card::before{
-  content:'';
-  position:absolute;
-  inset:0;
-  border-radius:inherit;
-  padding:1px;
-  background:linear-gradient(135deg,rgba(255,255,255,.06),transparent 40%,transparent 60%,rgba(201,168,106,.04));
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask-composite:exclude;
-  pointer-events:none;
-}
-
-.card-soft{
-  background:rgba(255,255,255,.02);
-  border:1px solid var(--border);
-  border-radius:18px;
-}
-
-/* ═══ ANIMATIONS ═══ */
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.fade-up{animation:fadeUp .7s cubic-bezier(.16,1,.3,1) both}
-@keyframes pulse-ring{0%{transform:scale(1);opacity:.5}100%{transform:scale(2.2);opacity:0}}
-.pulse-ring{animation:pulse-ring 2.2s cubic-bezier(.4,0,.6,1) infinite}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.shimmer{background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.4) 50%,transparent 100%);background-size:200% 100%;animation:shimmer 2.8s infinite}
-@keyframes glow-gold{0%,100%{box-shadow:0 0 0 0 rgba(201,168,106,.4)}50%{box-shadow:0 0 0 6px rgba(201,168,106,0)}}
-.glow-gold{animation:glow-gold 3s ease-in-out infinite}
-
-/* ═══ HERO ═══ */
-.hero-overlay{
-  background:linear-gradient(to top,
-    rgba(6,7,10,.98) 0%,
-    rgba(6,7,10,.85) 30%,
-    rgba(6,7,10,.35) 60%,
-    rgba(6,7,10,.1) 85%,
-    transparent 100%);
-}
-.hero-noise::after{
-  content:'';
-  position:absolute;
-  inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
-  opacity:.04;
-  pointer-events:none;
-  mix-blend-mode:overlay;
-}
-
-/* ═══ PHOTO GRID ═══ */
-.photo-grid-item{
-  aspect-ratio:1;
-  overflow:hidden;
-  border-radius:18px;
-  cursor:pointer;
-  position:relative;
-  background:var(--bg-elev-2);
-  transition:all .5s cubic-bezier(.16,1,.3,1);
-  box-shadow:0 1px 2px rgba(0,0,0,.3);
-}
-.photo-grid-item:hover{
-  transform:translateY(-3px);
-  box-shadow:0 12px 32px rgba(0,0,0,.5);
-}
-.photo-grid-item img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  transition:transform .8s cubic-bezier(.16,1,.3,1);
-  pointer-events:none;
-}
-.photo-grid-item:hover img{transform:scale(1.06)}
-
-/* ═══ HERO TYPOGRAPHY ═══ */
-.display{
-  font-family:'Plus Jakarta Sans','Inter',sans-serif;
-  letter-spacing:-0.03em;
-  font-weight:800;
-}
+/* ═══════════════ TYPOGRAPHY ═══════════════ */
+.display{font-family:'Plus Jakarta Sans','Inter',sans-serif;letter-spacing:-0.035em;font-weight:800}
 .eyebrow{
   font-size:10px;
   font-weight:700;
@@ -174,244 +107,547 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
   text-transform:uppercase;
   color:var(--text-3);
 }
-.gold-hairline{
-  background:linear-gradient(90deg,transparent,var(--gold) 40%,var(--gold-bright) 50%,var(--gold) 60%,transparent);
+.gradient-text{
+  background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 30%,#f0abfc 60%,#67e8f9 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
 }
 
-/* ═══ STATUS CHIP ═══ */
+/* ═══════════════ CARDS — GLASSMORPHISM ═══════════════ */
+.card{
+  position:relative;
+  background:linear-gradient(180deg,rgba(255,255,255,.045) 0%,rgba(255,255,255,.02) 100%);
+  backdrop-filter:blur(24px) saturate(1.3);
+  -webkit-backdrop-filter:blur(24px) saturate(1.3);
+  border:1px solid var(--border);
+  border-radius:26px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.05) inset,
+    0 24px 64px rgba(0,0,0,.35),
+    0 4px 16px rgba(99,102,241,.04);
+  overflow:hidden;
+  transition:border-color .4s ease,box-shadow .4s ease;
+}
+.card:hover{
+  border-color:var(--border-strong);
+}
+.card::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  padding:1px;
+  background:linear-gradient(140deg,rgba(255,255,255,.12),transparent 30%,transparent 70%,rgba(139,92,246,.08));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  pointer-events:none;
+}
+
+/* ═══════════════ ANIMATIONS ═══════════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .8s cubic-bezier(.16,1,.3,1) both}
+
+@keyframes pulse-ring{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.4);opacity:0}}
+.pulse-ring{animation:pulse-ring 2.2s cubic-bezier(.4,0,.6,1) infinite}
+
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.shimmer{background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.6) 50%,transparent 100%);background-size:200% 100%;animation:shimmer 2.8s infinite}
+
+@keyframes grad-move{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.grad-anim{background-size:200% 200%;animation:grad-move 6s ease-in-out infinite}
+
+@keyframes glow-pulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:.7;transform:scale(1.05)}}
+.glow-pulse{animation:glow-pulse 3s ease-in-out infinite}
+
+@keyframes slide-in-right{from{opacity:0;transform:translateX(60px) scale(.9)}to{opacity:1;transform:translateX(0) scale(1)}}
+.slide-in-right{animation:slide-in-right .6s cubic-bezier(.16,1,.3,1) both}
+
+@keyframes bounce-soft{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.bounce-soft{animation:bounce-soft 2s ease-in-out infinite}
+
+@keyframes rotate-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.rotate-slow{animation:rotate-slow 20s linear infinite}
+
+/* ═══════════════ HERO ═══════════════ */
+.hero-overlay{
+  background:linear-gradient(to top,
+    rgba(10,14,31,.98) 0%,
+    rgba(10,14,31,.88) 25%,
+    rgba(10,14,31,.45) 55%,
+    rgba(10,14,31,.15) 80%,
+    transparent 100%);
+}
+.hero-aura{
+  position:absolute;
+  inset:-40%;
+  background:conic-gradient(from 200deg at 60% 40%,transparent,rgba(99,102,241,.15),transparent 40%,rgba(139,92,246,.1),transparent 70%);
+  animation:rotate-slow 30s linear infinite;
+  pointer-events:none;
+  filter:blur(40px);
+}
+
+/* ═══════════════ PHOTO GRID ═══════════════ */
+.photo-grid-item{
+  aspect-ratio:1;
+  overflow:hidden;
+  border-radius:20px;
+  cursor:pointer;
+  position:relative;
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--border);
+  transition:all .5s cubic-bezier(.16,1,.3,1);
+}
+.photo-grid-item::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  opacity:0;
+  transition:opacity .4s;
+  box-shadow:0 0 0 1px rgba(139,92,246,.5),0 20px 40px rgba(139,92,246,.15);
+  pointer-events:none;
+}
+.photo-grid-item:hover{transform:translateY(-4px)}
+.photo-grid-item:hover::after{opacity:1}
+.photo-grid-item img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transition:transform .9s cubic-bezier(.16,1,.3,1);
+  pointer-events:none;
+}
+.photo-grid-item:hover img{transform:scale(1.07)}
+
+/* ═══════════════ STATUS CHIP ═══════════════ */
 .chip{
   display:inline-flex;
   align-items:center;
-  gap:6px;
-  padding:5px 11px;
+  gap:7px;
+  padding:6px 12px;
   border-radius:100px;
   font-size:10px;
   font-weight:700;
-  letter-spacing:.05em;
+  letter-spacing:.04em;
   border:1px solid var(--border);
-  background:rgba(255,255,255,.03);
+  background:rgba(255,255,255,.04);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
   white-space:nowrap;
+  transition:all .3s;
 }
 .chip-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
-.chip-ok{background:var(--emerald-soft);border-color:rgba(79,176,135,.25);color:#7dd3a8}
-.chip-ok .chip-dot{background:var(--emerald);box-shadow:0 0 8px rgba(79,176,135,.6)}
-.chip-no{background:var(--rose-soft);border-color:rgba(217,122,122,.22);color:#e39a9a}
-.chip-no .chip-dot{background:var(--rose)}
-.chip-gold{background:var(--gold-soft);border-color:rgba(201,168,106,.3);color:var(--gold-bright)}
-.chip-gold .chip-dot{background:var(--gold);box-shadow:0 0 8px rgba(201,168,106,.6)}
+.chip-ok{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:#6ee7b7}
+.chip-ok .chip-dot{background:#10b981;box-shadow:0 0 10px rgba(16,185,129,.8)}
+.chip-no{background:rgba(244,63,94,.1);border-color:rgba(244,63,94,.25);color:#fda4af}
+.chip-no .chip-dot{background:#f43f5e}
+.chip-indigo{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.28);color:#a5b4fc}
+.chip-indigo .chip-dot{background:#6366f1;box-shadow:0 0 10px rgba(99,102,241,.8)}
 
-/* ═══ DOC LIST ═══ */
+/* ═══════════════ DOC ROWS ═══════════════ */
 .doc-row{
   display:flex;
   align-items:center;
   gap:14px;
   padding:14px 4px;
   border-bottom:1px solid var(--border);
-  transition:background .2s;
+  transition:all .3s;
 }
 .doc-row:last-child{border-bottom:none}
 .doc-icon{
-  width:38px;
-  height:38px;
-  border-radius:12px;
+  width:40px;
+  height:40px;
+  border-radius:13px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:13px;
-  background:rgba(255,255,255,.03);
+  font-size:14px;
+  background:rgba(255,255,255,.04);
   border:1px solid var(--border);
   color:var(--text-2);
   flex-shrink:0;
-  transition:all .3s;
+  transition:all .4s cubic-bezier(.16,1,.3,1);
 }
 .doc-row.done .doc-icon{
-  background:var(--emerald-soft);
-  border-color:rgba(79,176,135,.2);
-  color:#7dd3a8;
+  background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(16,185,129,.08));
+  border-color:rgba(16,185,129,.3);
+  color:#6ee7b7;
+  box-shadow:0 0 20px rgba(16,185,129,.15);
 }
 .doc-row.pending .doc-icon{
-  background:var(--rose-soft);
-  border-color:rgba(217,122,122,.2);
-  color:#e39a9a;
+  background:linear-gradient(135deg,rgba(244,63,94,.15),rgba(244,63,94,.05));
+  border-color:rgba(244,63,94,.25);
+  color:#fda4af;
 }
 .doc-label{
-  font-size:12px;
+  font-size:12.5px;
   font-weight:600;
   color:var(--text);
   letter-spacing:-0.005em;
   line-height:1.2;
 }
 .doc-sub{
-  font-size:10px;
+  font-size:10.5px;
   font-weight:500;
   color:var(--text-3);
-  margin-top:2px;
+  margin-top:3px;
   font-family:'Inter',monospace;
   letter-spacing:.02em;
 }
 
-/* ═══ TIMELINE ═══ */
+/* ═══════════════ TIMELINE ═══════════════ */
 .tl-circle{
-  width:42px;height:42px;
+  width:44px;
+  height:44px;
   border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   font-size:15px;
   border:1px solid var(--border-strong);
-  background:var(--bg-elev);
+  background:rgba(255,255,255,.03);
+  backdrop-filter:blur(12px);
   position:relative;
   z-index:2;
   flex-shrink:0;
-  transition:all .4s;
+  transition:all .5s cubic-bezier(.16,1,.3,1);
 }
 .tl-circle.done{
-  background:linear-gradient(135deg,#3d8f6e,#4fb087);
-  border-color:rgba(79,176,135,.4);
+  background:linear-gradient(135deg,#10b981,#059669);
+  border-color:rgba(16,185,129,.5);
   color:#fff;
-  box-shadow:0 4px 16px rgba(79,176,135,.25),0 0 0 1px rgba(79,176,135,.15) inset;
+  box-shadow:0 8px 24px rgba(16,185,129,.3),0 0 0 1px rgba(16,185,129,.2) inset;
 }
 .tl-circle.active{
-  background:linear-gradient(135deg,#1a1c26,#23252f);
-  border-color:rgba(201,168,106,.4);
-  color:var(--gold-bright);
-  box-shadow:0 0 24px rgba(201,168,106,.15),0 0 0 1px rgba(201,168,106,.1) inset;
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);
+  border-color:rgba(139,92,246,.5);
+  color:#fff;
+  box-shadow:0 8px 28px rgba(139,92,246,.4),0 0 0 1px rgba(139,92,246,.2) inset,0 0 60px rgba(139,92,246,.2);
 }
 .tl-circle.future{color:var(--text-3)}
 
 .tl-line{
   position:absolute;
-  left:20px;top:48px;bottom:-8px;
+  left:21px;
+  top:50px;
+  bottom:-8px;
   width:2px;
   border-radius:2px;
   background:linear-gradient(to bottom,var(--border-strong),transparent);
 }
-.tl-line.done{background:linear-gradient(to bottom,rgba(79,176,135,.5),rgba(79,176,135,.1))}
+.tl-line.done{background:linear-gradient(to bottom,rgba(16,185,129,.6),rgba(16,185,129,.15),transparent)}
 
-/* ═══ TIMELINE PROGRESS BAR ═══ */
+/* ═══════════════ PROGRESS BAR ═══════════════ */
 .progress-track{
-  height:4px;
-  background:rgba(255,255,255,.04);
+  height:6px;
+  background:rgba(255,255,255,.05);
   border-radius:100px;
   overflow:hidden;
   border:1px solid var(--border);
+  position:relative;
 }
 .progress-fill{
   height:100%;
   border-radius:100px;
-  background:linear-gradient(90deg,var(--gold),var(--gold-bright));
-  box-shadow:0 0 16px rgba(201,168,106,.4);
+  background:linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899);
+  background-size:200% 100%;
+  animation:grad-move 3s ease infinite;
+  box-shadow:0 0 20px rgba(139,92,246,.5);
   position:relative;
   overflow:hidden;
-  transition:width .8s cubic-bezier(.16,1,.3,1);
+  transition:width 1s cubic-bezier(.16,1,.3,1);
 }
 .progress-fill::after{
   content:'';
   position:absolute;
   inset:0;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
-  animation:shimmer 2.8s infinite;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);
+  animation:shimmer 2.5s infinite;
 }
 
-/* ═══ TAB ═══ */
+/* ═══════════════ TABS ═══════════════ */
 .tab-btn{
   flex:1;
-  padding:10px 8px;
+  padding:11px 8px;
   border-radius:14px;
-  font-size:11px;
+  font-size:11.5px;
   font-weight:600;
-  letter-spacing:.01em;
-  transition:all .3s cubic-bezier(.16,1,.3,1);
+  letter-spacing:.005em;
+  transition:all .35s cubic-bezier(.16,1,.3,1);
   color:var(--text-2);
   border:1px solid transparent;
   cursor:pointer;
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:6px;
+  gap:7px;
+  position:relative;
+  overflow:hidden;
 }
-.tab-btn:hover{color:var(--text)}
+.tab-btn:hover{color:var(--text);background:rgba(255,255,255,.03)}
 .tab-btn.active{
-  background:rgba(255,255,255,.05);
-  border-color:var(--border);
-  color:var(--text);
-  box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 1px 3px rgba(0,0,0,.2);
+  background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.1));
+  border-color:rgba(139,92,246,.3);
+  color:#fff;
+  box-shadow:0 4px 16px rgba(99,102,241,.15),0 0 0 1px rgba(255,255,255,.05) inset;
 }
 .tab-count{
-  font-size:9px;
+  font-size:9.5px;
   font-weight:700;
-  padding:1px 6px;
+  padding:2px 7px;
   border-radius:100px;
-  background:rgba(255,255,255,.05);
+  background:rgba(255,255,255,.06);
   color:var(--text-3);
   letter-spacing:.02em;
+  transition:all .3s;
 }
 .tab-btn.active .tab-count{
-  background:var(--gold-soft);
-  color:var(--gold-bright);
+  background:rgba(255,255,255,.15);
+  color:#fff;
 }
 
-/* ═══ BUTTONS ═══ */
-.btn-gold{
-  background:linear-gradient(180deg,var(--gold-bright) 0%,var(--gold) 100%);
-  color:#141008;
-  border:1px solid rgba(0,0,0,.15);
-  box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 8px 24px rgba(201,168,106,.2);
+/* ═══════════════ BUTTONS ═══════════════ */
+.btn-primary{
+  background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#ec4899 100%);
+  background-size:200% 200%;
+  animation:grad-move 5s ease infinite;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.2) inset,
+    0 8px 24px rgba(139,92,246,.3),
+    0 0 40px rgba(99,102,241,.15);
   font-weight:700;
   letter-spacing:-0.005em;
-  transition:all .2s;
+  transition:all .3s;
 }
-.btn-gold:hover{filter:brightness(1.05);box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 12px 28px rgba(201,168,106,.3)}
-.btn-gold:active{transform:scale(.98)}
+.btn-primary:hover{
+  filter:brightness(1.1);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.25) inset,
+    0 12px 32px rgba(139,92,246,.4),
+    0 0 60px rgba(99,102,241,.25);
+  transform:translateY(-1px);
+}
+.btn-primary:active{transform:scale(.98) translateY(0)}
 
 .btn-ghost{
   background:rgba(255,255,255,.04);
   border:1px solid var(--border-strong);
   color:var(--text);
-  transition:all .2s;
+  backdrop-filter:blur(12px);
+  transition:all .3s;
 }
-.btn-ghost:hover{background:rgba(255,255,255,.07)}
+.btn-ghost:hover{background:rgba(255,255,255,.08);transform:translateY(-1px)}
 .btn-ghost:active{transform:scale(.98)}
 
-/* ═══ HERO CHIP ═══ */
 .glass-chip{
-  background:rgba(255,255,255,.06);
-  backdrop-filter:blur(20px) saturate(1.2);
-  -webkit-backdrop-filter:blur(20px) saturate(1.2);
-  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.08);
+  backdrop-filter:blur(24px) saturate(1.3);
+  -webkit-backdrop-filter:blur(24px) saturate(1.3);
+  border:1px solid rgba(255,255,255,.15);
   color:var(--text);
+  transition:all .3s;
+}
+.glass-chip:hover{background:rgba(255,255,255,.13)}
+
+/* ═══════════════ SOCIAL FOOTER ═══════════════ */
+.social-btn{
+  width:44px;
+  height:44px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  color:#fff;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border);
+  backdrop-filter:blur(12px);
+  transition:all .35s cubic-bezier(.16,1,.3,1);
+  position:relative;
+  overflow:hidden;
+}
+.social-btn::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  opacity:0;
+  transition:opacity .35s;
+}
+.social-btn.tiktok::before{background:linear-gradient(135deg,#000,#25f4ee,#fe2c55);opacity:0}
+.social-btn.instagram::before{background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)}
+.social-btn.whatsapp::before{background:linear-gradient(135deg,#25d366,#128c7e)}
+.social-btn:hover{transform:translateY(-4px) scale(1.06);border-color:transparent;box-shadow:0 12px 32px rgba(0,0,0,.4)}
+.social-btn:hover::before{opacity:1}
+.social-btn > *{position:relative;z-index:2}
+
+/* ═══════════════ WHATSAPP FLOAT ═══════════════ */
+.wa-float{
+  position:fixed;
+  bottom:24px;
+  right:24px;
+  z-index:150;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 20px 14px 14px;
+  border-radius:100px;
+  background:linear-gradient(135deg,#25d366,#128c7e);
+  color:#fff;
+  font-weight:700;
+  font-size:13px;
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:
+    0 12px 40px rgba(37,211,102,.4),
+    0 0 0 0 rgba(37,211,102,.7);
+  cursor:pointer;
+  transition:all .4s cubic-bezier(.16,1,.3,1);
+  opacity:0;
+  transform:translateY(100px) scale(.8);
+  pointer-events:none;
+}
+.wa-float.show{
+  opacity:1;
+  transform:translateY(0) scale(1);
+  pointer-events:auto;
+  animation:wa-pulse 2.5s ease-in-out infinite;
+}
+.wa-float:hover{
+  transform:translateY(-4px) scale(1.03);
+  box-shadow:0 16px 48px rgba(37,211,102,.55);
+}
+.wa-float:active{transform:scale(.97)}
+.wa-icon{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:rgba(255,255,255,.2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  flex-shrink:0;
+}
+.wa-text{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}
+.wa-text small{font-size:10px;opacity:.85;font-weight:500;letter-spacing:.02em}
+.wa-text span{font-size:13px;font-weight:800;letter-spacing:-0.01em}
+.wa-close{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#0a0e1f;
+  border:1px solid var(--border-strong);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  color:var(--text-2);
+  cursor:pointer;
+  transition:all .2s;
+}
+.wa-close:hover{color:#fff;background:#1a1f38}
+
+@keyframes wa-pulse{
+  0%,100%{box-shadow:0 12px 40px rgba(37,211,102,.4),0 0 0 0 rgba(37,211,102,.7)}
+  50%{box-shadow:0 12px 40px rgba(37,211,102,.4),0 0 0 12px rgba(37,211,102,0)}
+}
+
+/* ═══════════════ WHATSAPP MODAL TOAST (bottom) ═══════════════ */
+.wa-toast{
+  position:fixed;
+  bottom:100px;
+  right:24px;
+  z-index:145;
+  max-width:280px;
+  padding:14px 16px 14px 14px;
+  border-radius:18px;
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+  backdrop-filter:blur(24px) saturate(1.3);
+  border:1px solid var(--border-strong);
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  opacity:0;
+  transform:translateY(20px) scale(.95);
+  transition:all .5s cubic-bezier(.16,1,.3,1);
+  pointer-events:none;
+}
+.wa-toast.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.wa-toast-avatar{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#25d366,#128c7e);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:16px;
+  flex-shrink:0;
+  box-shadow:0 0 20px rgba(37,211,102,.4);
+}
+.wa-toast p{font-size:12px;color:var(--text);font-weight:500;line-height:1.4}
+.wa-toast p b{color:#6ee7b7;font-weight:700}
+
+@media(max-width:640px){
+  .wa-float{bottom:16px;right:16px;padding:12px 16px 12px 12px}
+  .wa-text{display:none}
+  .wa-float{padding:12px}
+  .wa-icon{width:44px;height:44px;font-size:22px}
+  .wa-toast{bottom:84px;right:16px;left:16px;max-width:none}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══════════ HEADER ═══════════ -->
-<header class="sticky top-0 z-40" style="background:rgba(9,9,13,.75);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);border-bottom:1px solid var(--border)">
+<!-- ═══════════════ ANIMATED MESH BG ═══════════════ -->
+<div class="bg-mesh" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+</div>
+<div class="bg-noise" aria-hidden="true"></div>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="sticky top-0 z-40" style="background:rgba(10,14,31,.7);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);border-bottom:1px solid var(--border)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,rgba(201,168,106,.15),rgba(201,168,106,.05));border:1px solid rgba(201,168,106,.25)">
-        <i class="fa-solid fa-car-side" style="color:var(--gold-bright);font-size:15px"></i>
+      <div class="w-11 h-11 rounded-2xl flex items-center justify-center relative" style="background:linear-gradient(135deg,#6366f1,#8b5cf6,#ec4899);box-shadow:0 8px 24px rgba(139,92,246,.4)">
+        <i class="fa-solid fa-car-side text-white" style="font-size:16px"></i>
+        <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2" style="border-color:#0a0e1f"></span>
       </div>
       <div>
         <h1 class="text-base font-extrabold tracking-tight leading-none" style="color:var(--text)">
-          Auction<span style="color:var(--gold)">Land</span>
+          Auction<span style="background:linear-gradient(135deg,#a5b4fc,#c4b5fd,#f0abfc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Land</span>
         </h1>
         <p class="eyebrow mt-1" style="font-size:8px">Premium Logistika</p>
       </div>
     </div>
     <span id="live-badge" class="chip chip-ok">
       <span class="relative flex h-1.5 w-1.5">
-        <span class="pulse-ring absolute inline-flex h-full w-full rounded-full" style="background:var(--emerald)"></span>
-        <span class="relative inline-flex rounded-full h-1.5 w-1.5" style="background:var(--emerald)"></span>
+        <span class="pulse-ring absolute inline-flex h-full w-full rounded-full" style="background:#10b981"></span>
+        <span class="relative inline-flex rounded-full h-1.5 w-1.5" style="background:#10b981"></span>
       </span>
-      Canlı
+      Canlı İzləmə
     </span>
   </div>
 </header>
 
-<!-- ═══════════ LOADING ═══════════ -->
+<!-- ═══════════════ LOADING ═══════════════ -->
 <div id="loading" class="flex flex-col items-center justify-center min-h-[80vh] space-y-6">
   <div class="relative">
-    <div class="w-16 h-16 rounded-full" style="border:1.5px solid var(--border-strong);border-top-color:var(--gold)"></div>
-    <div class="absolute top-0 left-0 w-16 h-16 rounded-full animate-spin" style="border:1.5px solid transparent;border-top-color:var(--gold-bright)"></div>
+    <div class="w-16 h-16 rounded-full" style="border:1.5px solid var(--border-strong);border-top-color:#8b5cf6"></div>
+    <div class="absolute top-0 left-0 w-16 h-16 rounded-full animate-spin" style="border:1.5px solid transparent;border-top-color:#ec4899;animation-duration:.8s"></div>
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="w-2 h-2 rounded-full" style="background:linear-gradient(135deg,#6366f1,#ec4899);box-shadow:0 0 16px rgba(139,92,246,.8)"></span>
+    </div>
   </div>
   <div class="text-center">
     <p class="text-sm font-semibold" style="color:var(--text-2)">Məlumatlar yüklənir</p>
@@ -419,24 +655,25 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
   </div>
 </div>
 
-<!-- ═══════════ ERROR ═══════════ -->
+<!-- ═══════════════ ERROR ═══════════════ -->
 <div id="error-box" class="hidden flex-col items-center justify-center min-h-[80vh] space-y-5 px-4">
-  <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl" style="background:var(--rose-soft);border:1px solid rgba(217,122,122,.2);color:#e39a9a">
+  <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl" style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);color:#fda4af">
     <i class="fa-solid fa-triangle-exclamation"></i>
   </div>
   <h2 class="text-xl font-bold" style="color:var(--text)">Avtomobil Tapılmadı</h2>
   <p id="error-msg" class="text-sm text-center max-w-md" style="color:var(--text-2)"></p>
 </div>
 
-<!-- ═══════════ MAIN ═══════════ -->
+<!-- ═══════════════ MAIN ═══════════════ -->
 <main id="content" class="hidden max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
 
   <!-- ═══ HERO + RIGHT CARD ═══ -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 fade-up">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
     <!-- HERO -->
-    <div class="lg:col-span-2 relative overflow-hidden rounded-[28px] min-h-[480px] hero-noise" style="background:linear-gradient(135deg,#0e1017,#06070a);border:1px solid var(--border);box-shadow:0 24px 64px rgba(0,0,0,.6)">
-      <div id="hero-bg" class="absolute inset-0" style="background:radial-gradient(circle at 30% 20%,rgba(201,168,106,.10),transparent 50%),linear-gradient(135deg,#0e1017,#06070a)"></div>
+    <div class="lg:col-span-2 relative overflow-hidden rounded-[28px] min-h-[500px] fade-up" style="background:linear-gradient(135deg,#0d1326,#0a0e1f);border:1px solid var(--border);box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 60px rgba(99,102,241,.08)">
+      <div class="hero-aura"></div>
+      <div id="hero-bg" class="absolute inset-0"></div>
       <img id="hero-img" src="" alt=""
         class="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms]"
         referrerpolicy="no-referrer"
@@ -446,21 +683,21 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
       <!-- TOP BAR -->
       <div class="absolute top-6 left-6 right-6 flex justify-between items-start gap-3 z-10">
         <span id="status-badge" class="chip"></span>
-        <span class="chip chip-gold">
+        <span class="chip chip-indigo">
           <i class="fa-solid fa-shield-halved text-[9px]"></i>
           Təsdiqlənmiş
         </span>
       </div>
 
       <!-- BOTTOM INFO -->
-      <div class="absolute bottom-0 left-0 right-0 p-7 sm:p-10">
+      <div class="absolute bottom-0 left-0 right-0 p-7 sm:p-10 z-10">
         <div class="flex items-center gap-3 mb-4">
-          <span class="gold-hairline h-px w-8"></span>
-          <span class="eyebrow" style="color:var(--gold);font-size:9px">Müştəri</span>
+          <span class="h-px w-8" style="background:linear-gradient(90deg,transparent,#8b5cf6)"></span>
+          <span class="eyebrow" style="color:#a5b4fc;font-size:9px">Müştəri</span>
         </div>
 
-        <h2 id="owner-name" class="display text-[34px] sm:text-[52px] leading-[1.02] mb-3" style="color:#fff"></h2>
-        <h3 id="car-model" class="text-lg sm:text-2xl font-light mb-7" style="color:rgba(255,255,255,.68);font-weight:400"></h3>
+        <h2 id="owner-name" class="display text-[34px] sm:text-[54px] leading-[1.02] mb-3" style="color:#fff"></h2>
+        <h3 id="car-model" class="text-lg sm:text-2xl mb-7" style="color:rgba(255,255,255,.7);font-weight:400"></h3>
 
         <div class="flex flex-wrap items-center gap-2">
           <span id="vin-pill" class="glass-chip text-[11px] font-mono font-medium px-3.5 py-2 rounded-xl tracking-wider"></span>
@@ -469,10 +706,10 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
             Kopyala
           </button>
           <a id="auction-btn" href="" target="_blank" rel="noopener noreferrer"
-            class="hidden text-[11px] font-bold px-4 py-2 rounded-xl transition-all active:scale-95 flex items-center gap-2 no-zoom btn-gold">
+            class="hidden text-[11px] font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-2 no-zoom btn-primary">
             <i class="fa-solid fa-gavel text-[10px]"></i>
             Hərraca Bax
-            <i class="fa-solid fa-arrow-up-right-from-square text-[8px] opacity-70"></i>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[8px] opacity-80"></i>
           </a>
         </div>
       </div>
@@ -485,93 +722,81 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
       <div>
         <p class="eyebrow mb-3">Cari Mərhələ</p>
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg flex-shrink-0"
-            style="background:linear-gradient(135deg,rgba(201,168,106,.15),rgba(201,168,106,.03));border:1px solid rgba(201,168,106,.22);color:var(--gold-bright)">
-            <i class="fa-solid fa-route"></i>
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg flex-shrink-0 relative" style="background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(139,92,246,.1));border:1px solid rgba(139,92,246,.3)">
+            <i class="fa-solid fa-route" style="color:#a5b4fc"></i>
+            <div class="absolute inset-0 rounded-2xl glow-pulse" style="background:radial-gradient(circle,rgba(139,92,246,.3),transparent 70%)"></div>
           </div>
           <p id="current-stage" class="text-[17px] font-bold tracking-tight leading-tight truncate" style="color:var(--text)">-</p>
         </div>
       </div>
 
-      <div class="h-px w-full" style="background:linear-gradient(90deg,transparent,var(--border-strong),transparent)"></div>
+      <div class="h-px w-full" style="background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)"></div>
 
       <!-- DAYS COUNTER -->
-      <div id="days-counter" class="relative overflow-hidden rounded-2xl p-5 hidden" style="background:linear-gradient(135deg,rgba(201,168,106,.10),rgba(201,168,106,.02));border:1px solid rgba(201,168,106,.2)">
-        <div class="absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 pointer-events-none" style="background:radial-gradient(circle,rgba(201,168,106,.15),transparent 70%)"></div>
-        <p id="days-label" class="eyebrow relative" style="color:var(--gold)">Potiyə Qalan</p>
+      <div id="days-counter" class="relative overflow-hidden rounded-2xl p-5 hidden" style="background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.05));border:1px solid rgba(139,92,246,.25)">
+        <div class="absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 pointer-events-none glow-pulse" style="background:radial-gradient(circle,rgba(236,72,153,.2),transparent 70%)"></div>
+        <p id="days-label" class="eyebrow relative" style="color:#a5b4fc">Potiyə Qalan</p>
         <div class="flex items-baseline gap-2 mt-2 relative">
-          <p id="days-num" class="display text-[42px] leading-none tabular-nums" style="color:var(--gold-bright)">0</p>
-          <p id="days-suffix" class="text-xs font-semibold mb-1" style="color:rgba(201,168,106,.8)">gün</p>
+          <p id="days-num" class="display text-[42px] leading-none tabular-nums gradient-text">0</p>
+          <p id="days-suffix" class="text-xs font-semibold mb-1" style="color:rgba(165,180,252,.8)">gün</p>
         </div>
       </div>
 
       <!-- INFO ROWS -->
       <div class="space-y-1">
-        <div class="flex items-center gap-3.5 py-3 hairline-b">
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] flex-shrink-0" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text-2)">
+        <div class="flex items-center gap-3.5 py-3" style="border-bottom:1px solid var(--border)">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] flex-shrink-0" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text-2)">
             <i class="fa-solid fa-location-dot"></i>
           </div>
           <div class="min-w-0 flex-1">
             <p class="eyebrow mb-1" style="font-size:8px">Yerləşmə</p>
-            <p id="location" class="text-[12px] font-semibold truncate" style="color:var(--text)">-</p>
+            <p id="location" class="text-[12.5px] font-semibold truncate" style="color:var(--text)">-</p>
           </div>
         </div>
-        <div class="flex items-center gap-3.5 py-3 hairline-b">
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] flex-shrink-0" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text-2)">
+        <div class="flex items-center gap-3.5 py-3" style="border-bottom:1px solid var(--border)">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] flex-shrink-0" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text-2)">
             <i class="fa-solid fa-anchor"></i>
           </div>
           <div class="min-w-0 flex-1">
             <p class="eyebrow mb-1" style="font-size:8px">Liman</p>
-            <p id="shipping-port" class="text-[12px] font-semibold truncate" style="color:var(--text)">-</p>
+            <p id="shipping-port" class="text-[12.5px] font-semibold truncate" style="color:var(--text)">-</p>
           </div>
         </div>
         <div class="flex items-center gap-3.5 py-3">
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] flex-shrink-0" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text-2)">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] flex-shrink-0" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text-2)">
             <i class="fa-solid fa-box"></i>
           </div>
           <div class="min-w-0 flex-1">
             <p class="eyebrow mb-1" style="font-size:8px">Konteyner</p>
-            <p id="container" class="text-[12px] font-mono font-semibold truncate tracking-wider" style="color:var(--text)">-</p>
+            <p id="container" class="text-[12.5px] font-mono font-semibold truncate tracking-wider" style="color:var(--text)">-</p>
           </div>
         </div>
       </div>
 
-      <div class="h-px w-full" style="background:linear-gradient(90deg,transparent,var(--border-strong),transparent)"></div>
+      <div class="h-px w-full" style="background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)"></div>
 
-      <!-- ═══ SƏNƏDLƏŞMƏ & ÖDƏNİŞLƏR (YENİ TƏMİZ DİZAYN) ═══ -->
+      <!-- SƏNƏDLƏŞMƏ -->
       <div>
         <p class="eyebrow mb-2">Sənədləşmə & Ödənişlər</p>
-
         <div class="space-y-0">
-          <!-- ETİBARNAMƏ -->
           <div id="doc-etibarname" class="doc-row">
-            <div id="doc-etibarname-icon" class="doc-icon">
-              <i class="fa-solid fa-file-signature"></i>
-            </div>
+            <div id="doc-etibarname-icon" class="doc-icon"><i class="fa-solid fa-file-signature"></i></div>
             <div class="min-w-0 flex-1">
               <p class="doc-label">Etibarnamə</p>
               <p id="doc-etibarname-sub" class="doc-sub">-</p>
             </div>
             <span id="doc-etibarname-badge" class="chip">-</span>
           </div>
-
-          <!-- YOL XƏRCİ -->
           <div id="doc-shipping" class="doc-row">
-            <div id="doc-shipping-icon" class="doc-icon">
-              <i class="fa-solid fa-money-bill-wave"></i>
-            </div>
+            <div id="doc-shipping-icon" class="doc-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
             <div class="min-w-0 flex-1">
               <p class="doc-label">Yol Xərci</p>
               <p id="doc-shipping-sub" class="doc-sub">-</p>
             </div>
             <span id="doc-shipping-badge" class="chip">-</span>
           </div>
-
-          <!-- KONTEYNER AÇILIŞI -->
           <div id="doc-container-open" class="doc-row">
-            <div id="doc-container-open-icon" class="doc-icon">
-              <i class="fa-solid fa-box-open"></i>
-            </div>
+            <div id="doc-container-open-icon" class="doc-icon"><i class="fa-solid fa-box-open"></i></div>
             <div class="min-w-0 flex-1">
               <p class="doc-label">Konteyner Açılışı</p>
               <p id="doc-container-open-sub" class="doc-sub">-</p>
@@ -581,12 +806,11 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
         </div>
       </div>
 
-      <!-- TRACK BUTTON -->
       <button id="track-container-btn" onclick="trackContainer()"
-        class="hidden w-full mt-auto py-3.5 rounded-2xl text-[12px] font-bold items-center justify-center gap-2.5 transition-all active:scale-[.98] no-zoom btn-ghost">
+        class="hidden w-full mt-auto py-3.5 rounded-2xl text-[12px] font-bold items-center justify-center gap-2.5 transition-all active:scale-[.98] no-zoom btn-primary">
         <i class="fa-solid fa-anchor text-[11px]"></i>
         <span id="track-btn-label">Konteyneri İzlə</span>
-        <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-50"></i>
+        <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-70"></i>
       </button>
     </div>
   </div>
@@ -600,7 +824,7 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
       </div>
       <div class="flex items-center gap-3">
         <span class="eyebrow" style="font-size:9px">İrəliləyiş</span>
-        <span id="progress-pct" class="text-sm font-bold tabular-nums px-3.5 py-1.5 rounded-xl" style="background:var(--gold-soft);color:var(--gold-bright);border:1px solid rgba(201,168,106,.25)">0%</span>
+        <span id="progress-pct" class="text-sm font-bold tabular-nums px-3.5 py-1.5 rounded-xl" style="background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.1));color:#c4b5fd;border:1px solid rgba(139,92,246,.3)">0%</span>
       </div>
     </div>
     <div id="timeline" class="space-y-1"></div>
@@ -617,7 +841,7 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
         <button onclick="downloadTabZip()" class="btn-ghost text-[11px] font-semibold px-3.5 py-2.5 rounded-xl flex items-center gap-2 no-zoom transition">
           <i class="fa-solid fa-file-zipper text-[10px]"></i> Kateqoriya
         </button>
-        <button onclick="downloadAllZip()" class="btn-gold text-[11px] font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-2 no-zoom">
+        <button onclick="downloadAllZip()" class="btn-primary text-[11px] font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-2 no-zoom">
           <i class="fa-solid fa-box-archive text-[10px]"></i> Hamısı
         </button>
       </div>
@@ -626,17 +850,66 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
     <div id="photo-area"></div>
   </div>
 
-  <p class="eyebrow text-center pt-8 pb-4" style="font-size:9px">© AuctionLand Logistika</p>
+  <!-- ═══ SOCIAL FOOTER ═══ -->
+  <div class="fade-up" style="animation-delay:.25s">
+    <div class="card p-7 sm:p-9 text-center">
+      <div class="inline-flex items-center gap-2 mb-3">
+        <span class="h-px w-8" style="background:linear-gradient(90deg,transparent,#8b5cf6)"></span>
+        <p class="eyebrow" style="color:#a5b4fc">Bizi İzləyin</p>
+        <span class="h-px w-8" style="background:linear-gradient(90deg,#8b5cf6,transparent)"></span>
+      </div>
+      <h4 class="text-lg font-bold mb-1" style="color:var(--text)">Sosial Şəbəkələrdə</h4>
+      <p class="text-xs mb-6" style="color:var(--text-2)">Yeniliklərdən xəbərdar olun</p>
+
+      <div class="flex items-center justify-center gap-3 mb-5">
+        <a href="https://www.tiktok.com/@auctionland" target="_blank" rel="noopener" class="social-btn tiktok no-zoom" title="TikTok" aria-label="TikTok">
+          <i class="fa-brands fa-tiktok"></i>
+        </a>
+        <a href="https://www.instagram.com/auctionnland/" target="_blank" rel="noopener" class="social-btn instagram no-zoom" title="Instagram" aria-label="Instagram">
+          <i class="fa-brands fa-instagram"></i>
+        </a>
+        <a href="https://wa.me/994515060012" target="_blank" rel="noopener" class="social-btn whatsapp no-zoom" title="WhatsApp" aria-label="WhatsApp">
+          <i class="fa-brands fa-whatsapp"></i>
+        </a>
+      </div>
+
+      <div class="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[12px]" style="background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.2)">
+        <i class="fa-brands fa-whatsapp text-[14px]" style="color:#6ee7b7"></i>
+        <span style="color:var(--text-2)">Əlaqə:</span>
+        <a href="https://wa.me/994515060012" target="_blank" rel="noopener" class="font-bold tracking-wider no-zoom" style="color:#6ee7b7">+994 51 506 00 12</a>
+      </div>
+
+      <p class="eyebrow mt-6" style="font-size:9px">© AuctionLand Logistika</p>
+    </div>
+  </div>
 </main>
 
-<!-- ═══════════ LIGHTBOX ═══════════ -->
-<div id="lightbox" class="hidden fixed inset-0 z-[100] flex flex-col select-none" style="background:rgba(5,6,9,.98);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)">
-  <div class="flex items-center justify-between px-5 py-4 shrink-0" style="border-bottom:1px solid var(--border);background:rgba(5,6,9,.6)">
+<!-- ═══════════════ WHATSAPP TOAST ═══════════════ -->
+<div id="waToast" class="wa-toast">
+  <div class="wa-toast-avatar"><i class="fa-brands fa-whatsapp"></i></div>
+  <div>
+    <p><b>AuctionLand</b></p>
+    <p style="margin-top:2px">Sualınız var? Bizə yazın — <b>+994 51 506 00 12</b></p>
+  </div>
+</div>
+
+<!-- ═══════════════ WHATSAPP FLOAT BUTTON ═══════════════ -->
+<a id="waFloat" class="wa-float no-zoom" href="https://wa.me/994515060012?text=Salam%2C%20avtomobil%20haqq%C4%B1nda%20sual%C4%B1m%20var" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <div class="wa-icon"><i class="fa-brands fa-whatsapp"></i></div>
+  <div class="wa-text">
+    <small>Sualınız var?</small>
+    <span>Bizə yazın</span>
+  </div>
+</a>
+
+<!-- ═══════════════ LIGHTBOX ═══════════════ -->
+<div id="lightbox" class="hidden fixed inset-0 z-[100] flex flex-col select-none" style="background:rgba(5,8,20,.98);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)">
+  <div class="flex items-center justify-between px-5 py-4 shrink-0" style="border-bottom:1px solid var(--border);background:rgba(5,8,20,.6)">
     <span id="lb-counter" class="text-[12px] font-bold px-3.5 py-2 rounded-xl tabular-nums" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text-2)">1 / 1</span>
     <button onclick="lbDownload()" class="text-[11px] font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-2 no-zoom" style="background:rgba(255,255,255,.05);border:1px solid var(--border-strong);color:var(--text)">
       <i class="fa-solid fa-arrow-down-to-line text-[10px]"></i> Yüklə
     </button>
-    <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text-2)">
+    <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 no-zoom" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text-2)">
       <i class="fa-solid fa-xmark"></i>
     </button>
   </div>
@@ -653,10 +926,10 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
   <div id="lb-dots" class="flex justify-center gap-2 py-5 shrink-0"></div>
 </div>
 
-<!-- ═══════════ TOAST ═══════════ -->
+<!-- ═══════════════ TOAST ═══════════════ -->
 <div id="toast" class="fixed bottom-6 right-6 left-6 sm:left-auto z-[200] transform translate-y-24 opacity-0 transition-all duration-300 px-4 py-3.5 rounded-2xl flex items-center gap-3 max-w-md sm:max-w-xs"
-  style="background:linear-gradient(180deg,#14151c,#0f1015);border:1px solid var(--border-strong);box-shadow:0 24px 64px rgba(0,0,0,.6)">
-  <div id="toast-icon-wrap" class="p-1.5 rounded-full shrink-0" style="background:var(--emerald)"><i id="toast-icon" class="fa-solid fa-check text-[10px] text-white"></i></div>
+  style="background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));backdrop-filter:blur(24px) saturate(1.3);border:1px solid var(--border-strong);box-shadow:0 24px 64px rgba(0,0,0,.6)">
+  <div id="toast-icon-wrap" class="p-1.5 rounded-full shrink-0" style="background:#10b981"><i id="toast-icon" class="fa-solid fa-check text-[10px] text-white"></i></div>
   <span id="toast-msg" class="text-[12px] font-semibold" style="color:var(--text)"></span>
 </div>
 
@@ -664,6 +937,9 @@ img,button,a,.tap{user-select:none;-webkit-user-select:none;-webkit-user-drag:no
 let custData = null;
 let custTab = 'auction';
 let lbPhotos = [], lbIndex = 0, lbTouchStart = 0;
+
+const WA_LINK = 'https://wa.me/994515060012?text=Salam%2C%20avtomobil%20haqq%C4%B1nda%20sual%C4%B1m%20var';
+const WA_DELAY = 15000; // 15 saniyə
 
 const DEFAULT_TRACKING_COMPANIES = {
   1: { id: 1, name: 'MSC', url: 'https://www.msc.com/en/track-a-shipment', base64Params: true, paramsTemplate: 'trackingNumber={konteyner}&trackingMode=0' },
@@ -676,7 +952,28 @@ function resolveTrackingCompany(d) {
   return null;
 }
 
+/* ═══════════════ WHATSAPP FLOAT — 15 SANİYƏ SONRA ═══════════════ */
+function initWhatsAppFloat() {
+  const float = document.getElementById('waFloat');
+  const toast = document.getElementById('waToast');
+  if (!float) return;
+
+  setTimeout(() => {
+    float.classList.add('show');
+    // Toast 1 saniyə sonra görünsün
+    setTimeout(() => {
+      if (toast) {
+        toast.classList.add('show');
+        // 8 saniyə sonra toast gizlənsin
+        setTimeout(() => toast.classList.remove('show'), 8000);
+      }
+    }, 1000);
+  }, WA_DELAY);
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
+  initWhatsAppFloat();
+
   const params = new URLSearchParams(window.location.search);
   const token = params.get('t');
   if (!token || token.length < 16) { showError('Link etibarsızdır.'); return; }
@@ -760,27 +1057,23 @@ function renderHero() {
     testImg.onload = () => { img.src = heroSrc; img.style.opacity = '1'; bg.style.display = 'none'; };
     testImg.onerror = () => { img.style.display = 'none'; bg.style.display = 'block'; };
     testImg.src = heroSrc;
-  } else {
-    img.style.display = 'none';
-    bg.style.display = 'block';
-  }
+  } else { img.style.display = 'none'; bg.style.display = 'block'; }
 
   const statusStyle = {
-    'Auksionda': { bg: 'rgba(201,168,106,.14)', bd: 'rgba(201,168,106,.3)', c: '#e2c891' },
-    'Anbara gedir': { bg: 'rgba(201,168,106,.14)', bd: 'rgba(201,168,106,.3)', c: '#e2c891' },
-    'Anbarda': { bg: 'rgba(122,127,245,.14)', bd: 'rgba(122,127,245,.3)', c: '#a5a8ff' },
-    'Gəmidə': { bg: 'rgba(122,127,245,.14)', bd: 'rgba(122,127,245,.3)', c: '#a5a8ff' },
-    'Potidədir': { bg: 'rgba(201,168,106,.14)', bd: 'rgba(201,168,106,.3)', c: '#e2c891' },
-    'Bakıdadır': { bg: 'rgba(79,176,135,.14)', bd: 'rgba(79,176,135,.3)', c: '#7dd3a8' }
-  }[d.s] || { bg: 'rgba(255,255,255,.06)', bd: 'rgba(255,255,255,.12)', c: 'var(--text)' };
+    'Auksionda': { bg: 'rgba(245,158,11,.12)', bd: 'rgba(245,158,11,.3)', c: '#fcd34d' },
+    'Anbara gedir': { bg: 'rgba(245,158,11,.12)', bd: 'rgba(245,158,11,.3)', c: '#fcd34d' },
+    'Anbarda': { bg: 'rgba(99,102,241,.12)', bd: 'rgba(99,102,241,.3)', c: '#a5b4fc' },
+    'Gəmidə': { bg: 'rgba(6,182,212,.12)', bd: 'rgba(6,182,212,.3)', c: '#67e8f9' },
+    'Potidədir': { bg: 'rgba(139,92,246,.12)', bd: 'rgba(139,92,246,.3)', c: '#c4b5fd' },
+    'Bakıdadır': { bg: 'rgba(16,185,129,.12)', bd: 'rgba(16,185,129,.3)', c: '#6ee7b7' }
+  }[d.s] || { bg: 'rgba(255,255,255,.06)', bd: 'var(--border-strong)', c: 'var(--text)' };
 
   const badge = document.getElementById('status-badge');
-  badge.textContent = d.s || 'Gözlənilir';
+  badge.className = 'chip';
   badge.style.background = statusStyle.bg;
   badge.style.borderColor = statusStyle.bd;
   badge.style.color = statusStyle.c;
-  badge.className = 'chip';
-  badge.innerHTML = `<span class="chip-dot" style="background:${statusStyle.c};box-shadow:0 0 8px ${statusStyle.c}"></span>${d.s || 'Gözlənilir'}`;
+  badge.innerHTML = `<span class="chip-dot" style="background:${statusStyle.c};box-shadow:0 0 10px ${statusStyle.c}"></span>${d.s || 'Gözlənilir'}`;
 
   document.getElementById('owner-name').textContent = d.n || 'Müştəri';
   document.getElementById('car-model').textContent = d.m || 'Avtomobil';
@@ -790,14 +1083,7 @@ function renderHero() {
   if (d.auctionLink && d.auctionLink.trim()) { auctionBtn.href = d.auctionLink; auctionBtn.classList.remove('hidden'); }
   else auctionBtn.classList.add('hidden');
 
-  const stageMap = {
-    'Auksionda': 'Auksion Uduşu',
-    'Anbara gedir': 'Anbara Yolda',
-    'Anbarda': 'Anbarda / Portda',
-    'Gəmidə': 'Gəmidə (Okean)',
-    'Potidədir': 'Potidə Gözləyir',
-    'Bakıdadır': 'Bakıya Çatdı'
-  };
+  const stageMap = { 'Auksionda': 'Auksion Uduşu', 'Anbara gedir': 'Anbara Yolda', 'Anbarda': 'Anbarda / Portda', 'Gəmidə': 'Gəmidə (Okean)', 'Potidədir': 'Potidə Gözləyir', 'Bakıdadır': 'Bakıya Çatdı' };
   document.getElementById('current-stage').textContent = stageMap[d.s] || d.s || '-';
   document.getElementById('location').textContent = d.location || '-';
   document.getElementById('shipping-port').textContent = d.shippingPort || '-';
@@ -855,19 +1141,17 @@ function updateDocRow(rowId, done, rawValue, doneText, notDoneText, doneSub) {
   const sub = document.getElementById(rowId + '-sub');
   const badge = document.getElementById(rowId + '-badge');
   if (!row) return;
-
   const dateStr = formatDate(rawValue);
-
   if (done) {
     row.className = 'doc-row done';
     sub.textContent = doneSub || (dateStr ? dateStr : 'Təsdiqlənib');
-    sub.style.color = 'rgba(79,176,135,.75)';
+    sub.style.color = 'rgba(110,231,183,.75)';
     badge.className = 'chip chip-ok';
     badge.innerHTML = `<span class="chip-dot"></span>${doneText}`;
   } else {
     row.className = 'doc-row pending';
     sub.textContent = doneSub || 'Gözlənilir';
-    sub.style.color = 'rgba(217,122,122,.75)';
+    sub.style.color = 'rgba(253,164,175,.75)';
     badge.className = 'chip chip-no';
     badge.innerHTML = `<span class="chip-dot"></span>${notDoneText}`;
   }
@@ -876,7 +1160,6 @@ function updateDocRow(rowId, done, rawValue, doneText, notDoneText, doneSub) {
 function renderDocStatus() {
   const d = custData || {};
   updateDocRow('doc-etibarname', isDone(d.etibarname), d.etibarname, 'Verilib', 'Yoxdur', isDone(d.etibarname) ? null : 'Gözlənilir');
-
   const spRaw = d.shippingPaid;
   const spDone = isDone(spRaw);
   let spSub = null;
@@ -885,7 +1168,6 @@ function renderDocStatus() {
     if (!isNaN(num) && num > 0) spSub = `$${num.toLocaleString('en-US')}`;
   }
   updateDocRow('doc-shipping', spDone, spRaw, 'Ödənilib', 'Ödənilməyib', spSub);
-
   const coRaw = d.containerOpenDate;
   const coDone = isDone(coRaw);
   const coSub = coDone ? (formatDate(coRaw) ? formatDate(coRaw) : 'Açılıb') : null;
@@ -911,17 +1193,16 @@ function renderTimeline() {
     const active = i === activeStep - 1 && activeStep > 0;
     const future = i >= activeStep;
     const isLast = i === steps.length - 1;
-
     let circleCls = 'tl-circle';
     if (past) circleCls += ' done';
-    else if (active) circleCls += ' active glow-gold';
+    else if (active) circleCls += ' active';
     else circleCls += ' future';
 
     let dayDiffText = '';
     if (past && !isLast && s.date && steps[i + 1]?.date) {
       const diff = diffDays(s.date, steps[i + 1].date);
       if (diff !== null && !isNaN(diff) && diff >= 0) {
-        dayDiffText = `<p class="text-[10px] mt-2 font-medium flex items-center gap-2" style="color:var(--text-3)"><span class="w-3 h-px" style="background:var(--emerald)"></span>${diff} gün</p>`;
+        dayDiffText = `<p class="text-[10px] mt-2 font-medium flex items-center gap-2" style="color:var(--text-3)"><span class="w-3 h-px" style="background:#10b981"></span>${diff} gün</p>`;
       }
     }
 
@@ -937,13 +1218,13 @@ function renderTimeline() {
           const clampedElapsed = Math.max(0, Math.min(total, elapsed ?? 0));
           const progressPct = Math.round((clampedElapsed / total) * 100);
           const remainTxt = remaining === null ? '' : (remaining >= 0 ? `${remaining} gün qaldı` : `${Math.abs(remaining)} gün gecikib`);
-          const remainColor = remaining >= 0 ? 'rgba(201,168,106,.9)' : 'rgba(217,122,122,.9)';
+          const remainColor = remaining >= 0 ? '#c4b5fd' : '#fda4af';
 
           progressHtml = `
-            <div class="mt-3 rounded-2xl p-4" style="background:rgba(255,255,255,.02);border:1px solid var(--border)">
+            <div class="mt-4 rounded-2xl p-4" style="background:rgba(255,255,255,.025);border:1px solid var(--border)">
               <div class="flex items-center justify-between mb-3">
                 <span class="eyebrow" style="font-size:9px">İrəliləyiş</span>
-                <span class="text-[15px] font-bold tabular-nums" style="color:var(--gold-bright)">${progressPct}%</span>
+                <span class="text-[15px] font-bold tabular-nums gradient-text">${progressPct}%</span>
               </div>
               <div class="progress-track">
                 <div class="progress-fill" style="width:${progressPct}%"></div>
@@ -962,17 +1243,17 @@ function renderTimeline() {
         ${!isLast ? `<div class="tl-line ${past ? 'done' : ''}"></div>` : ''}
         <div class="${circleCls}">
           ${past ? '<i class="fa-solid fa-check text-[13px]"></i>' : active ? '<i class="fa-solid fa-location-dot text-[13px]"></i>' : `<span class="text-[15px]">${s.icon}</span>`}
-          ${active ? '<span class="pulse-ring absolute inset-0 rounded-full" style="background:rgba(201,168,106,.35)"></span>' : ''}
+          ${active ? '<span class="pulse-ring absolute inset-0 rounded-full" style="background:rgba(139,92,246,.5)"></span>' : ''}
         </div>
         <div class="flex-1 min-w-0 pt-2">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
-            <h4 class="text-[13px] font-bold tracking-tight" style="color:${past ? 'var(--text)' : active ? 'var(--text)' : 'var(--text-3)'}">
+            <h4 class="text-[13.5px] font-bold tracking-tight" style="color:${past || active ? 'var(--text)' : 'var(--text-3)'}">
               ${s.label}
-              ${active ? '<span class="ml-2 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider" style="background:var(--gold-soft);color:var(--gold-bright);border:1px solid rgba(201,168,106,.25)">AKTİV</span>' : ''}
+              ${active ? '<span class="ml-2 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider" style="background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(139,92,246,.15));color:#c4b5fd;border:1px solid rgba(139,92,246,.3)">AKTİV</span>' : ''}
             </h4>
             ${s.date
-              ? `<span class="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-lg tracking-wider" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:${past ? 'var(--text-2)' : 'var(--gold-bright)'}">${s.date}</span>`
-              : `<span class="text-[10px] font-medium italic" style="color:var(--text-3)">${future ? 'Gözlənilir' : 'Təyin edilməyib'}</span>`}
+              ? `<span class="text-[10.5px] font-mono font-semibold px-2.5 py-1 rounded-lg tracking-wider" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:${past ? 'var(--text-2)' : '#c4b5fd'}">${s.date}</span>`
+              : `<span class="text-[10.5px] font-medium italic" style="color:var(--text-3)">${future ? 'Gözlənilir' : 'Təyin edilməyib'}</span>`}
           </div>
           ${dayDiffText}
           ${progressHtml}
@@ -1021,7 +1302,7 @@ function renderPhotos() {
       poti: { icon: '🇬🇪', title: 'Poti şəkli yoxdur' }
     }[custTab] || { icon: '📷', title: 'Media yoxdur' };
     area.innerHTML = `<div class="text-center py-20">
-      <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text-3)">${emptyMsg.icon}</div>
+      <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text-3)">${emptyMsg.icon}</div>
       <h3 class="text-sm font-semibold" style="color:var(--text-2)">${emptyMsg.title}</h3>
       <p class="eyebrow mt-2" style="font-size:9px">Admin tərəfindən yüklənəcək</p>
     </div>`;
@@ -1033,17 +1314,17 @@ function renderPhotos() {
     <div class="mb-7">
       <div class="flex items-center gap-3 mb-4">
         <span class="eyebrow">Şəkillər</span>
-        <span class="h-px flex-1" style="background:var(--border)"></span>
-        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full tabular-nums" style="background:var(--gold-soft);color:var(--gold-bright);border:1px solid rgba(201,168,106,.2)">${images.length}</span>
+        <span class="h-px flex-1" style="background:linear-gradient(90deg,var(--border),transparent)"></span>
+        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full tabular-nums" style="background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.1));color:#c4b5fd;border:1px solid rgba(139,92,246,.25)">${images.length}</span>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         ${images.map((url, i) => `
           <div class="photo-grid-item group no-zoom" onclick="openLightbox(${i})">
             <img src="${url}" loading="lazy" alt="" referrerpolicy="no-referrer">
-            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style="background:linear-gradient(to top,rgba(0,0,0,.75),transparent 60%)"></div>
+            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style="background:linear-gradient(to top,rgba(0,0,0,.8),transparent 60%)"></div>
             <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500">
               <span class="text-[10px] font-bold text-white px-2.5 py-1 rounded-lg tabular-nums" style="background:rgba(0,0,0,.5);backdrop-filter:blur(12px)">${i + 1} / ${images.length}</span>
-              <span class="w-7 h-7 rounded-lg flex items-center justify-center text-[11px]" style="background:rgba(255,255,255,.95);color:#0a0a0d">
+              <span class="w-7 h-7 rounded-lg flex items-center justify-center text-[11px]" style="background:rgba(255,255,255,.95);color:#0a0e1f">
                 <i class="fa-solid fa-expand"></i>
               </span>
             </div>
@@ -1054,16 +1335,16 @@ function renderPhotos() {
     <div>
       <div class="flex items-center gap-3 mb-4">
         <span class="eyebrow">Videolar</span>
-        <span class="h-px flex-1" style="background:var(--border)"></span>
-        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full tabular-nums" style="background:var(--indigo-soft);color:#a5a8ff;border:1px solid rgba(122,127,245,.2)">${videos.length}</span>
+        <span class="h-px flex-1" style="background:linear-gradient(90deg,var(--border),transparent)"></span>
+        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full tabular-nums" style="background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(99,102,241,.1));color:#67e8f9;border:1px solid rgba(6,182,212,.25)">${videos.length}</span>
       </div>
       <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
         ${videos.map((v, i) => `
-          <div class="group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 no-zoom" style="aspect-ratio:16/9;background:var(--bg-elev-2);border:1px solid var(--border)" onclick="window.open('${v.url}','_blank')">
+          <div class="group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 no-zoom" style="aspect-ratio:16/9;background:rgba(255,255,255,.03);border:1px solid var(--border)" onclick="window.open('${v.url}','_blank')">
             <img src="${v.thumb}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" alt="">
             <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,.7),transparent 60%)"></div>
             <div class="absolute inset-0 flex items-center justify-center">
-              <span class="w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110" style="background:rgba(255,255,255,.95);color:#0a0a0d">
+              <span class="w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110" style="background:rgba(255,255,255,.95);color:#0a0e1f;box-shadow:0 8px 32px rgba(139,92,246,.4)">
                 <i class="fa-solid fa-play ml-0.5 text-[13px]"></i>
               </span>
             </div>
@@ -1083,23 +1364,23 @@ function renderAllVideos() {
   ];
   const total = sections.reduce((s, x) => s + x.videos.length, 0);
   if (total === 0) {
-    area.innerHTML = `<div class="text-center py-20"><div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl" style="background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text-3)">🎬</div><h3 class="text-sm font-semibold" style="color:var(--text-2)">Video yoxdur</h3></div>`;
+    area.innerHTML = `<div class="text-center py-20"><div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text-3)">🎬</div><h3 class="text-sm font-semibold" style="color:var(--text-2)">Video yoxdur</h3></div>`;
     return;
   }
   area.innerHTML = sections.filter(s => s.videos.length > 0).map(sec => `
     <div class="mb-7">
       <div class="flex items-center gap-3 mb-4">
         <span class="eyebrow">${sec.label}</span>
-        <span class="h-px flex-1" style="background:var(--border)"></span>
-        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full tabular-nums" style="background:var(--indigo-soft);color:#a5a8ff;border:1px solid rgba(122,127,245,.2)">${sec.videos.length}</span>
+        <span class="h-px flex-1" style="background:linear-gradient(90deg,var(--border),transparent)"></span>
+        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full tabular-nums" style="background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(99,102,241,.1));color:#67e8f9;border:1px solid rgba(6,182,212,.25)">${sec.videos.length}</span>
       </div>
       <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
         ${sec.videos.map(v => `
-          <div class="group relative rounded-2xl overflow-hidden cursor-pointer transition-all no-zoom" style="aspect-ratio:16/9;background:var(--bg-elev-2);border:1px solid var(--border)" onclick="window.open('${v.url}','_blank')">
+          <div class="group relative rounded-2xl overflow-hidden cursor-pointer transition-all no-zoom" style="aspect-ratio:16/9;background:rgba(255,255,255,.03);border:1px solid var(--border)" onclick="window.open('${v.url}','_blank')">
             <img src="${v.thumb}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" alt="">
             <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,.7),transparent 60%)"></div>
             <div class="absolute inset-0 flex items-center justify-center">
-              <span class="w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110" style="background:rgba(255,255,255,.95);color:#0a0a0d"><i class="fa-solid fa-play ml-0.5 text-[13px]"></i></span>
+              <span class="w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110" style="background:rgba(255,255,255,.95);color:#0a0e1f"><i class="fa-solid fa-play ml-0.5 text-[13px]"></i></span>
             </div>
           </div>`).join('')}
       </div>
@@ -1126,7 +1407,7 @@ function renderLightbox() {
   document.getElementById('lb-img').src = lbPhotos[lbIndex];
   document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${lbPhotos.length}`;
   document.getElementById('lb-dots').innerHTML = lbPhotos.map((_, i) =>
-    `<span onclick="lbGoTo(${i})" class="w-1.5 h-1.5 rounded-full cursor-pointer transition-all ${i === lbIndex ? 'scale-150' : ''}" style="${i === lbIndex ? 'background:var(--gold)' : 'background:rgba(255,255,255,.25)'}"></span>`
+    `<span onclick="lbGoTo(${i})" class="w-1.5 h-1.5 rounded-full cursor-pointer transition-all ${i === lbIndex ? 'scale-150' : ''}" style="${i === lbIndex ? 'background:linear-gradient(135deg,#a5b4fc,#f0abfc);box-shadow:0 0 12px rgba(139,92,246,.8)' : 'background:rgba(255,255,255,.25)'}"></span>`
   ).join('');
 }
 
@@ -1241,7 +1522,7 @@ function showToast(msg, type = 'info') {
   const wrap = document.getElementById('toast-icon-wrap');
   const icon = document.getElementById('toast-icon');
   document.getElementById('toast-msg').textContent = msg;
-  wrap.style.background = type === 'success' ? 'var(--emerald)' : type === 'error' ? 'var(--rose)' : 'var(--text-3)';
+  wrap.style.background = type === 'success' ? '#10b981' : type === 'error' ? '#f43f5e' : '#6366f1';
   icon.className = 'fa-solid text-[10px] text-white ' + (type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info');
   toast.classList.remove('translate-y-24', 'opacity-0');
   toast.classList.add('translate-y-0', 'opacity-100');
