@@ -786,20 +786,17 @@ function deleteTrackingCompany(id) {trackingCompanies = trackingCompanies.filter
 
 function copyTextToClipboard(text) {if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text); return new Promise((res, rej) => {try {const t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.focus(); t.select(); document.execCommand('copy'); document.body.removeChild(t); res();} catch (err) {rej(err);} });}
 
-/* ✅ YENİLƏNDİ: copyContainerAndTrack — əvvəlcə JSON-dakı tracking məlumatlarından istifadə edir */
 async function copyContainerAndTrack(carId, event) {
   if (event && event.preventDefault) event.preventDefault();
   const car = cars.find(c => c.id === carId);
   if (!car) return;
   if (!car.container) {showToast('⚠️ Konteyner yoxdur'); return;}
 
-  // ✅ Əvvəlcə JSON-dakı tracking məlumatlarından istifadə et
   let url = car.trackingUrl;
   let paramsTemplate = car.trackingParamsTemplate;
   let isBase64 = car.trackingBase64;
   let companyName = car.trackingCompanyName || 'Şirkət';
 
-  // Əgər JSON-da yoxdursa, cari trackingCompanies-dən tap
   if (!url && car.trackingCompanyId) {
     const company = trackingCompanies.find(co => co.id === car.trackingCompanyId);
     if (company) {
@@ -839,7 +836,7 @@ function adjustDateField(id, delta) {const el = document.getElementById(id); if 
 function diffDays(d1, d2) {const a = parseAppDate(d1), b = parseAppDate(d2); if (!a || !b) return null; return Math.ceil((b - a) / 86400000);}
 function getDaysToPoti(p) {const dt = parseAppDate(p); if (!dt) return null; const t = new Date(); t.setHours(0, 0, 0, 0); dt.setHours(0, 0, 0, 0); return Math.ceil((dt - t) / 86400000);}
 
-/* ✅ YENİLƏNDİ: normalizeCars — tracking sahələri qorunur */
+/* ✅ YENİLƏNDİ: normalizeCars — köhnə avtomobillər üçün tracking məlumatlarını trackingCompanies-dən tapır */
 function normalizeCars(list) {
   if (!Array.isArray(list)) return [];
   return list.map(c => {
@@ -848,6 +845,22 @@ function normalizeCars(list) {
     const token = c.shareToken || generateShareToken();
     const container = c.container || '';
     const hasTracking = !!(container && c.trackingCompanyId);
+
+    // ✅ Köhnə avtomobillər üçün tracking məlumatlarını trackingCompanies-dən tap
+    let companyName = c.trackingCompanyName || null;
+    let companyUrl = c.trackingUrl || null;
+    let paramsTemplate = c.trackingParamsTemplate || null;
+    let base64Flag = !!c.trackingBase64;
+
+    if (hasTracking && (!companyName || !companyUrl) && Array.isArray(trackingCompanies)) {
+      const found = trackingCompanies.find(co => co.id === c.trackingCompanyId);
+      if (found) {
+        companyName = companyName || found.name;
+        companyUrl = companyUrl || found.url;
+        paramsTemplate = paramsTemplate || found.paramsTemplate || null;
+        base64Flag = c.trackingBase64 !== undefined ? !!c.trackingBase64 : !!found.base64Params;
+      }
+    }
 
     return {
       ...c,
@@ -859,13 +872,12 @@ function normalizeCars(list) {
       shareToken: token,
       shareUrl: c.shareUrl || `${window.location.origin}/customer.html?t=${token}`,
 
-      // ✅ Tracking sahələri — konteyner + şirkət varsa qorunur, yoxsa null
       container: container,
       trackingCompanyId: hasTracking ? c.trackingCompanyId : null,
-      trackingCompanyName: hasTracking ? (c.trackingCompanyName || null) : null,
-      trackingUrl: hasTracking ? (c.trackingUrl || null) : null,
-      trackingParamsTemplate: hasTracking ? (c.trackingParamsTemplate || null) : null,
-      trackingBase64: hasTracking ? !!c.trackingBase64 : false,
+      trackingCompanyName: hasTracking ? companyName : null,
+      trackingUrl: hasTracking ? companyUrl : null,
+      trackingParamsTemplate: hasTracking ? paramsTemplate : null,
+      trackingBase64: hasTracking ? base64Flag : false,
 
       photos: {auction: migrate(raw.auction), anbar: migrate(raw.anbar), poti: migrate(raw.poti)}
     };
@@ -911,14 +923,12 @@ function openModal(id = null) {document.getElementById('carForm').reset(); tempA
 function closeModal() {document.getElementById('carModal').classList.add('hidden');}
 async function handleFormSubmit(e) {e.preventDefault(); await processSaveCar(document.getElementById('form-id').value, document.getElementById('form-image-url').value);}
 
-/* ✅ YENİLƏNDİ: processSaveCar — tracking məlumatları yalnız konteyner + şirkət varsa yazılır */
 async function processSaveCar(id, imageUrl) {
   const existing = id ? cars.find(c => c.id === parseInt(id)) : null;
   const container = document.getElementById('form-container').value.trim();
   const trackingCoId = document.getElementById('form-tracking-company').value ? parseInt(document.getElementById('form-tracking-company').value) : null;
   const trackingCo = trackingCoId ? trackingCompanies.find(x => x.id === trackingCoId) : null;
 
-  // ✅ Yalnız konteyner VƏ şirkət varsa tracking məlumatlarını yaz
   const hasTracking = !!(container && trackingCo);
 
   const finalShareToken = (existing && existing.shareToken) || generateShareToken();
@@ -932,7 +942,6 @@ async function processSaveCar(id, imageUrl) {
     shippingPort: document.getElementById('form-shipping-port').value.trim(),
     container: container,
 
-    // ✅ Tracking məlumatları — yalnız konteyner + şirkət varsa
     trackingCompanyId: hasTracking ? trackingCo.id : null,
     trackingCompanyName: hasTracking ? trackingCo.name : null,
     trackingUrl: hasTracking ? trackingCo.url : null,
