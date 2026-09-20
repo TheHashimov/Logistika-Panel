@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<title>Carzone — Avtomobil İzləmə</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a}
+.cs::-webkit-scrollbar{width:5px;height:5px}
+.cs::-webkit-scrollbar-track{background:#e2e8f0}
+.cs::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .5s ease}
+@keyframes pulse-ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.8);opacity:0}}
+.pulse-ring{animation:pulse-ring 1.8s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.shimmer{background:linear-gradient(90deg,#f1f5f9 0%,#e2e8f0 50%,#f1f5f9 100%);background-size:200% 100%;animation:shimmer 1.5s infinite}
+.photo-grid-item{aspect-ratio:1;overflow:hidden;border-radius:16px;cursor:pointer;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.08);transition:all .3s cubic-bezier(.4,0,.2,1)}
+.photo-grid-item:hover{box-shadow:0 20px 40px rgba(0,0,0,.15);transform:translateY(-4px)}
+.photo-grid-item img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.photo-grid-item:hover img{transform:scale(1.1)}
+.gradient-hero{background:linear-gradient(to top,rgba(15,23,42,.95) 0%,rgba(15,23,42,.7) 40%,transparent 100%)}
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- HEADER -->
+<header class="bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="bg-gradient-to-br from-red-600 to-red-700 p-2.5 rounded-xl text-white text-lg shadow-lg shadow-red-500/30">
+        <i class="fa-solid fa-car-side"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-black text-slate-900 tracking-tight">CAR<span class="text-red-600">ZON</span></h1>
+        <p class="text-[11px] text-slate-500 font-semibold">Premium İzləmə Paneli</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span id="live-badge" class="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
+        <span class="relative flex h-2 w-2">
+          <span class="pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        Canlı İzləmə
+      </span>
+    </div>
+  </div>
+</header>
+
+<!-- YÜKLƏMƏ -->
+<div id="loading" class="flex flex-col items-center justify-center min-h-[70vh] space-y-5">
+  <div class="relative">
+    <div class="w-20 h-20 border-4 border-slate-200 rounded-full"></div>
+    <div class="absolute top-0 left-0 w-20 h-20 border-4 border-transparent border-t-red-600 rounded-full animate-spin"></div>
+  </div>
+  <div class="text-center">
+    <p class="text-base font-bold text-slate-700">Məlumatlar yüklənir</p>
+    <p class="text-xs text-slate-400 mt-1">Zəhmət olmasa gözləyin...</p>
+  </div>
+</div>
+
+<!-- XƏTA -->
+<div id="error-box" class="hidden flex-col items-center justify-center min-h-[70vh] space-y-4 px-4">
+  <div class="w-24 h-24 bg-rose-100 rounded-3xl flex items-center justify-center text-5xl">⚠️</div>
+  <h2 class="text-2xl font-black text-slate-800">Avtomobil Tapılmadı</h2>
+  <p id="error-msg" class="text-sm text-slate-500 text-center max-w-md"></p>
+</div>
+
+<!-- ƏSAS MƏZMUN -->
+<main id="content" class="hidden max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+
+  <!-- HERO + STATUS -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 fade-up">
+    <!-- HERO -->
+    <div class="lg:col-span-2 relative overflow-hidden rounded-3xl shadow-2xl bg-slate-900 min-h-[400px]">
+      <img id="hero-img" src="" alt="" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'">
+      <div class="absolute inset-0 gradient-hero"></div>
+      <div class="absolute top-4 left-4 right-4 flex justify-between items-start gap-2">
+        <span id="status-badge" class="text-xs font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-md bg-white/95 border border-white/50"></span>
+        <span class="flex items-center gap-1.5 text-[11px] font-bold bg-emerald-500 text-white px-3 py-1.5 rounded-full shadow-lg shadow-emerald-500/30">
+          <i class="fa-solid fa-shield-halved"></i> Təsdiqlənmiş
+        </span>
+      </div>
+      <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-white">
+        <p class="text-[11px] font-bold uppercase tracking-widest text-white/70 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-user"></i> Müştəri
+        </p>
+        <h2 id="owner-name" class="text-2xl sm:text-4xl font-black tracking-tight mb-1">-</h2>
+        <h3 id="car-model" class="text-lg sm:text-2xl font-bold text-white/90 mb-4">-</h3>
+        <div class="flex flex-wrap items-center gap-2">
+          <span id="vin-pill" class="text-[11px] font-mono font-bold bg-white/15 backdrop-blur-md border border-white/25 px-3 py-1.5 rounded-lg"></span>
+          <button onclick="copyVin()" class="text-[10px] font-bold bg-white/15 hover:bg-white/25 backdrop-blur border border-white/25 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
+            <i class="fa-solid fa-copy"></i> Kopyala
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS KARTI -->
+    <div class="bg-white rounded-3xl shadow-lg border border-slate-200 p-5 space-y-4 fade-up">
+      <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+        <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-500/30">
+          <i class="fa-solid fa-route"></i>
+        </div>
+        <div class="min-w-0">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cari Mərhələ</p>
+          <p id="current-stage" class="text-base font-black text-slate-900 truncate">-</p>
+        </div>
+      </div>
+
+      <div id="days-counter" class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 text-center hidden">
+        <p id="days-label" class="text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-1">Potiyə Qalan</p>
+        <p id="days-num" class="text-4xl font-black text-amber-600">0</p>
+        <p id="days-suffix" class="text-xs font-bold text-amber-700">gün</p>
+      </div>
+
+      <div class="space-y-3 pt-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 bg-amber-100 text-amber-700 rounded-lg flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-location-dot"></i></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] font-bold text-slate-400 uppercase">Yerləşmə</p>
+            <p id="location" class="text-xs font-bold text-slate-900 truncate">-</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-anchor"></i></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] font-bold text-slate-400 uppercase">Liman</p>
+            <p id="shipping-port" class="text-xs font-bold text-slate-900 truncate">-</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 bg-indigo-100 text-indigo-700 rounded-lg flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-box"></i></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] font-bold text-slate-400 uppercase">Konteyner</p>
+            <p id="container" class="text-xs font-mono font-bold text-slate-900 truncate">-</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="bg-white rounded-3xl shadow-lg border border-slate-200 p-6 sm:p-8 fade-up">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+      <div>
+        <h3 class="text-lg font-black text-slate-900">Logistika Yol Xəritəsi</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Avtomobilinizin səyahət tarixçəsi</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-[11px] font-bold text-slate-500">Ümumi İrəliləyiş</span>
+        <span id="progress-pct" class="text-sm font-black bg-slate-900 text-white px-3 py-1.5 rounded-full">0%</span>
+      </div>
+    </div>
+    <div id="timeline" class="space-y-1"></div>
+  </div>
+
+  <!-- MEDIA -->
+  <div class="bg-white rounded-3xl shadow-lg border border-slate-200 p-6 sm:p-8 fade-up">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+      <div>
+        <h3 class="text-lg font-black text-slate-900">Avtomobil Media</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Şəkillər və videolar kateqoriyalara görə</p>
+      </div>
+      <div id="dl-bar" class="hidden flex gap-2">
+        <button onclick="downloadTabZip()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-md shadow-indigo-500/20">
+          <i class="fa-solid fa-file-zipper"></i> Kateqoriya ZIP
+        </button>
+        <button onclick="downloadAllZip()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-md">
+          <i class="fa-solid fa-box-archive"></i> Hamısı ZIP
+        </button>
+      </div>
+    </div>
+    <div class="bg-slate-100 border border-slate-200 rounded-2xl p-1.5 flex gap-1.5 mb-6" id="tabs"></div>
+    <div id="photo-area"></div>
+  </div>
+
+  <p class="text-center text-xs text-slate-400 font-medium pt-6 pb-4">© Carzone Logistika • Premium Müştəri Paneli</p>
+</main>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" class="hidden fixed inset-0 z-[100] bg-black flex flex-col select-none">
+  <div class="flex items-center justify-between px-4 py-3 bg-black/60 shrink-0">
+    <span id="lb-counter" class="text-white text-sm font-bold">1 / 1</span>
+    <button onclick="lbDownload()" class="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-sm font-bold transition">
+      <i class="fa-solid fa-arrow-down-to-line"></i> Yüklə
+    </button>
+    <button onclick="closeLightbox()" class="w-10 h-10 flex items-center justify-center text-white/70 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="flex-1 flex items-center justify-center relative overflow-hidden" id="lb-area">
+    <button onclick="lbPrev()" class="absolute left-2 z-10 w-12 h-12 flex items-center justify-center bg-black/40 hover:bg-black/70 text-white rounded-full text-lg transition">
+      <i class="fa-solid fa-chevron-left"></i></button>
+    <img id="lb-img" src="" class="max-h-full max-w-full object-contain px-14" draggable="false">
+    <button onclick="lbNext()" class="absolute right-2 z-10 w-12 h-12 flex items-center justify-center bg-black/40 hover:bg-black/70 text-white rounded-full text-lg transition">
+      <i class="fa-solid fa-chevron-right"></i></button>
+  </div>
+  <div id="lb-dots" class="flex justify-center gap-2 py-4 shrink-0"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-6 right-6 z-[200] transform translate-y-24 opacity-0 transition-all duration-300 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 max-w-xs">
+  <div id="toast-icon-wrap" class="bg-emerald-500 p-1.5 rounded-full shrink-0"><i id="toast-icon" class="fa-solid fa-check text-xs text-white"></i></div>
+  <span id="toast-msg" class="text-sm font-medium"></span>
+</div>
+
+<script>
+let custData = null;
+let custTab = 'pikap';
+let lbPhotos = [], lbIndex = 0, lbTouchStart = 0;
+
+/* ============================
+   TOKEN YOXLAMA
+   ============================ */
+window.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('t');
+  if (!token || token.length < 16) {
+    showError('Link etibarsızdır. Zəhmət olmasa doğru linkdən istifadə edin.');
+    return;
+  }
+  await loadCar(token);
+  
+  document.addEventListener('keydown', e => {
+    const lb = document.getElementById('lightbox');
+    if (!lb.classList.contains('hidden')) {
+      if (e.key === 'ArrowRight') lbNext();
+      else if (e.key === 'ArrowLeft') lbPrev();
+      else if (e.key === 'Escape') closeLightbox();
+    }
+  });
+  
+  const lbArea = document.getElementById('lb-area');
+  lbArea?.addEventListener('touchstart', e => { lbTouchStart = e.touches[0].clientX; }, { passive: true });
+  lbArea?.addEventListener('touchend', e => {
+    const diff = lbTouchStart - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) diff > 0 ? lbNext() : lbPrev();
+  });
+});
+
+/* ============================
+   YÜKLƏMƏ
+   ============================ */
+async function loadCar(token) {
+  try {
+    const r = await fetch(`/api/customer?t=${encodeURIComponent(token)}`);
+    if (r.status === 404) throw new Error('Bu link etibarsızdır və ya avtomobil silinib');
+    if (!r.ok) throw new Error(`Server xətası: ${r.status}`);
+    const data = await r.json();
+    const car = data.car;
+    
+    const ph = car.photos || {};
+    const normalizeCat = cat => Array.isArray(cat) ? { images: cat, videos: [] } : { images: cat?.images || [], videos: cat?.videos || [] };
+    const catP = normalizeCat(ph.pikap), catA = normalizeCat(ph.anbar), catT = normalizeCat(ph.poti);
+    const mapVid = v => typeof v === 'string' ? { url: v, thumb: getVideoThumb(v) } : { url: v.url, thumb: v.thumb || getVideoThumb(v.url) };
+
+    custData = {
+      n: car.owner, m: car.model, v: car.vin, s: car.status,
+      udus: car.udus, anbar: car.anbar, poti: car.poti, baki: car.baki,
+      etibarname: car.etibarname, shippingPaid: car.shippingPaid,
+      location: car.location, shippingPort: car.shippingPort, container: car.container,
+      imageUrl: car.imageUrl || '',
+      ph: {
+        pikap: { images: catP.images.map(p => typeof p === 'string' ? p : p.url), videos: catP.videos.map(mapVid) },
+        anbar: { images: catA.images.map(p => typeof p === 'string' ? p : p.url), videos: catA.videos.map(mapVid) },
+        poti: { images: catT.images.map(p => typeof p === 'string' ? p : p.url), videos: catT.videos.map(mapVid) }
+      }
+    };
+    
+    renderAll();
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('content').classList.remove('hidden');
+  } catch (e) {
+    showError(e.message);
+  }
+}
+
+function showError(msg) {
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('content').classList.add('hidden');
+  const box = document.getElementById('error-box');
+  box.classList.remove('hidden');
+  box.classList.add('flex');
+  document.getElementById('error-msg').textContent = msg;
+}
+
+function renderAll() {
+  renderHero();
+  renderTimeline();
+  renderTabs();
+  renderPhotos();
+}
+
+/* ============================
+   HERO
+   ============================ */
+function renderHero() {
+  const d = custData;
+  
+  /* Şəkil */
+  const img = document.getElementById('hero-img');
+  if (d.imageUrl) { img.src = d.imageUrl; img.style.display = 'block'; }
+  else { img.style.display = 'none'; }
+  
+  /* Status badge */
+  const colors = {
+    'Auksionda': 'bg-amber-100 text-amber-900',
+    'Anbara gedir': 'bg-yellow-100 text-yellow-900',
+    'Anbarda': 'bg-blue-100 text-blue-900',
+    'Gəmidə': 'bg-indigo-100 text-indigo-900',
+    'Potidədir': 'bg-purple-100 text-purple-900',
+    'Bakıdadır': 'bg-emerald-100 text-emerald-900'
+  };
+  const badge = document.getElementById('status-badge');
+  badge.textContent = d.s || 'Gözlənilir';
+  badge.className = `text-xs font-black px-4 py-2 rounded-full shadow-lg backdrop-blur-md border border-white/50 ${colors[d.s] || 'bg-white text-slate-900'}`;
+  
+  /* Ad + Model */
+  document.getElementById('owner-name').textContent = d.n || 'Müştəri';
+  document.getElementById('car-model').textContent = d.m || 'Avtomobil';
+  document.getElementById('vin-pill').textContent = `VIN: ${d.v || '-'}`;
+  
+  /* Cari mərhələ */
+  const stageMap = {
+    'Auksionda': '🏷️ Auksion Uduşu',
+    'Anbara gedir': '🚛 Anbara Yolda',
+    'Anbarda': '🏭 Anbarda / Portda',
+    'Gəmidə': '🚢 Gəmidə (Okean)',
+    'Potidədir': '🇬🇪 Potidə Gözləyir',
+    'Bakıdadır': '🇦🇿 Bakıya Çatdı'
+  };
+  document.getElementById('current-stage').textContent = stageMap[d.s] || d.s || '-';
+  
+  /* Detallar */
+  document.getElementById('location').textContent = d.location || '-';
+  document.getElementById('shipping-port').textContent = d.shippingPort || '-';
+  document.getElementById('container').textContent = d.container || '-';
+  
+  /* Gün sayğacı */
+  const daysEl = document.getElementById('days-counter');
+  if (d.poti && d.status !== 'Bakıdadır') {
+    const daysLeft = getDaysToPoti(d.poti);
+    if (daysLeft !== null) {
+      if (daysLeft >= 0) {
+        document.getElementById('days-label').textContent = 'Potiyə Qalan';
+        document.getElementById('days-num').textContent = daysLeft;
+        document.getElementById('days-suffix').textContent = 'gün';
+      } else {
+        document.getElementById('days-label').textContent = 'Potiyə Çatıb';
+        document.getElementById('days-num').textContent = Math.abs(daysLeft);
+        document.getElementById('days-suffix').textContent = 'gün əvvəl';
+      }
+      daysEl.classList.remove('hidden');
+    }
+  }
+}
+
+/* ============================
+   TIMELINE
+   ============================ */
+function renderTimeline() {
+  const d = custData;
+  const steps = [
+    { key: 'udus', label: 'Auksion Uduşu', icon: '🏷️', date: d.udus, done: !!d.udus },
+    { key: 'anbar', label: 'Anbara Giriş', icon: '🏭', date: d.anbar, done: !!d.anbar },
+    { key: 'poti', label: 'Poti Çatdırılma', icon: '🇬🇪', date: d.poti, done: !!d.poti },
+    { key: 'baki', label: 'Bakı Çatdırılma', icon: '🇦🇿', date: d.baki, done: !!d.baki }
+  ];
+  
+  let activeStep = 0;
+  steps.forEach((s, i) => { if (s.done) activeStep = i + 1; });
+  
+  const pct = Math.round((activeStep / steps.length) * 100);
+  document.getElementById('progress-pct').textContent = `${pct}%`;
+  
+  const html = steps.map((s, i) => {
+    const past = i < activeStep;
+    const active = i === activeStep - 1 && activeStep > 0;
+    const future = i >= activeStep;
+    const isLast = i === steps.length - 1;
+    
+    let circleCls = '';
+    if (past) circleCls = 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-500/30';
+    else if (active) circleCls = 'bg-gradient-to-br from-indigo-500 to-indigo-700 text-white border-indigo-700 shadow-lg shadow-indigo-500/40 ring-4 ring-indigo-100';
+    else circleCls = 'bg-slate-100 text-slate-400 border-slate-300';
+    
+    const lineCls = past ? 'bg-emerald-400' : 'bg-slate-200';
+    
+    return `
+      <div class="relative flex items-start gap-4 ${isLast ? '' : 'pb-6'}">
+        ${!isLast ? `<div class="absolute left-5 top-12 bottom-0 w-0.5 ${lineCls}"></div>` : ''}
+        <div class="relative shrink-0 w-10 h-10 rounded-full border-2 flex items-center justify-center text-base font-black ${circleCls} z-10">
+          ${past ? '✓' : active ? '📍' : s.icon}
+          ${active ? '<span class="pulse-ring absolute inset-0 rounded-full bg-indigo-400 opacity-40"></span>' : ''}
+        </div>
+        <div class="flex-1 min-w-0 pt-1">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h4 class="text-sm font-black ${past ? 'text-emerald-800' : active ? 'text-indigo-900' : 'text-slate-400'}">
+              ${s.label}
+              ${active ? '<span class="ml-2 text-[10px] font-black bg-indigo-600 text-white px-2 py-0.5 rounded-full">CARİ</span>' : ''}
+            </h4>
+            ${s.date
+              ? `<span class="text-xs font-mono font-bold ${past ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-indigo-700 bg-indigo-50 border-indigo-200'} px-2.5 py-1 rounded-lg border">${s.date}</span>`
+              : `<span class="text-xs font-medium text-slate-400 italic">${future ? 'Gözlənilir' : 'Təyin edilməyib'}</span>`}
+          </div>
+          ${past && !isLast && steps[i+1]?.date
+            ? `<p class="text-[11px] text-slate-500 mt-1 font-medium">${diffDays(s.date, steps[i+1].date)} gün çəkdi</p>`
+            : ''}
+        </div>
+      </div>`;
+  }).join('');
+  
+  document.getElementById('timeline').innerHTML = html;
+}
+
+/* ============================
+   TABS + PHOTOS
+   ============================ */
+function renderTabs() {
+  const ph = custData.ph || {};
+  const totalVideos = (ph.pikap?.videos?.length || 0) + (ph.anbar?.videos?.length || 0) + (ph.poti?.videos?.length || 0);
+  const totalImages = (ph.pikap?.images?.length || 0) + (ph.anbar?.images?.length || 0) + (ph.poti?.images?.length || 0);
+  
+  const tabs = [
+    { key: 'pikap', label: '📦 Pikap', count: (ph.pikap?.images?.length || 0) + (ph.pikap?.videos?.length || 0) },
+    { key: 'anbar', label: '🏭 Anbar', count: (ph.anbar?.images?.length || 0) + (ph.anbar?.videos?.length || 0) },
+    { key: 'poti', label: '🇬🇪 Poti', count: (ph.poti?.images?.length || 0) + (ph.poti?.videos?.length || 0) },
+    { key: 'videolar', label: '🎬 Video', count: totalVideos }
+  ];
+  
+  document.getElementById('tabs').innerHTML = tabs.map(t => `
+    <button onclick="setTab('${t.key}')" class="flex-1 py-2.5 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${custTab === t.key ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-white'}">
+      ${t.label}
+      <span class="px-1.5 py-0.5 rounded-full text-[10px] ${custTab === t.key ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}">${t.count}</span>
+    </button>`).join('');
+  
+  if (totalImages > 0) document.getElementById('dl-bar').classList.remove('hidden');
+}
+
+function setTab(tab) {
+  custTab = tab;
+  renderTabs();
+  renderPhotos();
+}
+
+function renderPhotos() {
+  const ph = custData.ph || {};
+  const area = document.getElementById('photo-area');
+  
+  if (custTab === 'videolar') return renderAllVideos();
+  
+  const cat = ph[custTab] || { images: [], videos: [] };
+  const images = cat.images || [], videos = cat.videos || [];
+  
+  if (!images.length && !videos.length) {
+    area.innerHTML = `
+      <div class="text-center py-20">
+        <div class="w-24 h-24 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-5xl">📷</div>
+        <h3 class="text-base font-bold text-slate-700">Bu kateqoriyada media yoxdur</h3>
+        <p class="text-xs text-slate-400 mt-1">Admin tərəfindən yüklənəcək</p>
+      </div>`;
+    return;
+  }
+  
+  area.innerHTML = `
+    ${images.length > 0 ? `
+    <div class="mb-6">
+      <h4 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+        📷 Şəkillər <span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded-full">${images.length}</span>
+      </h4>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        ${images.map((url, i) => `
+          <div class="photo-grid-item group" onclick="openLightbox(${i})">
+            <img src="${url}" loading="lazy" alt="">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+            <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition">
+              <span class="text-[10px] font-bold text-white bg-black/50 backdrop-blur px-2 py-0.5 rounded-full">${i + 1} / ${images.length}</span>
+              <span class="w-7 h-7 bg-white/90 rounded-full flex items-center justify-center text-slate-900 text-xs">
+                <i class="fa-solid fa-expand"></i>
+              </span>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+    ${videos.length > 0 ? `
+    <div>
+      <h4 class="text-xs font-black uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+        🎬 Videolar <span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded-full">${videos.length}</span>
+      </h4>
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        ${videos.map((v, i) => `
+          <div class="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl border border-slate-200 cursor-pointer transition-all duration-300" style="aspect-ratio:16/9" onclick="window.open('${v.url}','_blank')">
+            <img src="${v.thumb}" class="w-full h-full object-cover" loading="lazy" alt="">
+            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition flex items-center justify-center">
+              <span class="w-14 h-14 bg-white/90 group-hover:bg-white rounded-full flex items-center justify-center text-slate-900 text-xl group-hover:scale-110 transition">
+                <i class="fa-solid fa-play ml-1"></i>
+              </span>
+            </div>
+            <span class="absolute bottom-2 right-2 text-[10px] font-bold text-white bg-black/50 backdrop-blur px-2 py-0.5 rounded-full">${i + 1} / ${videos.length}</span>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+  `;
+}
+
+function renderAllVideos() {
+  const ph = custData.ph || {};
+  const area = document.getElementById('photo-area');
+  const sections = [
+    { key: 'pikap', label: '📦 Pikap', videos: ph.pikap?.videos || [] },
+    { key: 'anbar', label: '🏭 Anbar', videos: ph.anbar?.videos || [] },
+    { key: 'poti', label: '🇬🇪 Poti', videos: ph.poti?.videos || [] }
+  ];
+  const total = sections.reduce((s, x) => s + x.videos.length, 0);
+  
+  if (total === 0) {
+    area.innerHTML = `
+      <div class="text-center py-20">
+        <div class="w-24 h-24 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-5xl">🎬</div>
+        <h3 class="text-base font-bold text-slate-700">Hələ video yoxdur</h3>
+      </div>`;
+    return;
+  }
+  
+  area.innerHTML = sections.filter(s => s.videos.length > 0).map(sec => `
+    <div class="mb-6">
+      <h4 class="text-xs font-black uppercase tracking-widest text-slate-600 mb-3 flex items-center gap-2">
+        ${sec.label}
+        <span class="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded-full">${sec.videos.length}</span>
+      </h4>
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        ${sec.videos.map(v => `
+          <div class="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl border border-slate-200 cursor-pointer transition-all duration-300" style="aspect-ratio:16/9" onclick="window.open('${v.url}','_blank')">
+            <img src="${v.thumb}" class="w-full h-full object-cover" loading="lazy" alt="">
+            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition flex items-center justify-center">
+              <span class="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center text-slate-900 text-xl">
+                <i class="fa-solid fa-play ml-1"></i>
+              </span>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+/* ============================
+   LIGHTBOX
+   ============================ */
+function openLightbox(i) {
+  lbPhotos = custData.ph[custTab]?.images || [];
+  lbIndex = i;
+  document.getElementById('lightbox').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  renderLightbox();
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function lbNext() {
+  if (!lbPhotos.length) return;
+  lbIndex = (lbIndex + 1) % lbPhotos.length;
+  renderLightbox();
+}
+
+function lbPrev() {
+  if (!lbPhotos.length) return;
+  lbIndex = (lbIndex - 1 + lbPhotos.length) % lbPhotos.length;
+  renderLightbox();
+}
+
+function renderLightbox() {
+  document.getElementById('lb-img').src = lbPhotos[lbIndex];
+  document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${lbPhotos.length}`;
+  document.getElementById('lb-dots').innerHTML = lbPhotos.map((_, i) =>
+    `<span onclick="lbGoTo(${i})" class="w-2 h-2 rounded-full cursor-pointer transition ${i === lbIndex ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'}"></span>`
+  ).join('');
+}
+
+function lbGoTo(i) {
+  lbIndex = i;
+  renderLightbox();
+}
+
+async function lbDownload() {
+  const url = lbPhotos[lbIndex];
+  if (!url) return;
+  try {
+    const r = await fetch(url, { mode: 'cors' });
+    const b = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = `carzone_${Date.now()}.jpg`;
+    a.click();
+    showToast('Şəkil yükləndi!', 'success');
+  } catch {
+    window.open(url, '_blank');
+  }
+}
+
+/* ============================
+   ZIP YÜKLƏMƏ
+   ============================ */
+async function downloadTabZip() {
+  if (custTab === 'videolar') { showToast('Videolar ZIP kimi yüklənə bilməz', 'info'); return; }
+  const photos = custData.ph[custTab]?.images || [];
+  if (!photos.length) { showToast('Şəkil yoxdur', 'error'); return; }
+  await downloadZip({ [custTab]: photos }, `${custData.m}_${custTab}`);
+}
+
+async function downloadAllZip() {
+  const ph = custData.ph || {};
+  const all = { pikap: ph.pikap?.images || [], anbar: ph.anbar?.images || [], poti: ph.poti?.images || [] };
+  if (!Object.values(all).some(a => a.length > 0)) { showToast('Şəkil yoxdur', 'error'); return; }
+  await downloadZip(all, custData.m || 'Avtomobil');
+}
+
+async function downloadZip(byCategory, baseName) {
+  showToast('ZIP hazırlanır...', 'info');
+  const zip = new JSZip();
+  const names = { pikap: 'Pikap', anbar: 'Anbar', poti: 'Poti' };
+  let total = 0;
+  for (const [cat, urls] of Object.entries(byCategory)) {
+    if (!urls.length) continue;
+    const folder = zip.folder(names[cat] || cat);
+    for (let i = 0; i < urls.length; i++) {
+      try {
+        const r = await fetch(urls[i], { mode: 'cors' });
+        const b = await r.blob();
+        folder.file(`${String(i + 1).padStart(3, '0')}.jpg`, b);
+        total++;
+      } catch { }
+    }
+  }
+  if (!total) { showToast('Şəkillər yüklənə bilmədi', 'error'); return; }
+  const content = await zip.generateAsync({ type: 'blob' });
+  saveAs(content, `${baseName}-Şəkillər.zip`);
+  showToast(`${total} şəkil yükləndi!`, 'success');
+}
+
+/* ============================
+   UTILS
+   ============================ */
+function getVideoThumb(videoUrl) {
+  if (!videoUrl) return '';
+  if (videoUrl.includes('/video/upload/')) {
+    return videoUrl.replace('/video/upload/', '/video/upload/so_0,w_400/').replace(/\.[^.]+$/, '.jpg');
+  }
+  return videoUrl;
+}
+
+function parseDate(str) {
+  if (!str) return null;
+  let m = String(str).match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+  m = String(str).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  return null;
+}
+
+function diffDays(d1, d2) {
+  const a = parseDate(d1), b = parseDate(d2);
+  if (!a || !b) return null;
+  return Math.ceil((b - a) / 86400000);
+}
+
+function getDaysToPoti(p) {
+  const dt = parseDate(p);
+  if (!dt) return null;
+  const t = new Date(); t.setHours(0, 0, 0, 0); dt.setHours(0, 0, 0, 0);
+  return Math.ceil((dt - t) / 86400000);
+}
+
+function copyVin() {
+  if (!custData?.v) return;
+  navigator.clipboard.writeText(custData.v).then(() => showToast('VIN kopyalandı!', 'success'));
+}
+
+function showToast(msg, type = 'info') {
+  const toast = document.getElementById('toast');
+  const wrap = document.getElementById('toast-icon-wrap');
+  const icon = document.getElementById('toast-icon');
+  document.getElementById('toast-msg').textContent = msg;
+  wrap.className = 'p-1.5 rounded-full shrink-0 ' + (type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-rose-500' : 'bg-slate-500');
+  icon.className = 'fa-solid text-xs text-white ' + (type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info');
+  toast.classList.remove('translate-y-24', 'opacity-0');
+  toast.classList.add('translate-y-0', 'opacity-100');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => {
+    toast.classList.add('translate-y-24', 'opacity-0');
+    toast.classList.remove('translate-y-0', 'opacity-100');
+  }, type === 'error' ? 5000 : 3000);
+}
+</script>
+</body>
+</html>
