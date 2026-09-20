@@ -170,7 +170,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
         </div>
 
         <!-- Yol Xərci -->
-        <div id="doc-shipping" class="flex items-center justify-between rounded-xl p-3 transition-all border">
+        <div id="doc-shipping" class="flex items-center justify-between rounded-xl p-3 mb-2 transition-all border">
           <div class="flex items-center gap-2.5 min-w-0">
             <div id="doc-shipping-icon" class="w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0">
               <i class="fa-solid fa-money-bill-wave"></i>
@@ -181,6 +181,20 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
             </div>
           </div>
           <span id="doc-shipping-badge" class="text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0">-</span>
+        </div>
+
+        <!-- 🆕 KONTEYNER AÇILIŞI -->
+        <div id="doc-container-open" class="flex items-center justify-between rounded-xl p-3 transition-all border">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div id="doc-container-open-icon" class="w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0">
+              <i class="fa-solid fa-box-open"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[11px] font-black text-slate-800">Konteyner Açılışı</p>
+              <p id="doc-container-open-sub" class="text-[10px] font-semibold text-slate-500 truncate">-</p>
+            </div>
+          </div>
+          <span id="doc-container-open-badge" class="text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0">-</span>
         </div>
       </div>
       <!-- ═══════════ SƏNƏDLƏŞMƏ BLOK BİTİR ═══════════ -->
@@ -259,7 +273,7 @@ let custTab = 'auction';
 let lbPhotos = [], lbIndex = 0, lbTouchStart = 0;
 
 /* ═══════════════════════════════════════════════════════════
-   HARDCODED DEFAULT ŞİRKƏTLƏR — JSON-da trackingUrl olmasa da işləyir
+   HARDCODED DEFAULT ŞİRKƏTLƏR
    ═══════════════════════════════════════════════════════════ */
 const DEFAULT_TRACKING_COMPANIES = {
   1: {
@@ -276,7 +290,6 @@ const DEFAULT_TRACKING_COMPANIES = {
   }
 };
 
-/* Tracking məlumatlarını tap — əvvəl JSON-dan, sonra hardcoded fallback */
 function resolveTrackingCompany(d) {
   if (d.trackingCompanyName && d.trackingUrl) {
     return {
@@ -337,6 +350,7 @@ async function loadCar(token) {
       n: car.owner, m: car.model, v: car.vin, s: car.status,
       udus: car.udus, anbar: car.anbar, poti: car.poti, baki: car.baki,
       etibarname: car.etibarname, shippingPaid: car.shippingPaid,
+      containerOpenDate: car.containerOpenDate || null,
       location: car.location, shippingPort: car.shippingPort, container: car.container,
       imageUrl: car.imageUrl || car.image || '',
       auctionLink: car.link || '',
@@ -565,8 +579,24 @@ function renderDocStatus() {
     spSub
   );
 
+  // 🆕 KONTEYNER AÇILIŞI
+  const coRaw = d.containerOpenDate;
+  const coDone = isDone(coRaw);
+  const coSub = coDone
+    ? (formatDate(coRaw) ? `Açılış: ${formatDate(coRaw)}` : 'Konteyner açılıb')
+    : 'Konteyner hələ açılmayıb';
+  updateDocRow(
+    'doc-container-open',
+    coDone,
+    coRaw,
+    'Açılıb',
+    'Açılmayıb',
+    coSub
+  );
+
   console.log('[DOC STATUS] etibarname:', etRaw, '→', etDone);
   console.log('[DOC STATUS] shippingPaid:', spRaw, '→', spDone);
+  console.log('[DOC STATUS] containerOpenDate:', coRaw, '→', coDone);
 }
 
 function renderTimeline() {
