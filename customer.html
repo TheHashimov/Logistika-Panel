@@ -148,6 +148,43 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#0f172a
         </div>
       </div>
 
+      <!-- ═══════════ SƏNƏDLƏŞMƏ & ÖDƏNİŞLƏR ═══════════ -->
+      <div class="pt-4 border-t border-slate-100">
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+          <i class="fa-solid fa-clipboard-check"></i>
+          Sənədləşmə & Ödənişlər
+        </p>
+
+        <!-- Etibarnamə -->
+        <div id="doc-etibarname" class="flex items-center justify-between rounded-xl p-3 mb-2 transition-all border">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div id="doc-etibarname-icon" class="w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0">
+              <i class="fa-solid fa-file-signature"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[11px] font-black text-slate-800">Etibarnamə</p>
+              <p id="doc-etibarname-sub" class="text-[10px] font-semibold text-slate-500 truncate">-</p>
+            </div>
+          </div>
+          <span id="doc-etibarname-badge" class="text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0">-</span>
+        </div>
+
+        <!-- Yol Xərci -->
+        <div id="doc-shipping" class="flex items-center justify-between rounded-xl p-3 transition-all border">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div id="doc-shipping-icon" class="w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0">
+              <i class="fa-solid fa-money-bill-wave"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[11px] font-black text-slate-800">Yol Xərci</p>
+              <p id="doc-shipping-sub" class="text-[10px] font-semibold text-slate-500 truncate">-</p>
+            </div>
+          </div>
+          <span id="doc-shipping-badge" class="text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0">-</span>
+        </div>
+      </div>
+      <!-- ═══════════ SƏNƏDLƏŞMƏ BLOK BİTİR ═══════════ -->
+
       <button id="track-container-btn" onclick="trackContainer()"
         class="hidden w-full mt-3 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-xs font-bold items-center justify-center gap-2 transition shadow-md shadow-indigo-500/20">
         <i class="fa-solid fa-anchor"></i>
@@ -241,7 +278,6 @@ const DEFAULT_TRACKING_COMPANIES = {
 
 /* Tracking məlumatlarını tap — əvvəl JSON-dan, sonra hardcoded fallback */
 function resolveTrackingCompany(d) {
-  // 1) JSON-da tam məlumat varsa
   if (d.trackingCompanyName && d.trackingUrl) {
     return {
       name: d.trackingCompanyName,
@@ -250,7 +286,6 @@ function resolveTrackingCompany(d) {
       paramsTemplate: d.trackingParamsTemplate || null
     };
   }
-  // 2) Yalnız trackingCompanyId varsa — hardcoded fallback
   if (d.trackingCompanyId && DEFAULT_TRACKING_COMPANIES[d.trackingCompanyId]) {
     return DEFAULT_TRACKING_COMPANIES[d.trackingCompanyId];
   }
@@ -318,9 +353,6 @@ async function loadCar(token) {
     };
 
     console.log('=== CUSTDATA ===', JSON.stringify(custData, null, 2));
-    console.log('[TRACKING] trackingCompanyId:', custData.trackingCompanyId);
-    console.log('[TRACKING] trackingUrl:', custData.trackingUrl);
-    console.log('[TRACKING] resolved:', resolveTrackingCompany(custData));
 
     renderAll();
     document.getElementById('loading').classList.add('hidden');
@@ -341,6 +373,7 @@ function showError(msg) {
 
 function renderAll() {
   renderHero();
+  renderDocStatus();
   renderTimeline();
   renderTabs();
   renderPhotos();
@@ -416,24 +449,18 @@ function renderHero() {
   document.getElementById('shipping-port').textContent = d.shippingPort || '-';
   document.getElementById('container').textContent = d.container || '-';
 
-  /* İZLƏMƏ DÜYMƏSİ — hardcoded fallback ilə */
   const trackBtn = document.getElementById('track-container-btn');
   const trackLabel = document.getElementById('track-btn-label');
   const hasContainer = d.container && d.container.trim() && d.container !== '-';
   const company = resolveTrackingCompany(d);
 
-  console.log('[BTN] hasContainer:', hasContainer);
-  console.log('[BTN] company:', company);
-
   if (hasContainer && company) {
     trackBtn.classList.remove('hidden');
     trackBtn.classList.add('flex');
     if (trackLabel) trackLabel.textContent = `${company.name} ilə İzlə`;
-    console.log('[BTN] ✅ Düymə göstərilir');
   } else {
     trackBtn.classList.add('hidden');
     trackBtn.classList.remove('flex');
-    console.log('[BTN] ❌ Düymə gizlədilib');
   }
 
   const daysEl = document.getElementById('days-counter');
@@ -452,6 +479,94 @@ function renderHero() {
       daysEl.classList.remove('hidden');
     }
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SƏNƏDLƏŞMƏ & ÖDƏNİŞLƏR STATUSU
+   ═══════════════════════════════════════════════════════════ */
+
+function isDone(val) {
+  if (val === null || val === undefined) return false;
+  if (val === false || val === 0 || val === '0') return false;
+  if (val === true || val === 1 || val === '1') return true;
+  const s = String(val).trim();
+  if (s === '' || s === '-' || s === 'null' || s === 'undefined') return false;
+  return true;
+}
+
+function formatDate(val) {
+  if (!val) return null;
+  const s = String(val).trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return `${m[3]}.${m[2]}.${m[1]}`;
+  m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+  if (m) return s;
+  return null;
+}
+
+function updateDocRow(rowId, done, rawValue, doneText, notDoneText, doneSub) {
+  const row = document.getElementById(rowId);
+  const icon = document.getElementById(rowId + '-icon');
+  const sub = document.getElementById(rowId + '-sub');
+  const badge = document.getElementById(rowId + '-badge');
+
+  if (!row) return;
+
+  const dateStr = formatDate(rawValue);
+
+  if (done) {
+    row.className = 'flex items-center justify-between rounded-xl p-3 mb-2 transition-all border bg-emerald-50 border-emerald-200';
+    icon.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0 bg-emerald-500 text-white shadow-sm shadow-emerald-500/30';
+    sub.textContent = doneSub || (dateStr ? `Tarix: ${dateStr}` : 'Təsdiqlənib');
+    sub.className = 'text-[10px] font-semibold text-emerald-700 truncate';
+    badge.textContent = '✅ ' + doneText;
+    badge.className = 'text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0 bg-emerald-600 text-white';
+  } else {
+    row.className = 'flex items-center justify-between rounded-xl p-3 mb-2 transition-all border bg-rose-50 border-rose-200';
+    icon.className = 'w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0 bg-rose-500 text-white shadow-sm shadow-rose-500/30';
+    sub.textContent = 'Gözlənilir';
+    sub.className = 'text-[10px] font-semibold text-rose-700 truncate';
+    badge.textContent = '❌ ' + notDoneText;
+    badge.className = 'text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0 bg-rose-600 text-white';
+  }
+}
+
+function renderDocStatus() {
+  const d = custData || {};
+
+  // Etibarnamə
+  const etRaw = d.etibarname;
+  const etDone = isDone(etRaw);
+  updateDocRow(
+    'doc-etibarname',
+    etDone,
+    etRaw,
+    'Verilib',
+    'Verilməyib',
+    etDone ? null : 'Hələ təqdim edilməyib'
+  );
+
+  // Yol Xərci
+  const spRaw = d.shippingPaid;
+  const spDone = isDone(spRaw);
+  let spSub = null;
+  if (spDone) {
+    const num = parseFloat(String(spRaw).replace(/[^\d.]/g, ''));
+    if (!isNaN(num) && num > 0) {
+      spSub = `Ödənilib: $${num.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    }
+  }
+  updateDocRow(
+    'doc-shipping',
+    spDone,
+    spRaw,
+    'Ödənilib',
+    'Ödənilməyib',
+    spSub
+  );
+
+  console.log('[DOC STATUS] etibarname:', etRaw, '→', etDone);
+  console.log('[DOC STATUS] shippingPaid:', spRaw, '→', spDone);
 }
 
 function renderTimeline() {
@@ -736,7 +851,6 @@ async function downloadZip(byCategory, baseName) {
   showToast(`${total} şəkil yükləndi!`, 'success');
 }
 
-/* KONTEYNER İZLƏMƏ — hardcoded fallback ilə */
 function trackContainer() {
   const d = custData;
   if (!d) return;
@@ -754,7 +868,6 @@ function trackContainer() {
 
   const companyName = company.name || 'Şirkət';
 
-  // 1) Base64 parametrli (məs. MSC)
   if (company.base64Params && company.paramsTemplate) {
     const resolved = company.paramsTemplate.split('{konteyner}').join(d.container);
     const b64 = btoa(unescape(encodeURIComponent(resolved)));
@@ -765,14 +878,12 @@ function trackContainer() {
     return;
   }
 
-  // 2) URL-də {konteyner} placeholder
   if (company.url.includes('{konteyner}')) {
     const url = company.url.split('{konteyner}').join(encodeURIComponent(d.container));
     window.open(url, '_blank');
     return;
   }
 
-  // 3) Sadəcə URL — konteyner kopyalanır + şirkət saytı açılır
   copyToClipboard(d.container)
     .then(() => showToast('📋 Konteyner kopyalandı — yapışdırın', 'success'))
     .catch(() => {});
