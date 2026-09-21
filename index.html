@@ -1404,5 +1404,152 @@ function renderTableView(cont, fc) {
   cont.innerHTML = html;
 }
 </script>
+  <!-- ====== 504 DEBUG PANEL ====== -->
+<div id="debug504" style="position:fixed;bottom:10px;left:10px;z-index:99999;font-family:monospace;font-size:11px;max-width:420px;max-height:70vh;overflow:auto;background:rgba(0,0,0,.92);color:#0f0;border:1px solid #0f0;border-radius:8px;padding:10px;display:none;line-height:1.5">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;border-bottom:1px solid #0f0;padding-bottom:5px">
+    <b>🔍 504 DEBUG</b>
+    <div>
+      <button onclick="clearDebugLog()" style="background:#333;color:#fff;border:1px solid #555;padding:2px 6px;border-radius:4px;cursor:pointer">Təmizlə</button>
+      <button onclick="testAllEndpoints()" style="background:#333;color:#fff;border:1px solid #555;padding:2px 6px;border-radius:4px;cursor:pointer">Test Et</button>
+      <button onclick="document.getElementById('debug504').style.display='none'" style="background:#800;color:#fff;border:1px solid #f00;padding:2px 6px;border-radius:4px;cursor:pointer">X</button>
+    </div>
+  </div>
+  <div id="debugLog"></div>
+</div>
+
+<button onclick="document.getElementById('debug504').style.display='block'" 
+  style="position:fixed;bottom:10px;left:10px;z-index:99998;background:#0a0b0e;color:#0f0;border:1px solid #0f0;padding:6px 10px;border-radius:6px;font-family:monospace;font-size:11px;cursor:pointer">
+  🐛 DEBUG
+</button>
+
+<script>
+(function(){
+  const logEl = () => document.getElementById('debugLog');
+  const panel = () => document.getElementById('debug504');
+  const logs = [];
+
+  // Esc to close
+  document.addEventListener('keydown', e => { if(e.key==='Escape') panel().style.display='none'; });
+
+  window.clearDebugLog = function(){ logs.length=0; logEl().innerHTML=''; };
+
+  function log(msg, color) {
+    const t = new Date().toLocaleTimeString();
+    const line = document.createElement('div');
+    line.style.color = color || '#0f0';
+    line.style.marginBottom = '3px';
+    line.style.whiteSpace = 'pre-wrap';
+    line.style.wordBreak = 'break-all';
+    line.textContent = `[${t}] ${msg}`;
+    logEl().appendChild(line);
+    logEl().scrollTop = logEl().scrollHeight;
+    console.log(`[504-DEBUG] ${msg}`);
+  }
+
+  // ============ 1. FETCH INTERCEPTOR ============
+  const originalFetch = window.fetch;
+  window.fetch = async function(input, init) {
+    const url = (typeof input === 'string') ? input : (input.url || 'unknown');
+    const method = (init && init.method) || 'GET';
+    const started = performance.now();
+    const reqId = Math.random().toString(36).slice(2,7);
+
+    // Cloudinary-i izləməyə ehtiyac yoxdur
+    const isAPI = url.startsWith('/api/');
+    const isCloudinary = url.includes('cloudinary.com');
+    
+    if (isAPI || isCloudinary) {
+      log(`→ [${reqId}] ${method} ${url}`, '#ff0');
+    }
+
+    // 30 saniyə timeout — 504-ü tez tutmaq üçün
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const origSignal = init && init.signal;
+    if (origSignal) {
+      origSignal.addEventListener('abort', () => controller.abort());
+    }
+    const newInit = { ...(init||{}), signal: controller.signal };
+
+    try {
+      const resp = await originalFetch(input, newInit);
+      clearTimeout(timeoutId);
+      const elapsed = Math.round(performance.now() - started);
+
+      if (isAPI) {
+        let color = '#0f0';
+        if (resp.status >= 500) color = '#f00';
+        else if (resp.status >= 400) color = '#ff0';
+        else if (elapsed > 5000) color = '#fa0';
+        log(`← [${reqId}] ${resp.status} ${resp.statusText} (${elapsed}ms) ${url}`, color);
+        
+        if (resp.status === 504) {
+          log(`   ⚠️ 504 GATEWAY TIMEOUT! Server: ${url}`, '#f00');
+          log(`   → Backend (PHP/Node) bu endpoint-də cavab vermir.`, '#f80');
+          log(`   → /api/${url.split('/api/')[1]?.split('?')[0]} faylını yoxla.`, '#f80');
+        }
+        if (resp.status === 502) log(`   ⚠️ 502 BAD GATEWAY — backend işləmir!`, '#f00');
+        if (resp.status === 401) log(`   🔒 401 — Token köhnəlib / PIN səhvdir.`, '#ff0');
+      }
+      return resp;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      const elapsed = Math.round(performance.now() - started);
+      if (err.name === 'AbortError') {
+        log(`✖ [${reqId}] TIMEOUT 30s — ${url}`, '#f00');
+        log(`   → Bu endpoint 30 saniyə cavab vermədi → 504 səbəbidir.`, '#f80');
+      } else if (isAPI) {
+        log(`✖ [${reqId}] XƏTA (${elapsed}ms): ${err.message} — ${url}`, '#f00');
+      }
+      throw err;
+    }
+  };
+
+  // ============ 2. ENDPOINT TESTER ============
+  window.testAllEndpoints = async function() {
+    panel().style.display = 'block';
+    log('═══ BÜTÜN ENDPOINT-LƏR TEST EDİLİR ═══', '#0ff');
+    const endpoints = [
+      { method:'GET',  url:'/api/cars',                auth:true,  name:'Avtomobil siyahısı' },
+      { method:'GET',  url:'/api/tracking-companies',  auth:false, name:'Gəmi şirkətləri' },
+      { method:'POST', url:'/api/auth',                auth:false, name:'PIN auth', body:{pin:'0000'} },
+    ];
+    for (const ep of endpoints) {
+      const t0 = performance.now();
+      log(`\n▶ Test: ${ep.method} ${ep.url} — ${ep.name}`, '#0ff');
+      try {
+        const opts = { method: ep.method, headers:{} };
+        if (ep.auth && window.sessionToken) opts.headers['X-Auth-Token'] = window.sessionToken;
+        if (ep.body) { opts.headers['Content-Type']='application/json'; opts.body = JSON.stringify(ep.body); }
+        const r = await originalFetch(ep.url, opts);
+        const ms = Math.round(performance.now()-t0);
+        log(`  ✅ ${r.status} ${r.statusText} — ${ms}ms`, r.status<400?'#0f0':'#f00');
+        try { const j = await r.clone().json(); log(`  📦 Cavab: ${JSON.stringify(j).slice(0,200)}`, '#8f8'); } catch(e){}
+      } catch(e) {
+        const ms = Math.round(performance.now()-t0);
+        log(`  ❌ UĞURSUZ (${ms}ms): ${e.message}`, '#f00');
+        if (e.name === 'AbortError') log(`     → 504: bu endpoint cavab vermir!`, '#f80');
+      }
+    }
+    log('\n═══ TEST BİTDİ ═══', '#0ff');
+  };
+
+  // ============ 3. SƏHİFƏ AÇILANDA AVTOMATİK TEST ============
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      log('✅ Debug aktivdir. "Test Et" düyməsini bas və ya yuxarıda fetch-ləri izlə.', '#0ff');
+      // Avtomatik sürətli test
+      testAllEndpoints();
+    }, 1500);
+  });
+
+  // ============ 4. UNHANDLED PROMISE ============
+  window.addEventListener('unhandledrejection', e => {
+    const r = e.reason;
+    log(`⚠️ Tutulmamış Promise xətası: ${r?.message || r}`, '#f80');
+  });
+
+})();
+</script>
 </body>
 </html>
